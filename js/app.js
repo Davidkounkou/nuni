@@ -212,17 +212,7 @@ function confirmPlanViaWhatsApp(){
   const msg = encodeURIComponent(`Bonjour NUNI, je souhaite souscrire au ${planLabel}${idNote}. Pouvez-vous m'aider à finaliser mon paiement ?`);
   window.open(`https://wa.me/242068951600?text=${msg}`, '_blank');
   document.getElementById('whatsapp-modal-overlay').classList.remove('show');
-  toast('Redirection vers le service client NUNI sur WhatsApp…');
-  if(type === 'artist'){
-    setTimeout(()=>{
-      enterApp('dashboard');
-      const panel = document.getElementById('upload-panel');
-      if(panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
-      toast('Dès votre paiement confirmé sur WhatsApp, importez votre musique et vos photos.');
-    }, 700);
-  } else {
-    setTimeout(()=> enterApp('catalog'), 700);
-  }
+  toast('Compte créé — une fois votre paiement confirmé sur WhatsApp, vous recevrez un code par email pour débloquer votre accès.');
 }
 function closeWhatsAppModal(){
   document.getElementById('whatsapp-modal-overlay').classList.remove('show');

@@ -272,9 +272,12 @@
     <p class="home-sub"><span id="rotating-msg">Chaque écoute change une vie.</span></p>
 
     <div class="home-actions">
-      <button class="btn btn-primary" onclick="goTo('plans')">Créer un compte</button>
-      <button class="btn btn-ghost" onclick="enterApp('catalog'); toast('Connexion réussie — bon retour sur NUNI.')">Connexion</button>
-    </div>
+          <button class="btn btn-primary" onclick="goTo('plans')">Créer un compte</button>
+          <button class="btn btn-ghost" onclick="enterApp('catalog'); toast('Connexion réussie — bon retour sur NUNI.')">Connexion</button>
+        </div>
+        <p style="margin-top:14px;">
+          <a href="#" onclick="event.preventDefault(); openRedeemModal();" style="color:var(--accent); font-size:13px; text-decoration:underline; cursor:pointer;">J'ai déjà un code d'accès</a>
+        </p>
 
     <div class="impact-counter">
       <span class="dot"></span>
