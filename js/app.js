@@ -212,7 +212,8 @@ function confirmPlanViaWhatsApp(){
   const msg = encodeURIComponent(`Bonjour NUNI, je souhaite souscrire au ${planLabel}${idNote}. Pouvez-vous m'aider à finaliser mon paiement ?`);
   window.open(`https://wa.me/242068951600?text=${msg}`, '_blank');
   document.getElementById('whatsapp-modal-overlay').classList.remove('show');
-  toast('Compte créé — une fois votre paiement confirmé sur WhatsApp, vous recevrez un code par email pour débloquer votre accès.');
+  toast('Compte créé — une fois votre paiement confirmé, vous recevrez un code à saisir ci-dessous.');
+  openRedeemModal();
 }
 function closeWhatsAppModal(){
   document.getElementById('whatsapp-modal-overlay').classList.remove('show');
@@ -220,7 +221,13 @@ function closeWhatsAppModal(){
 
 function openRedeemModal(){
   document.getElementById('redeem-feedback').innerHTML = '';
-  if(realAuthToken) document.getElementById('redeem-email').closest('.field').style.display = 'none';
+  if(realAuthToken){
+    document.getElementById('redeem-email').closest('.field').style.display = 'none';
+    document.getElementById('redeem-password').closest('.field').style.display = 'none';
+  } else {
+    document.getElementById('redeem-email').closest('.field').style.display = '';
+    document.getElementById('redeem-password').closest('.field').style.display = '';
+  }
   document.getElementById('redeem-overlay').classList.add('show');
 }
 function closeRedeemModal(){
