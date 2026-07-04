@@ -88,7 +88,12 @@
       <div class="field"><label>Nom *</label><input type="text" id="rr-last"></div>
     </div>
     <div class="field full"><label>Email *</label><input type="email" id="rr-email"></div>
-    <div class="field full"><label>Mot de passe * (8 caractères min.)</label><input type="password" id="rr-password"></div>
+    <div class="field full"><label>Mot de passe * (8 caractères min.)</label>
+      <div class="field-password-wrap">
+        <input type="password" id="rr-password">
+        <button type="button" class="field-eye-btn" onclick="togglePasswordVisibility('rr-password', this)" aria-label="Afficher le mot de passe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
     <div class="field-row">
       <div class="field"><label>Âge *</label><input type="number" id="rr-age"></div>
       <div class="field"><label>Téléphone</label><input type="text" id="rr-phone"></div>
@@ -120,7 +125,13 @@
     <h2 class="serif">Code reçu sur WhatsApp</h2>
     <p style="margin-bottom:14px;">Une fois votre paiement confirmé, NUNI vous envoie un code à 6 caractères. Saisissez-le ici pour débloquer votre compte.</p>
     <div class="field full"><label>Email utilisé à l'inscription</label><input type="email" id="redeem-email"></div>
-    <div class="field full"><label>Mot de passe</label><input type="password" id="redeem-password"></div>
+    <div class="field full"><label>Mot de passe</label>
+      <div class="field-password-wrap">
+        <input type="password" id="redeem-password">
+        <button type="button" class="field-eye-btn" onclick="togglePasswordVisibility('redeem-password', this)" aria-label="Afficher le mot de passe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+    </div>
+    <div class="field checkbox-field" id="redeem-remember-field"><label><input type="checkbox" id="redeem-remember" checked> Se souvenir de moi sur cet appareil</label></div>
     <div class="field full"><label>Code d'accès (6 caractères)</label><input type="text" id="redeem-code-input" style="text-transform:uppercase; letter-spacing:2px; text-align:center; font-size:18px; font-weight:700;" maxlength="6"></div>
     <button class="btn btn-primary" style="width:100%; margin-top:14px;" onclick="submitRedeem()" id="redeem-submit-btn">Débloquer mon accès</button>
     <div id="redeem-feedback" style="margin-top:12px; font-size:12.5px;"></div>
@@ -426,7 +437,7 @@
           <button class="profile-menu-item" onclick="openProfileInfo('contact'); closeProfileMenu();">📩 <span>Nous contacter</span></button>
           <div class="profile-menu-sep"></div>
           <button class="profile-menu-item" onclick="openRedeemModal(); closeProfileMenu();">🔑 <span>Saisir mon code d'accès</span></button>
-          <button class="profile-menu-item danger" onclick="goTo('home'); closeProfileMenu(); toast('Vous avez été déconnecté.');">🚪 <span>Déconnexion</span></button>
+          <button class="profile-menu-item danger" onclick="logoutUser();">🚪 <span>Déconnexion</span></button>
         </div>
       </div>
       <input type="file" id="profile-avatar-input" accept="image/*" onchange="handleProfileAvatarUpload(event)" style="display:none">

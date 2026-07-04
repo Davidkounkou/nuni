@@ -1,4 +1,4 @@
-console.log('🎵 NUNI app.js chargé — version F2 (Popup album : glassmorphism + morceau en cours)');
+console.log('🎵 NUNI app.js chargé — version F3 (Session persistante + affichage mot de passe)');
 /* ============ HELPERS ============ */
 function ico(name){
   if(name==='check') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
@@ -136,6 +136,70 @@ let realAuthToken = null;
 let realUserId = null;
 let currentUser = null; // infos complètes (prénom, nom...) de la personne connectée
 
+/* ============ SESSION PERSISTANTE ============ */
+// "Se souvenir de moi" coché -> localStorage (survit à la fermeture du navigateur)
+// décoché -> sessionStorage (effacé à la fermeture de l'onglet)
+const NUNI_SESSION_KEY = 'nuni_session';
+function saveSession(token, user, remember){
+  try{
+    const payload = JSON.stringify({ token, userId: user.id });
+    if(remember){
+      localStorage.setItem(NUNI_SESSION_KEY, payload);
+      sessionStorage.removeItem(NUNI_SESSION_KEY);
+    } else {
+      sessionStorage.setItem(NUNI_SESSION_KEY, payload);
+      localStorage.removeItem(NUNI_SESSION_KEY);
+    }
+  }catch(e){ /* stockage indisponible (navigation privée très restrictive) : tant pis, pas bloquant */ }
+}
+function clearSession(){
+  try{
+    localStorage.removeItem(NUNI_SESSION_KEY);
+    sessionStorage.removeItem(NUNI_SESSION_KEY);
+  }catch(e){}
+}
+function readStoredSession(){
+  try{
+    const raw = localStorage.getItem(NUNI_SESSION_KEY) || sessionStorage.getItem(NUNI_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+async function restoreSession(){
+  const stored = readStoredSession();
+  if(!stored || !stored.token) return;
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/me', { headers:{ 'Authorization':'Bearer ' + stored.token } });
+    if(!res.ok){ clearSession(); return; }
+    const data = await res.json();
+    realAuthToken = stored.token;
+    realUserId = stored.userId;
+    currentUser = data.user;
+    applyAccountType();
+    enterApp('catalog');
+    toast(`Bon retour, ${currentUser.first_name} 👋`);
+  }catch(e){ /* pas de réseau : on laisse l'écran d'accueil, l'utilisateur pourra réessayer */ }
+}
+function logoutUser(){
+  clearSession();
+  realAuthToken = null;
+  realUserId = null;
+  currentUser = null;
+  demoOverride = false;
+  closeProfileMenu();
+  applyAccountType();
+  goTo('home');
+  toast('Vous avez été déconnecté.');
+}
+function togglePasswordVisibility(inputId, btn){
+  const input = document.getElementById(inputId);
+  if(!input) return;
+  const nowVisible = input.type === 'password';
+  input.type = nowVisible ? 'text' : 'password';
+  btn.innerHTML = nowVisible
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.6 21.6 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 7 11 7a21.7 21.7 0 0 1-2.61 3.65M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+
 function choosePlan(type){
   pendingPlanType = type;
   document.getElementById('rr-title').textContent = type === 'artist' ? 'Créer mon compte Artiste' : 'Créer mon compte Consommateur';
@@ -184,6 +248,7 @@ async function submitRealRegistration(){
     realAuthToken = data.token;
     realUserId = data.user.id;
     currentUser = data.user;
+    saveSession(data.token, data.user, true); // toujours mémorisé après une inscription fraîche
 
     // demande de Pass, tout de suite après la création du compte
     const subRes = await fetch(NUNI_API_BASE + '/api/subscribe/request', {
@@ -262,6 +327,8 @@ async function submitRedeem(){
       realAuthToken = loginData.token;
       realUserId = loginData.user.id;
       currentUser = loginData.user;
+      const rememberBox = document.getElementById('redeem-remember');
+      saveSession(loginData.token, loginData.user, !rememberBox || rememberBox.checked);
     }
 
     const res = await fetch(NUNI_API_BASE + '/api/subscribe/redeem', {
@@ -2396,6 +2463,7 @@ document.addEventListener('click', (e)=>{
   if(wrap && !wrap.contains(e.target)) closeProfileMenu();
 });
 applyAccountType();
+restoreSession();
 
 /* ============ CONTENU DU MENU PROFIL ============ */
 let currentLanguage = 'fr';
