@@ -1,4 +1,4 @@
-console.log('🎵 NUNI app.js chargé — version J2 (Accueil : Continuer l\'écoute + fond de bienvenue vivant)');
+console.log('🎵 NUNI app.js chargé — version J4 (Nouveaux prix Pass Consommateur : 650/650/1500 FCFA)');
 
 /* ============ ÉCRAN DE CHARGEMENT (SPLASH) ============
    Séquence différente si en ligne ou hors ligne (comme demandé). Durée volontairement
@@ -141,16 +141,11 @@ function goTo(screen){
 
 let pendingPlanType = null;
 
-/* ============ SYSTÈME DE CODES PROMO ============ */
-const promoCodes = {
-  'NUNI5': { pct: 5, plan: 'trimestre', expires: '2026-12-31', maxUses: 500, uses: 128, newUsersOnly: false, active: true, desc: 'Campagne de lancement -5% trimestre' },
-  'WELCOME5': { pct: 5, plan: 'trimestre', expires: '2026-12-31', maxUses: 1000, uses: 340, newUsersOnly: true, active: true, desc: 'Bienvenue nouveaux utilisateurs' },
-  'CONGO2026': { pct: 10, plan: 'trimestre', expires: '2026-08-31', maxUses: 300, uses: 300, newUsersOnly: false, active: true, desc: 'Campagne fête nationale (épuisé)' },
-};
-const BASE_PRICE_TRIM = 1200;
+/* ============ SYSTÈME DE CODES PROMO (vraie vérification côté serveur) ============ */
+const BASE_PRICE_TRIM = 650; // Pass Consommateur trimestriel
 let appliedPromo = null;
 
-function applyPromoCode(){
+async function applyPromoCode(){
   const input = document.getElementById('promo-input');
   const code = input.value.trim().toUpperCase();
   const feedback = document.getElementById('promo-feedback');
@@ -159,33 +154,44 @@ function applyPromoCode(){
 
   if(!code){ feedback.className='error'; feedback.textContent='Entrez un code promotionnel.'; return; }
 
-  const promo = promoCodes[code];
-  const today = new Date('2026-07-01');
-  const isExpired = promo && new Date(promo.expires) < today;
-  const isExhausted = promo && promo.uses >= promo.maxUses;
+  feedback.textContent = 'Vérification en cours…';
 
-  if(!promo || !promo.active || isExpired || isExhausted){
+  let data, ok;
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/promo/validate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ code, plan: 'consumer' })
+    });
+    data = await res.json();
+    ok = res.ok;
+  }catch(e){
     feedback.className = 'error';
-    feedback.textContent = 'Code promotionnel invalide ou expiré.';
-    document.getElementById('promo-price-trim').textContent = '1 200 FCFA';
+    feedback.textContent = 'Impossible de vérifier ce code — vérifiez votre connexion internet.';
+    return;
+  }
+
+  if(!ok){
+    feedback.className = 'error';
+    feedback.textContent = data.error || 'Code promotionnel invalide ou expiré.';
+    document.getElementById('promo-price-trim').textContent = '650 FCFA';
     appliedPromo = null;
     return;
   }
 
-  appliedPromo = { code, ...promo };
-  const discount = Math.round(BASE_PRICE_TRIM * promo.pct / 100);
+  appliedPromo = { code: data.code, pct: data.discount_pct };
+  const discount = Math.round(BASE_PRICE_TRIM * data.discount_pct / 100);
   const newPrice = BASE_PRICE_TRIM - discount;
-  document.getElementById('promo-price-trim').innerHTML = `<span class="old-price">1 200 FCFA</span> <span class="new-price">${newPrice.toLocaleString('fr-FR')} FCFA</span>`;
+  document.getElementById('promo-price-trim').innerHTML = `<span class="old-price">650 FCFA</span> <span class="new-price">${newPrice.toLocaleString('fr-FR')} FCFA</span>`;
 
   feedback.className = 'success';
   feedback.innerHTML = `
-    <span class="promo-badge">🎉 -${promo.pct}% appliqué</span>
+    <span class="promo-badge">🎉 -${data.discount_pct}% appliqué</span>
     <div class="promo-breakdown">
-      Prix initial : 1 200 FCFA<br>
-      Réduction : -${promo.pct}%<br>
+      Prix initial : 650 FCFA<br>
+      Réduction : -${data.discount_pct}%<br>
       Total : <b>${newPrice.toLocaleString('fr-FR')} FCFA</b> / trimestre
     </div>`;
-  toast(`Code ${code} appliqué — ${promo.pct}% de réduction sur le trimestre.`);
+  toast(`Code ${data.code} appliqué — ${data.discount_pct}% de réduction sur le trimestre.`);
 }
 
 /* ============ CONNEXION AU VRAI SERVEUR NUNI (Railway) ============ */
@@ -3148,7 +3154,7 @@ function openProfileInfo(type){
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
           <b>Pass Consommateur</b><span class="pi-status-badge">● Actif</span>
         </div>
-        <div class="pi-sub-row"><span>Formule</span><b>Trimestriel — 1 000 FCFA</b></div>
+        <div class="pi-sub-row"><span>Formule</span><b>Trimestriel — 650 FCFA</b></div>
         <div class="pi-sub-row"><span>Début de l'abonnement</span><b>${fmtDate(start)}</b></div>
         <div class="pi-sub-row"><span>Prochain paiement / expiration</span><b>${fmtDate(expiry)}</b></div>
         <div class="pi-sub-row"><span>Jours restants</span><b>${daysLeft} jours</b></div>
@@ -3164,8 +3170,8 @@ function openProfileInfo(type){
           <b>🎧 Pass Consommateur</b>
         </div>
         <div class="pi-sub-row"><span>Mensuel</span><b>650 FCFA</b></div>
-        <div class="pi-sub-row"><span>Trimestriel</span><b>1 000 FCFA</b></div>
-        <div class="pi-sub-row"><span>Annuel</span><b>3 500 FCFA</b></div>
+        <div class="pi-sub-row"><span>Trimestriel</span><b>650 FCFA</b></div>
+        <div class="pi-sub-row"><span>Annuel</span><b>1 500 FCFA</b></div>
       </div>
       <div class="pi-sub-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
