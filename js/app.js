@@ -1,4 +1,4 @@
-console.log('🎵 NUNI app.js chargé — version J1 (Cartes de catégories premium : identités animées)');
+console.log('🎵 NUNI app.js chargé — version J2 (Accueil : Continuer l\'écoute + fond de bienvenue vivant)');
 
 /* ============ ÉCRAN DE CHARGEMENT (SPLASH) ============
    Séquence différente si en ligne ou hors ligne (comme demandé). Durée volontairement
@@ -674,6 +674,28 @@ function updateGreeting(){
   });
 }
 
+/* Section "Continuer l'écoute" : basée sur le véritable historique de la session, pas des données de démo.
+   Ne s'affiche que s'il y a vraiment quelque chose à reprendre — pas de section vide qui donnerait
+   une impression d'écran cassé. */
+function renderContinueListening(){
+  const wrap = document.getElementById('shelf-continue-wrap');
+  const row = document.getElementById('shelf-continue');
+  if(!wrap || !row) return;
+  // dernier morceau écouté par titre, le plus récent en premier, sans doublons
+  const seen = new Set();
+  const recent = [];
+  for(const h of listeningHistory){
+    if(seen.has(h.track.t)) continue;
+    seen.add(h.track.t);
+    recent.push(h.track);
+    if(recent.length >= 8) break;
+  }
+  if(!recent.length){ wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  row.innerHTML = '';
+  fillShelf('shelf-continue', recent);
+}
+
 function enterApp(view){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('app-shell').classList.add('active');
@@ -681,7 +703,7 @@ function enterApp(view){
   document.getElementById('mobile-tabbar').style.removeProperty('display');
   document.getElementById('demo-nav').classList.remove('no-player');
   document.getElementById('mimi-widget').classList.remove('no-player');
-  if(view === 'catalog') updateGreeting();
+  if(view === 'catalog'){ updateGreeting(); renderContinueListening(); }
   if(view === 'clips') renderClips();
   if(view === 'library') renderLibrary();
   ['catalog','clips','ads','library','artist','dashboard','admin'].forEach(v=>{

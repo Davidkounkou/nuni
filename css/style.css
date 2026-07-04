@@ -201,7 +201,13 @@ html.is-playing .eq i:nth-child(3){ animation-delay:.3s; }
     radial-gradient(60% 50% at 20% 10%, rgba(110,69,168,.22), transparent 60%),
     radial-gradient(50% 45% at 85% 85%, rgba(212,175,106,.16), transparent 60%),
     var(--bg);
+  background-size:140% 140%;
+  animation: homeBgDrift 22s ease-in-out infinite;
   overflow:hidden;
+}
+@keyframes homeBgDrift{
+  0%,100%{ background-position:0% 0%, 100% 100%, 0 0; }
+  50%{ background-position:8% 6%, 92% 94%, 0 0; }
 }
 .home-topbar{
   position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:center;
