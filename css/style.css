@@ -496,12 +496,21 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 
 .cover{
   width:172px; height:172px; border-radius:var(--radius-m); flex-shrink:0; position:relative; overflow:hidden;
-  display:flex; align-items:flex-end; padding:14px; transition:transform .4s var(--ease);
+  display:flex; align-items:flex-end; justify-content:flex-end; padding:14px;
+  border:1px solid rgba(255,255,255,0.06);
+  box-shadow:0 10px 26px -12px rgba(0,0,0,0.55);
+  transition:transform .4s var(--ease), box-shadow .4s var(--ease);
 }
 .track-card{ width:172px; flex-shrink:0; cursor:pointer; }
 .track-card.reveal-in{ opacity:0; animation: revealIn .55s var(--ease) forwards; }
 @keyframes revealIn{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:translateY(0);} }
-.track-card:hover .cover{ transform:translateY(-6px) scale(1.02); }
+.track-card:hover .cover{ transform:translateY(-6px) scale(1.02); box-shadow:0 16px 36px -10px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08); }
+.track-card:hover .cover.pal-1{ box-shadow:0 16px 36px -10px rgba(0,0,0,0.6), 0 0 34px -6px rgba(110,69,168,0.55); }
+.track-card:hover .cover.pal-2{ box-shadow:0 16px 36px -10px rgba(0,0,0,0.6), 0 0 34px -6px rgba(212,175,106,0.55); }
+.track-card:hover .cover.pal-3{ box-shadow:0 16px 36px -10px rgba(0,0,0,0.6), 0 0 34px -6px rgba(201,102,122,0.55); }
+.track-card:hover .cover.pal-4{ box-shadow:0 16px 36px -10px rgba(0,0,0,0.6), 0 0 34px -6px rgba(142,99,201,0.45); }
+.track-card:hover .cover.pal-5{ box-shadow:0 16px 36px -10px rgba(0,0,0,0.6), 0 0 34px -6px rgba(142,99,201,0.55); }
+.track-card:hover .cover.pal-6{ box-shadow:0 16px 36px -10px rgba(0,0,0,0.6), 0 0 34px -6px rgba(30,132,73,0.5); }
 .track-card .ttl{ font-size:14px; font-weight:600; margin-top:12px; }
 .track-card .art{ font-size:12.5px; color:var(--text-faint); margin-top:3px; }
 .track-card .likes{ font-size:11px; color:var(--rose-braise); margin-top:4px; display:flex; align-items:center; gap:4px; }
@@ -513,10 +522,10 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 }
 .cover .play-fab{
   width:38px; height:38px; border-radius:50%; background:rgba(10,10,16,.55); backdrop-filter:blur(6px);
-  display:flex; align-items:center; justify-content:center; opacity:0; transform:translateY(6px);
-  transition:all .3s var(--ease); border:1px solid rgba(255,255,255,.25);
+  display:flex; align-items:center; justify-content:center; opacity:0; transform:translateY(6px) scale(.8);
+  transition:opacity .3s var(--ease), transform .35s var(--ease); border:1px solid rgba(255,255,255,.25);
 }
-.track-card:hover .play-fab{ opacity:1; transform:translateY(0); }
+.track-card:hover .play-fab{ opacity:1; transform:translateY(0) scale(1); }
 .cover .play-fab svg{ width:14px; height:14px; fill:#fff; }
 
 /* generated cover palettes */
