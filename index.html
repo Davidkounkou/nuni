@@ -23,7 +23,8 @@
   <div class="splash-halo"></div>
   <div class="splash-ring"></div>
   <div class="splash-notes" id="splash-notes"></div>
-  <img src="assets/nuni-logo-full.png" alt="NUNI" class="splash-logo" id="splash-logo">
+  <img src="assets/logo.png" alt="NUNI" class="splash-logo" id="splash-logo" onerror="this.style.display='none'; document.getElementById('splash-fallback').style.display='flex';">
+  <div class="splash-fallback" id="splash-fallback">NUNI</div>
   <div class="splash-status-row">
     <span class="splash-status-icon" id="splash-status-icon">🔗</span>
     <div class="splash-status" id="splash-status">Connexion à NUNI…</div>

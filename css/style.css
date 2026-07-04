@@ -86,6 +86,7 @@ html,body{height:100%;}
   100%{ opacity:0; transform:translate(calc(-50% + var(--nx,20px)), -150px) scale(1.15) rotate(var(--nr,20deg)); }
 }
 .splash-logo{ position:relative; width:200px; height:200px; object-fit:contain; opacity:0; animation-fill-mode:forwards; animation: splashBreathe 3.2s ease-in-out infinite; filter:drop-shadow(0 18px 40px rgba(0,0,0,.5)); }
+.splash-fallback{ display:none; position:relative; font-family:var(--font-display); font-weight:700; font-size:34px; letter-spacing:3px; color:var(--or-2); }
 @keyframes splashBreathe{ 0%{ opacity:0; transform:scale(.85); } 12%{ opacity:1; transform:scale(1); } 50%{ transform:scale(1.035); } 100%{ transform:scale(1); opacity:1; } }
 .splash-status-row{ position:relative; display:flex; align-items:center; gap:7px; margin-top:16px; opacity:0; animation:fadeUp .7s .5s var(--ease) forwards; }
 .splash-status-icon{ font-size:13px; transition:opacity .2s ease; }
