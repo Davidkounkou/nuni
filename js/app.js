@@ -1,4 +1,4 @@
-console.log('🎵 NUNI app.js chargé — version G1 (Lecteur plein écran : palette dynamique + immersion)');
+console.log('🎵 NUNI app.js chargé — version H1 (Lecteur vivant : micro-interactions, file d\'attente, menu rapide)');
 /* ============ HELPERS ============ */
 function ico(name){
   if(name==='check') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
@@ -1378,20 +1378,39 @@ const NuniPalette = (function(){
     };
   }
 
+  // Garde-fou mémoire : au-delà de cette taille (~1,8 Mo réels), on n'analyse pas l'image en direct.
+  // Une photo de téléphone non compressée peut peser plusieurs Mo une fois décodée en mémoire ;
+  // l'analyser en plus de son affichage normal peut faire planter l'onglet sur un appareil modeste.
+  // Dans ce cas, la palette de secours est utilisée à la place — jamais de risque de plantage.
+  const MAX_ANALYZABLE_LENGTH = 2500000;
+
   function extract(imageUrl){
     if(!imageUrl) return Promise.resolve(FALLBACK);
     if(cache.has(imageUrl)) return Promise.resolve(cache.get(imageUrl)); // déjà calculée : aucun recalcul
+    if(typeof imageUrl === 'string' && imageUrl.length > MAX_ANALYZABLE_LENGTH){
+      cache.set(imageUrl, FALLBACK);
+      return Promise.resolve(FALLBACK);
+    }
     return new Promise((resolve)=>{
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = ()=>{
-        const sorted = quantize(img);
-        const palette = sorted ? buildPalette(sorted) : FALLBACK;
-        cache.set(imageUrl, palette);
-        resolve(palette);
+      const finish = (palette)=>{ cache.set(imageUrl, palette); resolve(palette); };
+      const legacyDecode = ()=>{
+        // Repli pour navigateurs plus anciens ou en cas d'échec de la méthode économe ci-dessous
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = ()=>{ const sorted = quantize(img); finish(sorted ? buildPalette(sorted) : FALLBACK); };
+        img.onerror = ()=> finish(FALLBACK);
+        img.src = imageUrl;
       };
-      img.onerror = ()=>{ cache.set(imageUrl, FALLBACK); resolve(FALLBACK); };
-      img.src = imageUrl;
+      if(!('createImageBitmap' in window)){ legacyDecode(); return; }
+      fetch(imageUrl)
+        .then(r=> r.blob())
+        .then(blob=> createImageBitmap(blob, { resizeWidth:40, resizeHeight:40, resizeQuality:'low' }))
+        .then(bitmap=>{
+          const sorted = quantize(bitmap);
+          if(bitmap.close) bitmap.close(); // libère immédiatement la mémoire du bitmap, pas d'attente du ramasse-miettes
+          finish(sorted ? buildPalette(sorted) : FALLBACK);
+        })
+        .catch(legacyDecode);
     });
   }
 
@@ -1490,6 +1509,36 @@ function updateProgress(){
   updateLyricsHighlight();
   updateFpRemainingPill();
 }
+/* ============ MICRO-INTERACTIONS RÉUTILISABLES (ondes, rebonds, pulsations, haptique) ============ */
+function spawnRipple(e, el){
+  const rect = el.getBoundingClientRect();
+  const x = (e.clientX ?? (rect.left + rect.width/2)) - rect.left;
+  const y = (e.clientY ?? (rect.top + rect.height/2)) - rect.top;
+  const span = document.createElement('span');
+  span.className = 'nuni-ripple';
+  span.style.setProperty('--rx', x + 'px');
+  span.style.setProperty('--ry', y + 'px');
+  el.appendChild(span);
+  setTimeout(()=> span.remove(), 600);
+}
+document.addEventListener('click', (e)=>{
+  const el = e.target.closest('.btn-icon, .fp-pill, .player-controls button, .artist-suggest-card button, #follow-btn');
+  if(el) spawnRipple(e, el);
+}, true);
+function bounceEl(el){ el.classList.remove('is-bouncing'); void el.offsetWidth; el.classList.add('is-bouncing'); setTimeout(()=> el.classList.remove('is-bouncing'), 520); }
+function pulseEl(el){ el.classList.remove('is-pulsing'); void el.offsetWidth; el.classList.add('is-pulsing'); setTimeout(()=> el.classList.remove('is-pulsing'), 440); }
+function hapticPing(){ if(navigator.vibrate){ try{ navigator.vibrate(12); }catch(e){} } }
+function spawnFlyPing(fromEl, emoji){
+  const rect = fromEl.getBoundingClientRect();
+  const span = document.createElement('span');
+  span.className = 'fp-fly-ping';
+  span.textContent = emoji;
+  span.style.left = (rect.left + rect.width/2) + 'px';
+  span.style.top = (rect.top + rect.height/2) + 'px';
+  document.body.appendChild(span);
+  setTimeout(()=> span.remove(), 850);
+}
+
 function seek(e){
   const rect = e.currentTarget.getBoundingClientRect();
   const pct = (e.clientX - rect.left) / rect.width;
@@ -1497,6 +1546,50 @@ function seek(e){
   if(usingRealAudio) realAudio.currentTime = elapsed;
   updateProgress();
 }
+/* Barre de progression interactive : grossit au survol, affiche une pastille de temps, se laisse "scrubber" */
+function setupFpProgressScrub(){
+  const track = document.getElementById('fp-progress-track');
+  const tip = document.getElementById('fp-scrub-tip');
+  if(!track || !tip) return;
+  let dragging = false;
+  const posToTime = (clientX)=>{
+    const rect = track.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return { pct, time: pct * duration };
+  };
+  const showTip = (clientX)=>{
+    const { pct, time } = posToTime(clientX);
+    tip.textContent = fmt(time);
+    tip.style.left = (pct*100) + '%';
+    tip.classList.add('show');
+  };
+  track.addEventListener('mousemove', (e)=>{ if(!dragging) showTip(e.clientX); });
+  track.addEventListener('mouseleave', ()=>{ if(!dragging) tip.classList.remove('show'); });
+  track.addEventListener('mousedown', (e)=>{
+    dragging = true;
+    track.classList.add('is-scrubbing');
+    showTip(e.clientX);
+    const { time } = posToTime(e.clientX);
+    elapsed = Math.max(0, Math.min(duration, time));
+    if(usingRealAudio) realAudio.currentTime = elapsed;
+    updateProgress();
+  });
+  window.addEventListener('mousemove', (e)=>{
+    if(!dragging) return;
+    showTip(e.clientX);
+    const { time } = posToTime(e.clientX);
+    elapsed = Math.max(0, Math.min(duration, time));
+    if(usingRealAudio) realAudio.currentTime = elapsed;
+    updateProgress();
+  });
+  window.addEventListener('mouseup', ()=>{
+    if(!dragging) return;
+    dragging = false;
+    track.classList.remove('is-scrubbing');
+    tip.classList.remove('show');
+  });
+}
+setupFpProgressScrub();
 function setVolume(e){
   const rect = e.currentTarget.getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
@@ -1504,13 +1597,16 @@ function setVolume(e){
   realAudio.volume = pct;
 }
 let genreRadioFilter = null;
+function getCurrentPlaybackPool(){
+  return genreRadioFilter ? tracks.filter(t=>t.genre===genreRadioFilter) : tracks;
+}
 function nextTrack(){
-  const pool = genreRadioFilter ? tracks.filter(t=>t.genre===genreRadioFilter) : tracks;
+  const pool = getCurrentPlaybackPool();
   const i = pool.findIndex(t=>t.t===currentTrack.t);
   playTrack(pool[(i+1) % pool.length] || pool[0]);
 }
 function prevTrack(){
-  const pool = genreRadioFilter ? tracks.filter(t=>t.genre===genreRadioFilter) : tracks;
+  const pool = getCurrentPlaybackPool();
   const i = pool.findIndex(t=>t.t===currentTrack.t);
   playTrack(pool[(i-1+pool.length) % pool.length] || pool[0]);
 }
@@ -1518,17 +1614,29 @@ function toggleLike(btn){
   btn.classList.toggle('liked');
   document.querySelectorAll('#player-like-btn, #fp-like-btn').forEach(b=> b.classList.toggle('liked', btn.classList.contains('liked')));
   const liked = btn.classList.contains('liked');
+  bounceEl(btn);
+  hapticPing();
   if(liked){
     if(!favoritesPlaylist.find(t=>t.t===currentTrack.t)) favoritesPlaylist.unshift(currentTrack);
+    spawnFlyPing(btn, '❤️'); // petite confirmation visuelle : "ça vient d'être ajouté à votre bibliothèque"
   } else {
     favoritesPlaylist = favoritesPlaylist.filter(t=>t.t!==currentTrack.t);
   }
-  toast(liked ? 'Ajouté à votre playlist Favoris.' : 'Retiré de votre playlist Favoris.');
+  toast(liked ? 'Ajouté à votre playlist Favoris — visible dans Bibliothèque.' : 'Retiré de votre playlist Favoris.');
 }
-function shuffleToggle(btn){ btn.style.color = btn.style.color ? '' : 'var(--accent)'; }
-function repeatToggle(btn){ btn.style.color = btn.style.color ? '' : 'var(--accent)'; }
+function shuffleToggle(btn){
+  const activating = !btn.style.color;
+  btn.style.color = activating ? 'var(--accent)' : '';
+  if(activating){ pulseEl(btn); hapticPing(); }
+}
+function repeatToggle(btn){
+  const activating = !btn.style.color;
+  btn.style.color = activating ? 'var(--accent)' : '';
+  if(activating){ pulseEl(btn); hapticPing(); }
+}
 function toggleFollow(btn){
   const following = btn.textContent.trim() === 'Suivi ✓';
+  bounceEl(btn);
   if(currentArtistPageRealId && realAuthToken){
     btn.disabled = true;
     fetch(NUNI_API_BASE + '/api/follow', {
@@ -1538,6 +1646,7 @@ function toggleFollow(btn){
       btn.disabled = false;
       if(data.error){ toast('❌ ' + data.error); return; }
       btn.textContent = data.following ? 'Suivi ✓' : 'Suivre';
+      if(data.following) hapticPing();
       toast(data.following ? 'Vous suivez maintenant cet artiste.' : 'Vous ne suivez plus cet artiste.');
     }).catch(()=>{ btn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); });
     return;
@@ -2069,20 +2178,33 @@ function renderFanWall(){
     wall.appendChild(d);
   });
 }
+let fpLastTextKey = null;
 function syncFullPlayer(){
   const tr = currentTrack;
-  document.getElementById('fp-title').textContent = tr.t;
-  document.getElementById('fp-artist').textContent = tr.a;
-  document.getElementById('fp-meta').textContent = `${tr.album} · ${tr.genre} · ${tr.year}`;
-  document.getElementById('fp-meta2').textContent = `${tr.streams} écoutes · Sorti le ${tr.release}`;
-  document.getElementById('fp-verified').style.display = tr.verified ? 'inline-flex' : 'none';
+  const textKey = tr.t + '::' + tr.a;
+  const textSwap = document.getElementById('fp-text-swap');
+  const applyText = ()=>{
+    document.getElementById('fp-title').textContent = tr.t;
+    document.getElementById('fp-artist').textContent = tr.a;
+    document.getElementById('fp-meta').textContent = `${tr.album} · ${tr.genre} · ${tr.year}`;
+    document.getElementById('fp-meta2').textContent = `${tr.streams} écoutes · Sorti le ${tr.release}`;
+    document.getElementById('fp-verified').style.display = tr.verified ? 'inline-flex' : 'none';
+    renderFpInfoPills(tr);
+  };
+  if(textSwap && textKey !== fpLastTextKey){
+    fpLastTextKey = textKey;
+    textSwap.classList.add('is-swapping');
+    setTimeout(()=>{ applyText(); textSwap.classList.remove('is-swapping'); }, 180);
+  } else {
+    applyText();
+  }
   applyPlayerVisuals(tr);
-  renderFpInfoPills(tr);
   document.getElementById('fp-bio-avatar').textContent = tr.a.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('fp-artist-stat').style.display = (tr.a === 'Bibi Mwana') ? 'flex' : 'none';
   renderLyrics();
   updateLyricsHighlight();
   renderFanWall();
+  if(document.getElementById('fp-queue') && document.getElementById('fp-queue').classList.contains('open')) renderQueuePanel();
   // suggestions
   const similar = document.getElementById('fp-suggest-similar');
   const sameArtist = document.getElementById('fp-suggest-artist');
@@ -2173,6 +2295,98 @@ function updateFpRemainingPill(){
   if(!el) return;
   const remaining = Math.max(0, duration - elapsed);
   el.textContent = fmt(remaining) + ' restantes';
+}
+
+/* ============ FILE D'ATTENTE ============
+   Simplification assumée : la file reflète l'ordre réel de lecture (pool de morceaux courant,
+   selon le mode radio/DJ/genre en cours) plutôt qu'un ordre librement réorganisable à la souris.
+   Cliquer sur un morceau "à suivre" le lance immédiatement. Un vrai glisser-déposer demanderait
+   de repenser toute la logique de rotation Radio/DJ NUNI — proposé comme chantier à part si voulu. */
+function queueRowHtml(tr, extra){
+  const cov = tr.cover ? `style="background-image:url(${tr.cover})"` : `style="background:${palGradients[tr.p]||palGradients['pal-1']}"`;
+  return `<div class="fp-queue-cov" ${cov}></div><div class="fp-queue-info"><div class="t">${tr.t}</div><div class="a">${tr.a}</div></div>${extra||''}`;
+}
+let fpQueueUpcoming = [];
+let fpQueueHistoryList = [];
+function renderQueuePanel(){
+  const pool = getCurrentPlaybackPool();
+  const i = pool.findIndex(t=> t.t === currentTrack.t);
+  const current = document.getElementById('fp-queue-current');
+  const next = document.getElementById('fp-queue-next');
+  const hist = document.getElementById('fp-queue-history');
+  if(!current || !next || !hist) return;
+
+  current.innerHTML = `<div class="fp-queue-item is-current">${queueRowHtml(currentTrack)}</div>`;
+
+  fpQueueUpcoming = [];
+  for(let k=1; k<=5 && k<pool.length; k++) fpQueueUpcoming.push(pool[(i+k) % pool.length]);
+  next.innerHTML = fpQueueUpcoming.length
+    ? fpQueueUpcoming.map((tr, idx)=> `<div class="fp-queue-item" data-queue-kind="next" data-queue-idx="${idx}">${queueRowHtml(tr)}</div>`).join('')
+    : `<div class="fp-queue-empty">Rien d'autre à suivre pour le moment.</div>`;
+
+  fpQueueHistoryList = listeningHistory.filter(h=> h.track.t !== currentTrack.t).slice(0, 5).map(h=> h.track);
+  hist.innerHTML = fpQueueHistoryList.length
+    ? fpQueueHistoryList.map((tr, idx)=> `<div class="fp-queue-item" data-queue-kind="history" data-queue-idx="${idx}">${queueRowHtml(tr)}</div>`).join('')
+    : `<div class="fp-queue-empty">Aucun historique récent.</div>`;
+}
+document.addEventListener('click', (e)=>{
+  const item = e.target.closest('.fp-queue-item[data-queue-kind]');
+  if(!item) return;
+  const kind = item.dataset.queueKind;
+  const idx = Number(item.dataset.queueIdx);
+  const tr = kind === 'next' ? fpQueueUpcoming[idx] : fpQueueHistoryList[idx];
+  if(tr) playTrack(tr);
+});
+function toggleQueuePanel(){
+  const panel = document.getElementById('fp-queue');
+  const btn = document.getElementById('queue-toggle-btn');
+  const willOpen = !panel.classList.contains('open');
+  panel.classList.toggle('open', willOpen);
+  if(btn) btn.classList.toggle('is-active', willOpen);
+  if(willOpen){
+    renderQueuePanel();
+    panel.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+}
+
+/* ============ MENU RAPIDE (⋯) ============ */
+function toggleQuickMenu(e){
+  e.stopPropagation();
+  document.getElementById('fp-quick-menu').classList.toggle('open');
+}
+function closeQuickMenu(){
+  const m = document.getElementById('fp-quick-menu');
+  if(m) m.classList.remove('open');
+}
+document.addEventListener('click', (e)=>{
+  const wrap = document.querySelector('.fp-quick-menu-wrap');
+  if(wrap && !wrap.contains(e.target)) closeQuickMenu();
+});
+function openFpAlbum(){
+  closeQuickMenu();
+  const tr = currentTrack;
+  const albumTracks = tracks.filter(t=> t.album === tr.album && t.a === tr.a);
+  if(albumTracks.length > 1){ closeFullPlayer(); openAlbumView(tr); }
+  else { toast('Ce morceau ne fait pas partie d\'un album multi-titres.'); }
+}
+function openFpCredits(){
+  closeQuickMenu();
+  const tr = currentTrack;
+  const body = document.getElementById('credits-body');
+  body.innerHTML = `
+    <div class="pi-sub-card">
+      <div class="pi-sub-row"><span>Artiste principal</span><b>${tr.a}</b></div>
+      <div class="pi-sub-row"><span>Album / Sortie</span><b>${tr.album || '—'}</b></div>
+      <div class="pi-sub-row"><span>Genre</span><b>${tr.genre || '—'}</b></div>
+      <div class="pi-sub-row"><span>Année</span><b>${tr.year || '—'}</b></div>
+      <div class="pi-sub-row"><span>Type de sortie</span><b>${tr.releaseType || 'Single'}</b></div>
+      <div class="pi-sub-row"><span>Distribution</span><b>NUNI</b></div>
+    </div>
+    <p style="color:var(--text-faint); font-size:11.5px; margin-top:12px;">Crédits détaillés (auteur, compositeur, studio) disponibles prochainement lorsque les artistes les renseignent à la publication.</p>`;
+  document.getElementById('credits-modal-overlay').classList.add('show');
+}
+function closeFpCredits(){
+  document.getElementById('credits-modal-overlay').classList.remove('show');
 }
 
 /* ============ LÉGÈRE PROFONDEUR 3D SUR LA POCHETTE (souris, ordinateur uniquement) ============ */

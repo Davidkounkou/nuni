@@ -733,8 +733,12 @@ html.is-playing .player-track-info .t{ font-weight:700; }
 .play-pause svg{ width:14px; height:14px; }
 .progress-row{ display:flex; align-items:center; gap:10px; width:100%; }
 .progress-row .time{ font-family:var(--font-data); font-size:10.5px; color:var(--text-faint); width:34px; }
-.progress-track{ flex:1; height:4px; border-radius:4px; background:var(--bg-card); position:relative; cursor:pointer; }
-.progress-fill{ position:absolute; left:0; top:0; bottom:0; width:0%; border-radius:4px; background:var(--grad-envol); }
+.progress-track{ flex:1; height:4px; border-radius:4px; background:var(--bg-card); position:relative; cursor:pointer; transition:height .15s ease; }
+.progress-track:hover, .progress-track.is-scrubbing{ height:7px; }
+.progress-fill{ position:absolute; left:0; top:0; bottom:0; width:0%; border-radius:4px; background:var(--grad-envol); transition:background .2s ease; }
+.progress-track.is-scrubbing .progress-fill{ background:var(--accent); }
+.progress-scrub-tip{ position:absolute; bottom:16px; transform:translateX(-50%); background:var(--bg-elev); border:1px solid var(--border-strong); padding:3px 9px; border-radius:8px; font-family:var(--font-data); font-size:11px; white-space:nowrap; opacity:0; transition:opacity .15s ease; pointer-events:none; box-shadow:var(--shadow); }
+.progress-scrub-tip.show{ opacity:1; }
 
 .player-right{ width:230px; flex-shrink:0; display:flex; align-items:center; justify-content:flex-end; gap:14px; }
 .volume-row{ display:flex; align-items:center; gap:8px; }
@@ -761,6 +765,7 @@ html[data-theme="light"] .fp-bg-stack{ opacity:.35; }
 .fp-bg-layer{ position:absolute; inset:0; opacity:0; transition:opacity 1s ease; }
 .fp-bg-layer.is-active{ opacity:1; }
 .fp-halo{ position:absolute; inset:-46px; border-radius:50%; filter:blur(48px); opacity:.4; transition:opacity 1s ease, background 1s ease; animation: fpBreathe 9s ease-in-out infinite; pointer-events:none; }
+html.is-playing .full-player .fp-halo{ opacity:.58; animation-duration:6s; }
 .fp-particles{ position:absolute; inset:0; z-index:0; background-image:radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.18), transparent), radial-gradient(2px 2px at 70% 60%, rgba(255,255,255,.14), transparent), radial-gradient(1.5px 1.5px at 40% 80%, rgba(255,255,255,.12), transparent); opacity:.6; }
 .fp-topbar{ position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; padding:20px 24px; }
 .fp-eyebrow{ font-family:var(--font-data); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text-faint); }
@@ -856,13 +861,53 @@ html.is-playing .fp-title{ font-weight:800; }
 .fp-actions-row{ display:flex; gap:10px; margin-bottom:26px; flex-wrap:wrap; justify-content:center; }
 .fp-support-btn{ margin-bottom:8px; }
 
+/* ============ MICRO-INTERACTIONS RÉUTILISABLES ============ */
+.btn-icon, .fp-pill, .player-controls button, .artist-suggest-card button, #follow-btn{ position:relative; overflow:hidden; }
+.nuni-ripple{ position:absolute; left:var(--rx,50%); top:var(--ry,50%); width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:rgba(255,255,255,.55); transform:scale(0); opacity:.55; pointer-events:none; animation: nuniRippleOut .55s ease-out forwards; }
+@keyframes nuniRippleOut{ to{ transform:scale(9); opacity:0; } }
+@keyframes nuniBounce{ 0%{transform:scale(1);} 32%{transform:scale(1.32);} 55%{transform:scale(.9);} 100%{transform:scale(1);} }
+.is-bouncing{ animation: nuniBounce .48s var(--ease); }
+@keyframes nuniPulse{ 0%{transform:scale(1);} 45%{transform:scale(1.16);} 100%{transform:scale(1);} }
+.is-pulsing{ animation: nuniPulse .4s var(--ease); }
+.player-like svg, #fp-like-btn svg{ transition: fill .35s ease, color .35s ease, transform .1s ease; }
+
+/* Coeur volant : petite confirmation visuelle vers le reste de l'écosystème (bibliothèque/profil) */
+.fp-fly-ping{ position:fixed; z-index:200; pointer-events:none; font-size:16px; animation: fpFlyUp .8s ease-out forwards; }
+@keyframes fpFlyUp{ 0%{ opacity:1; transform:translate(0,0) scale(1); } 100%{ opacity:0; transform:translate(60px,-90px) scale(.4); } }
+
+/* Transition douce du texte au changement de morceau */
+.fp-text-swap{ transition: opacity .22s ease, transform .22s ease; }
+.fp-text-swap.is-swapping{ opacity:0; transform:translateY(8px); }
+
+/* Menu rapide (⋯) */
+.fp-quick-menu-wrap{ position:relative; }
+.fp-quick-menu{ display:none; position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); background:var(--bg-elev); border:1px solid var(--border-strong); border-radius:14px; box-shadow:var(--shadow); padding:6px; min-width:190px; z-index:20; flex-direction:column; gap:1px; }
+.fp-quick-menu.open{ display:flex; animation:fadeUp .2s var(--ease); }
+.fp-quick-menu button{ display:flex; align-items:center; gap:9px; padding:9px 11px; border-radius:9px; font-size:13px; color:var(--text-dim); text-align:left; width:100%; }
+.fp-quick-menu button:hover{ background:var(--bg-card); color:var(--text); }
+
+/* File d'attente */
+.fp-queue{ max-width:480px; margin:46px auto 0; display:none; text-align:left; }
+.fp-queue.open{ display:block; }
+.fp-queue-group{ margin-bottom:22px; }
+.fp-queue-label{ font-size:11px; text-transform:uppercase; letter-spacing:1.4px; color:var(--text-faint); margin-bottom:10px; }
+.fp-queue-item{ display:flex; align-items:center; gap:12px; padding:9px 10px; border-radius:12px; cursor:pointer; transition:background .2s ease; }
+.fp-queue-item:hover{ background:var(--bg-card); }
+.fp-queue-item.is-current{ background:rgba(212,175,106,.1); }
+.fp-queue-cov{ width:38px; height:38px; border-radius:8px; flex-shrink:0; background-size:cover; background-position:center; }
+.fp-queue-info{ flex:1; min-width:0; }
+.fp-queue-info .t{ font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fp-queue-info .a{ font-size:11px; color:var(--text-faint); }
+.fp-queue-empty{ font-size:12.5px; color:var(--text-faint); padding:6px 0; }
+
 .fp-lyrics{ max-width:480px; margin:10px auto 0; display:none; }
 .fp-lyrics.open{ display:block; }
 .fp-lyrics h3{ font-size:18px; margin-bottom:14px; }
 .fp-lyrics-lines{ display:flex; flex-direction:column; gap:14px; }
-.fp-lyrics-lines p{ font-size:17px; color:var(--text-faint); cursor:pointer; transition:all .3s; line-height:1.5; }
-.fp-lyrics-lines p:hover{ color:var(--text-dim); }
-.fp-lyrics-lines p.is-current{ color:var(--text); font-weight:600; font-size:19px; }
+.fp-lyrics-lines p{ font-size:17px; color:var(--text-faint); cursor:pointer; transition:filter .35s ease, opacity .35s ease, color .3s ease, font-size .3s ease; line-height:1.5; filter:blur(0px); opacity:1; }
+.fp-lyrics-lines p:not(.is-current){ filter:blur(1.1px); opacity:.5; }
+.fp-lyrics-lines p:hover{ color:var(--text-dim); filter:blur(0px); opacity:.85; }
+.fp-lyrics-lines p.is-current{ color:var(--text); font-weight:600; font-size:19px; filter:blur(0px); opacity:1; }
 
 .fp-section{ max-width:680px; margin:46px auto 0; }
 .fp-section-sub{ font-size:12.5px; color:var(--text-faint); margin-top:-10px; margin-bottom:16px; }

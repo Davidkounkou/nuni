@@ -39,6 +39,17 @@
   <span id="toast-text">Bienvenue chez NUNI.</span>
 </div>
 
+<!-- ============ CRÉDITS DU MORCEAU ============ -->
+<div class="legal-modal-overlay" id="credits-modal-overlay" onclick="if(event.target===this) closeFpCredits()">
+  <div class="legal-modal" style="max-width:420px;">
+    <button class="btn-icon" style="position:absolute; top:16px; right:16px;" onclick="closeFpCredits()" aria-label="Fermer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="serif">Crédits</h2>
+    <div class="legal-body" id="credits-body"></div>
+  </div>
+</div>
+
 <!-- ============ AI ONBOARDING MODAL ============ -->
 <div class="legal-modal-overlay" id="legal-modal-overlay" onclick="if(event.target===this) closeLegal()">
   <div class="legal-modal">
@@ -924,14 +935,16 @@
 
       <div class="fp-visualizer" id="fp-visualizer"></div>
 
-      <h1 class="serif fp-title" id="fp-title">Mokili Ya Sika</h1>
-      <div class="fp-artist-row">
-        <span id="fp-artist">Bibi Mwana</span>
-        <span class="badge-verified" id="fp-verified" style="display:none">${ico('check')} Artiste vérifié NUNI</span>
+      <div class="fp-text-swap" id="fp-text-swap">
+        <h1 class="serif fp-title" id="fp-title">Mokili Ya Sika</h1>
+        <div class="fp-artist-row">
+          <span id="fp-artist">Bibi Mwana</span>
+          <span class="badge-verified" id="fp-verified" style="display:none">${ico('check')} Artiste vérifié NUNI</span>
+        </div>
+        <div class="fp-meta" id="fp-meta">Envol · Rumba · 2026</div>
+        <div class="fp-meta fp-meta-faint" id="fp-meta2">412 K écoutes · Sorti le 12 Jan 2026</div>
+        <div class="fp-info-pills" id="fp-info-pills"></div>
       </div>
-      <div class="fp-meta" id="fp-meta">Envol · Rumba · 2026</div>
-      <div class="fp-meta fp-meta-faint" id="fp-meta2">412 K écoutes · Sorti le 12 Jan 2026</div>
-      <div class="fp-info-pills" id="fp-info-pills"></div>
 
       <div class="fp-artist-stat-card" id="fp-artist-stat" style="display:none">
         <span>🚀</span>
@@ -943,7 +956,7 @@
 
       <div class="progress-row fp-progress">
         <span class="time data" id="fp-time-elapsed">0:00</span>
-        <div class="progress-track" id="fp-progress-track" onclick="seek(event)"><div class="progress-fill" id="fp-progress-fill"></div></div>
+        <div class="progress-track" id="fp-progress-track" onclick="seek(event)"><div class="progress-fill" id="fp-progress-fill"></div><span class="progress-scrub-tip" id="fp-scrub-tip">0:00</span></div>
         <span class="time data" id="fp-time-total">3:24</span>
       </div>
 
@@ -961,6 +974,7 @@
         <button class="fp-pill" id="speed-btn" onclick="cycleSpeed()">1×</button>
         <button class="fp-pill" id="quality-btn" onclick="cycleQuality()">Haute qualité</button>
         <button class="fp-pill" id="lyrics-toggle-btn" onclick="toggleLyrics()">Paroles</button>
+        <button class="fp-pill" id="queue-toggle-btn" onclick="toggleQueuePanel()">File d'attente</button>
         <div class="volume-row" style="margin-left:4px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4zM19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
           <div class="volume-track" onclick="setVolume(event)"><div class="volume-fill" id="volume-fill-fp"></div></div>
@@ -973,7 +987,14 @@
         <button class="btn-icon" onclick="toast('Téléchargement démarré (simulation).')" aria-label="Télécharger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg></button>
         <button class="btn-icon" onclick="toast('Lien copié — partagez ce titre.')" aria-label="Partager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
         <button class="btn-icon" onclick="enterApp('artist'); closeFullPlayer();" aria-label="Voir l'artiste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></button>
-        <button class="btn-icon" onclick="toast('Signalement envoyé — merci de votre vigilance.')" aria-label="Signaler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22V15"/></svg></button>
+        <div class="fp-quick-menu-wrap">
+          <button class="btn-icon" onclick="toggleQuickMenu(event)" aria-label="Plus d'options"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+          <div class="fp-quick-menu" id="fp-quick-menu">
+            <button onclick="openFpAlbum()">💿 <span>Voir l'album</span></button>
+            <button onclick="openFpCredits()">📋 <span>Afficher les crédits</span></button>
+            <button onclick="toast('Signalement envoyé — merci de votre vigilance.'); closeQuickMenu();">🚩 <span>Signaler</span></button>
+          </div>
+        </div>
       </div>
 
       <button class="btn btn-primary fp-support-btn" onclick="toast('Merci pour votre soutien 🕊️')">❤️ Soutenir cet artiste</button>
@@ -983,6 +1004,24 @@
     <div class="fp-lyrics" id="fp-lyrics">
       <h3 class="serif">Paroles</h3>
       <div class="fp-lyrics-lines" id="fp-lyrics-lines"></div>
+    </div>
+
+    <!-- File d'attente -->
+    <div class="fp-queue" id="fp-queue">
+      <h3 class="serif">File d'attente</h3>
+      <p class="fp-section-sub">Ce qui joue, ce qui va suivre, et ce que vous venez d'écouter</p>
+      <div class="fp-queue-group">
+        <div class="fp-queue-label">En cours</div>
+        <div id="fp-queue-current"></div>
+      </div>
+      <div class="fp-queue-group">
+        <div class="fp-queue-label">À suivre</div>
+        <div id="fp-queue-next"></div>
+      </div>
+      <div class="fp-queue-group">
+        <div class="fp-queue-label">Historique récent</div>
+        <div id="fp-queue-history"></div>
+      </div>
     </div>
 
     <!-- Mur des fans -->
