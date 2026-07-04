@@ -1,4 +1,4 @@
-console.log('🎵 NUNI app.js chargé — version F3 (Session persistante + affichage mot de passe)');
+console.log('🎵 NUNI app.js chargé — version F4 (Vraie fenêtre Connexion email + mot de passe)');
 /* ============ HELPERS ============ */
 function ico(name){
   if(name==='check') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
@@ -198,6 +198,57 @@ function togglePasswordVisibility(inputId, btn){
   btn.innerHTML = nowVisible
     ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.6 21.6 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 7 11 7a21.7 21.7 0 0 1-2.61 3.65M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>'
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+function openLoginModal(){
+  document.getElementById('login-feedback').innerHTML = '';
+  document.getElementById('login-overlay').classList.add('show');
+}
+function closeLoginModal(){
+  document.getElementById('login-overlay').classList.remove('show');
+}
+async function submitLogin(){
+  const feedback = document.getElementById('login-feedback');
+  const btn = document.getElementById('login-submit-btn');
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  if(!email || !password){
+    feedback.style.color = 'var(--rose-braise)';
+    feedback.textContent = 'Merci de renseigner votre email et votre mot de passe.';
+    return;
+  }
+
+  feedback.style.color = 'var(--text-dim)';
+  feedback.textContent = 'Connexion en cours…';
+  btn.disabled = true;
+
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/login', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if(!res.ok){
+      feedback.style.color = 'var(--rose-braise)';
+      feedback.textContent = '❌ ' + data.error;
+      btn.disabled = false;
+      return;
+    }
+    realAuthToken = data.token;
+    realUserId = data.user.id;
+    currentUser = data.user;
+    const rememberBox = document.getElementById('login-remember');
+    saveSession(data.token, data.user, !rememberBox || rememberBox.checked);
+
+    feedback.style.color = '#7FC79A';
+    feedback.textContent = '✅ Connexion réussie — bon retour ' + currentUser.first_name + ' !';
+    btn.disabled = false;
+    applyAccountType();
+    setTimeout(()=>{ closeLoginModal(); enterApp('catalog'); }, 600);
+  }catch(e){
+    feedback.style.color = 'var(--rose-braise)';
+    feedback.textContent = '❌ Impossible de contacter le serveur NUNI.';
+    btn.disabled = false;
+  }
 }
 
 function choosePlan(type){
