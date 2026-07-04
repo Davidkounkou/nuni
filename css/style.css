@@ -720,7 +720,8 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 html.is-playing .player-track-info .t{ font-weight:700; }
 .player-like{ width:30px; height:30px; flex-shrink:0; }
 .player-like svg{ width:16px; height:16px; transition:all .3s; }
-.player-like.liked svg{ fill:var(--rose-braise); color:var(--rose-braise); }
+.player-like.liked svg, #fp-like-btn.liked svg{ fill:var(--rose-braise); color:var(--rose-braise); }
+#fp-like-btn.liked{ border-color:rgba(201,102,122,.5); }
 
 .player-center{ flex:1; max-width:520px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:8px; }
 .player-controls{ display:flex; align-items:center; gap:18px; }
