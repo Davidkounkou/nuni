@@ -1,4 +1,4 @@
-console.log('🎵 NUNI app.js chargé — version K1 (Vraies paroles par morceau + vérification de la publication)');
+console.log('🎵 NUNI app.js chargé — version K3 (Streams : un auditeur ne compte qu\'une fois, affiché sous la pochette)');
 
 /* ============ ÉCRAN DE CHARGEMENT (SPLASH) ============
    Séquence différente si en ligne ou hors ligne (comme demandé). Durée volontairement
@@ -712,6 +712,7 @@ function enterApp(view){
   if(view === 'catalog'){ updateGreeting(); renderContinueListening(); }
   if(view === 'clips') renderClips();
   if(view === 'library') renderLibrary();
+  if(view === 'dashboard') loadArtistStats();
   ['catalog','clips','ads','library','artist','dashboard','admin'].forEach(v=>{
     const el = document.getElementById('view-'+v);
     if(el) el.style.display = (v===view) ? 'block' : 'none';
@@ -1236,7 +1237,7 @@ function trackCard(tr){
     </div>
     <div class="ttl">${tr.t}</div>
     <div class="art" style="cursor:pointer;">${tr.a}</div>
-    <div class="likes">♥ <span>${formatLikes(tr.likes||0)}</span></div>`;
+    <div class="likes">🎧 <span>${tr.streams||0}</span> · ♥ <span>${formatLikes(tr.likes||0)}</span></div>`;
   card.querySelector('.cover').onclick = ()=> handleTrackCardClick(tr);
   card.querySelector('.ttl').onclick = ()=> handleTrackCardClick(tr);
   card.querySelector('.art').onclick = (e)=>{ e.stopPropagation(); openArtistPage(tr.a); };
@@ -1279,6 +1280,28 @@ function refreshMainShelves(){
   fillShelf('shelf-top', [...tracks].reverse().slice(0,5));
   fillShelf('shelf-playlists', tracks.slice(2,7));
 }
+async function loadArtistStats(){
+  const elTotal = document.getElementById('dash-streams-total');
+  const elTrend = document.getElementById('dash-streams-trend');
+  const elGross = document.getElementById('dash-gross');
+  const elPlatform = document.getElementById('dash-platform-share');
+  const elArtist = document.getElementById('dash-artist-share');
+  if(!elTotal) return;
+  if(!realAuthToken){ elTotal.textContent = '—'; return; }
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/artist/stats', {
+      headers:{ 'Authorization':'Bearer ' + realAuthToken }
+    });
+    if(!res.ok) return;
+    const s = await res.json();
+    const fmt = n => Number(n).toLocaleString('fr-FR');
+    elTotal.textContent = fmt(s.total_streams);
+    elTrend.textContent = `${fmt(s.streams_last_30_days)} sur les 30 derniers jours`;
+    elGross.textContent = fmt(s.gross_fcfa) + ' FCFA';
+    elPlatform.textContent = '−' + fmt(s.platform_share_fcfa) + ' FCFA';
+    elArtist.textContent = fmt(s.artist_share_fcfa) + ' FCFA';
+  }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
+}
 async function loadRealTracks(){
   try{
     const res = await fetch(NUNI_API_BASE + '/api/tracks');
@@ -1298,6 +1321,7 @@ async function loadRealTracks(){
       releaseType: r.release_type || 'Single',
       artistId: r.artist_id,
       lyrics: r.lyrics || null,
+      realId: r.id,
     }));
     tracks.unshift(...mapped);
     refreshMainShelves();
@@ -1554,6 +1578,14 @@ function playTrack(tr){
 
   listeningHistory.unshift({ track: tr, at: Date.now() });
   listeningHistory = listeningHistory.slice(0, 60);
+
+  // Enregistre une vraie écoute (pour les statistiques et revenus de l'artiste) — jamais bloquant.
+  if(tr.isReal && tr.realId){
+    fetch(NUNI_API_BASE + '/api/tracks/' + tr.realId + '/play', {
+      method:'POST',
+      headers: realAuthToken ? {'Authorization':'Bearer ' + realAuthToken} : {}
+    }).catch(()=>{});
+  }
 
   clearInterval(progressTimer);
   realAudio.pause();
