@@ -1,4 +1,4 @@
-console.log('🎵 NUNI app.js chargé — version K3 (Streams : un auditeur ne compte qu\'une fois, affiché sous la pochette)');
+console.log('🎵 NUNI app.js chargé — version K4 (Vrai système de clips : publication, partage, vues uniques)');
 
 /* ============ ÉCRAN DE CHARGEMENT (SPLASH) ============
    Séquence différente si en ligne ou hors ligne (comme demandé). Durée volontairement
@@ -1835,10 +1835,13 @@ function handleClipVideo(e){
   if(!file) return;
   pendingClipVideoFile = file;
   const status = document.getElementById('clip-upload-status');
-  status.innerHTML = `<div class="upload-item"><div class="ui-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l5-3v10l-5-3M4 6h11a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"/></svg></div><div class="ui-info"><div class="ui-name">${file.name}</div></div><div class="ui-status" style="color:var(--accent)">Prêt à publier</div></div>`;
+  const sizeMb = (file.size / (1024*1024)).toFixed(1);
+  const tooLarge = file.size > 9.5 * 1024 * 1024; // ~9,5 Mo réels ≈ 15 Mo une fois encodés, la limite du serveur
+  status.innerHTML = `<div class="upload-item"><div class="ui-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l5-3v10l-5-3M4 6h11a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"/></svg></div><div class="ui-info"><div class="ui-name">${file.name} (${sizeMb} Mo)</div></div><div class="ui-status" style="color:${tooLarge?'var(--rose-braise)':'var(--accent)'}">${tooLarge?'⚠️ Probablement trop lourde':'Prêt à publier'}</div></div>`;
+  if(tooLarge) toast('⚠️ Cette vidéo est probablement trop lourde pour être envoyée au serveur (limite ≈ 9-10 Mo). Compressez-la ou raccourcissez le clip.');
   if(!document.getElementById('clip-title-input').value) document.getElementById('clip-title-input').value = file.name.replace(/\.[^/.]+$/, '');
 }
-function publishClip(){
+async function publishClip(){
   const title = document.getElementById('clip-title-input').value.trim();
   const thumbPreview = document.getElementById('clip-thumb-preview');
   const thumbData = thumbPreview.style.backgroundImage;
@@ -1848,21 +1851,47 @@ function publishClip(){
   if(!hasThumb){ toast('Choisissez une miniature avant de publier.'); return; }
 
   const thumbUrl = thumbData.slice(5, -2);
+  const artistDisplayName = (currentUser && currentUser.artist_name) ? currentUser.artist_name : 'Bibi Mwana';
+  const localVideoUrl = URL.createObjectURL(pendingClipVideoFile);
   const newClip = {
-    id: 'clip_' + Date.now(), title, artist:'Bibi Mwana', thumb: thumbUrl,
-    videoUrl: URL.createObjectURL(pendingClipVideoFile), views: 0,
+    id: 'clip_' + Date.now(), title, artist: artistDisplayName, thumb: thumbUrl,
+    videoUrl: localVideoUrl, views: 0,
     likes: 0, date: new Date().toLocaleDateString('fr-FR', {day:'2-digit', month:'short'}), dur:'—:—'
   };
   clips.unshift(newClip);
   renderClips();
-  renderArtistClips('Bibi Mwana');
-  toast(`Clip "${title}" publié — visible dans Clips et sur votre page artiste.`);
+  renderArtistClips(artistDisplayName);
 
+  const pendingFile = pendingClipVideoFile;
   document.getElementById('clip-title-input').value = '';
   document.getElementById('clip-upload-status').innerHTML = '';
   pendingClipVideoFile = null;
   thumbPreview.style.backgroundImage = '';
   thumbPreview.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l4.5-4.5a2 2 0 0 1 2.8 0L16 16M14 14l1.5-1.5a2 2 0 0 1 2.8 0L20 14M4 6h16v12H4z"/></svg>';
+
+  // Envoi réel au serveur NUNI, pour que le clip soit visible par tous les auditeurs
+  if(!realAuthToken){
+    toast(`Clip "${title}" visible uniquement dans votre navigateur (connectez-vous pour le partager avec tous).`);
+    return;
+  }
+  toast(`Clip "${title}" publié — envoi au serveur en cours…`);
+  try{
+    const videoDataUrl = await fileToDataURL(pendingFile);
+    const res = await fetch(NUNI_API_BASE + '/api/clips', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'Authorization':'Bearer ' + realAuthToken},
+      body: JSON.stringify({ title, thumbUrl, videoUrl: videoDataUrl })
+    });
+    if(res.ok){
+      toast(`Clip "${title}" bien envoyé sur le serveur NUNI — visible par tous les auditeurs.`);
+      loadRealClips();
+    } else {
+      const err = await res.json().catch(()=>({}));
+      toast(`❌ Le clip n'a pas pu être envoyé au serveur : ${err.error || 'erreur inconnue'}. Il reste visible uniquement dans votre navigateur.`);
+    }
+  }catch(e){
+    toast('❌ Impossible de contacter le serveur — le clip reste visible uniquement dans votre navigateur (vidéo peut-être trop lourde).');
+  }
 }
 function ensureClipWatchStyles(){
   if(document.getElementById('nuni-clipwatch-styles')) return;
@@ -1898,7 +1927,14 @@ function ensureClipWatchStyles(){
 }
 function openClipWatchPage(clip){
   ensureClipWatchStyles();
-  clip.views = (clip.views || 0) + 1;
+  if(clip.isReal && clip.realId){
+    fetch(NUNI_API_BASE + '/api/clips/' + clip.realId + '/view', {
+      method:'POST',
+      headers: realAuthToken ? {'Authorization':'Bearer ' + realAuthToken} : {}
+    }).catch(()=>{});
+  } else {
+    clip.views = (clip.views || 0) + 1; // clips de démonstration uniquement : compteur local simple
+  }
   let overlay = document.getElementById('clip-watch-overlay');
   if(overlay) overlay.remove();
   overlay = document.createElement('div');
@@ -2036,6 +2072,26 @@ function seedClips(){
   renderClips();
 }
 seedClips();
+
+async function loadRealClips(){
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/clips');
+    if(!res.ok) return;
+    const data = await res.json();
+    if(!data.clips || !data.clips.length) return;
+    // retire les vrais clips déjà chargés avant de réinjecter (évite les doublons)
+    for(let i = clips.length - 1; i >= 0; i--){ if(clips[i].isReal) clips.splice(i, 1); }
+    const mapped = data.clips.map(c => ({
+      id: 'real_' + c.id, realId: c.id, title: c.title, artist: c.artist_name || 'Artiste NUNI',
+      thumb: c.thumb_url || null, pal: 'pal-1', videoUrl: c.video_url || null,
+      views: c.views || 0, likes: c.likes || 0, isReal: true,
+      date: '', dur: '—:—',
+    }));
+    clips.unshift(...mapped);
+    renderClips();
+  }catch(e){ /* pas grave si le serveur est indisponible, les clips de démo restent affichés */ }
+}
+loadRealClips();
 
 /* ============ LECTEUR VIDÉO CLIP (style iOS) ============ */
 let currentClip = null;
