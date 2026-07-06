@@ -205,7 +205,7 @@ async function applyPromoCode(){
 }
 
 /* ============ CONNEXION AU VRAI SERVEUR NUNI (Railway) ============ */
-const NUNI_API_BASE = 'http://localhost:3000'; // ⚠️ TEMPORAIRE pour tester la migration Postgres/Cloudinary en local — remettre 'https://nuni-backend.onrender.com' avant de publier le site
+const NUNI_API_BASE = 'https://nuni-backend.onrender.com';
 let realAuthToken = null;
 let realUserId = null;
 let currentUser = null; // infos complètes (prénom, nom...) de la personne connectée
