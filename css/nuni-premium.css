@@ -1,0 +1,166 @@
+/* ============================================================
+   NUNI — THÈME PREMIUM "AFRIQUE MODERNE" (accueil)
+   ------------------------------------------------------------
+   Ce fichier NE remplace PAS style.css : il vient par-dessus, en
+   surchargeant uniquement les variables de couleur et quelques
+   composants (cartes, genres, hero, cartes de Pass). Comme tout
+   le reste du site utilise déjà var(--accent), var(--bg-card),
+   etc., changer ces variables ici suffit à transformer toute
+   l'interface sans toucher à app.js ni casser une seule fonction.
+
+   Palette demandée : noir profond, brun cacao, or doux, cuivre,
+   terre cuite, vert émeraude, rouge africain discret, ivoire —
+   pas les couleurs Apple, une identité chaleureuse et premium.
+============================================================ */
+
+:root{
+  /* ---- Nouvelle palette "Afrique moderne" ---- */
+  --noir:#0B0908;              /* noir profond, légèrement chaud (pas un noir bleuté) */
+  --noir-2:#151110;
+  --noir-3:#1E1815;
+
+  --cacao:#3A2416;             /* brun cacao — remplace l'ancien bleu nuit dans les dégradés sombres */
+  --cacao-2:#4E3220;
+
+  --or:#C9A24B;                /* or doux */
+  --or-2:#E3BE6D;
+  --or-soft:#F0DBA6;
+
+  --cuivre:#B5652F;            /* cuivre — utilisé pour les accents chauds secondaires */
+  --terre-cuite:#B3512E;       /* terre cuite — remplace le violet dans les dégradés d'action */
+
+  --emeraude:#1E7A4C;          /* vert émeraude — remplace vert-nuni */
+  --rouge-afrique:#9C3B2E;     /* rouge africain discret, jamais criard */
+
+  --ivoire:#F4EEE1;            /* ivoire — remplace le blanc pur */
+  --ivoire-2:#EAE1CC;
+  --ivoire-3:#DDD0AF;
+
+  /* ---- Compatibilité : on ré-assigne les variables déjà utilisées partout ailleurs ---- */
+  --violet: var(--terre-cuite);
+  --violet-2: var(--cuivre);
+  --violet-soft: var(--or-soft);
+  --bleu-nuit: var(--cacao);
+  --bleu-nuit-2: var(--cacao-2);
+  --rose-braise: var(--rouge-afrique);
+  --vert-nuni: var(--emeraude);
+  --jaune-nuni: var(--or-2);
+  --rouge-nuni: var(--rouge-afrique);
+  --blanc: var(--ivoire);
+  --blanc-2: var(--ivoire-2);
+  --blanc-3: var(--ivoire-3);
+
+  --grad-envol: linear-gradient(135deg, var(--terre-cuite) 0%, var(--or) 100%);
+  --grad-nuit: linear-gradient(160deg, var(--cacao) 0%, var(--noir) 100%);
+
+  --radius-s:12px;
+  --radius-m:22px;
+  --radius-l:34px;             /* coins plus généreux, comme demandé */
+}
+
+html[data-theme="dark"]{
+  --bg: var(--noir);
+  --bg-elev: var(--noir-2);
+  --bg-card: var(--noir-3);
+  --text: var(--ivoire);
+  --text-dim:#B8AA96;
+  --text-faint:#7C6F5E;
+  --border: rgba(244,238,225,0.08);
+  --border-strong: rgba(244,238,225,0.16);
+  --accent: var(--or-2);
+  --accent-2: var(--or-soft);
+}
+html[data-theme="light"]{
+  --bg: var(--ivoire);
+  --bg-elev:#FFFDF8;
+  --bg-card: var(--ivoire-2);
+  --text:#241A10;
+  --text-dim:#5C4C38;
+  --text-faint:#8F7E68;
+  --border: rgba(36,26,16,0.08);
+  --border-strong: rgba(36,26,16,0.16);
+  --accent: var(--terre-cuite);
+  --accent-2: var(--cuivre);
+}
+
+/* ============ TEXTURE DE FOND — quasi invisible, juste une présence ============ */
+body{
+  position: relative;
+  background-image:
+    radial-gradient(circle at 15% 8%, rgba(201,162,75,0.05) 0%, transparent 45%),
+    radial-gradient(circle at 85% 92%, rgba(179,81,46,0.05) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+body::before{
+  content:'';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 1px, transparent 14px),
+                     repeating-linear-gradient(-45deg, currentColor 0, currentColor 1px, transparent 1px, transparent 14px);
+  color: var(--or);
+  mix-blend-mode: overlay;
+}
+
+/* ============ HERO / ACCUEIL ============ */
+.home-eyebrow{ color: var(--or-2); }
+.home-title em{
+  background: var(--grad-envol);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.impact-counter{ border-radius: 999px; backdrop-filter: blur(6px); }
+
+/* ============ ESPACEMENT — le design doit "respirer" ============ */
+.shelf{ margin-bottom: 64px; }
+.shelf-head{ margin-bottom: 24px; }
+.shelf-row{ gap: 22px; padding-bottom: 14px; }
+.genre-grid{ gap: 16px; }
+
+/* ============ CARTES DE MORCEAUX — pochettes plus grandes, plus premium ============ */
+.track-card{ width: 190px; }
+.cover{
+  border-radius: var(--radius-l) !important;
+  box-shadow: 0 12px 30px -10px rgba(0,0,0,0.5);
+  transition: transform .5s var(--ease), box-shadow .5s var(--ease);
+}
+.track-card .ttl{ font-family: var(--font-display); font-size: 15px; margin-top: 14px; }
+.track-card .art{ margin-top: 4px; }
+
+/* Animation d'entrée plus douce (les cartes "montent" au scroll, jamais brutal) */
+@keyframes revealIn{
+  from{ opacity:0; transform: translateY(22px) scale(.97); }
+  to{ opacity:1; transform: translateY(0) scale(1); }
+}
+.track-card.reveal-in{ animation-duration: .8s; }
+
+/* ============ TUILES DE GENRE — coins plus ronds, halo plus doux ============ */
+.genre-tile{
+  border-radius: var(--radius-m) !important;
+  transition: transform .45s var(--ease), box-shadow .45s var(--ease);
+}
+.genre-tile:hover{ transform: translateY(-6px) scale(1.02); }
+
+/* ============ CARTES DE PASS ============ */
+.plan-card{
+  border-radius: var(--radius-l);
+  transition: transform .5s var(--ease), border-color .5s var(--ease);
+}
+.plan-card.featured{ border-color: rgba(201,162,75,.5); }
+.plan-card .plan-tag{ border-radius: 999px; }
+
+/* ============ BOUTONS ============ */
+.btn-primary{
+  background: var(--grad-envol);
+  color: #14100C;
+  box-shadow: 0 12px 30px -8px rgba(179,81,46,.5);
+  border-radius: 999px;
+}
+.btn-ghost{ border-radius: 999px; }
+.btn-icon{ border-radius: var(--radius-s); }
+
+/* ============ MICRO-INTERACTIONS AU SCROLL — subtiles, jamais brutales ============ */
+@media (prefers-reduced-motion: no-preference){
+  .shelf-row .track-card{ will-change: transform; }
+}
