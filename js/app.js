@@ -2849,14 +2849,24 @@ setTimeout(()=>{
 
 updateProgress();
 
-/* ============ LIVE LISTENERS COUNTER (home) ============ */
-let impactValue = 184320;
+/* ============ COMPTEUR D'AUDITEURS ACTIFS (accueil) — VRAI chiffre, plus de simulation ============
+   Avant : un compteur de démo qui partait d'un nombre inventé (184 320) et s'incrémentait
+   au hasard toutes les 2,2s, sans aucun rapport avec la réalité. Maintenant : le vrai nombre
+   de comptes (Consommateur + Artiste) dont le Pass est actuellement actif, tiré directement
+   de la base de données. Rafraîchi régulièrement pour rester à jour sans devoir recharger la page. */
 const impactEl = document.getElementById('impact-value');
 function formatFCFA(n){ return Math.round(n).toLocaleString('fr-FR'); }
-setInterval(()=>{
-  impactValue += Math.floor(Math.random()*9) + 1;
-  if(impactEl) impactEl.textContent = formatFCFA(impactValue);
-}, 2200);
+async function refreshActiveUsersCount(){
+  if(!impactEl) return;
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/stats/public');
+    if(!res.ok) return;
+    const data = await res.json();
+    if(typeof data.active_users === 'number') impactEl.textContent = formatFCFA(data.active_users);
+  }catch(e){ /* pas grave si le serveur est momentanément indisponible — l'ancien chiffre reste affiché */ }
+}
+refreshActiveUsersCount();
+setInterval(refreshActiveUsersCount, 60000); // se remet à jour toutes les minutes
 
 /* ============ NUNI RADIO TUNER (12 stations) ============ */
 const tunerStations = [
