@@ -197,6 +197,19 @@
   </div>
 </div>
 
+<div class="ai-modal-overlay" id="support-artist-overlay" onclick="if(event.target===this) closeSupportArtistModal()">
+  <div class="ai-modal" style="max-width:420px; text-align:left;">
+    <button class="btn-icon" style="position:absolute; top:16px; right:16px;" onclick="closeSupportArtistModal()" aria-label="Fermer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="ai-modal-avatar">💛</div>
+    <span class="ai-modal-eyebrow">Soutien direct</span>
+    <h2 class="serif" id="support-artist-title">Soutenir cet artiste</h2>
+    <div id="support-artist-body"></div>
+  </div>
+</div>
+
+<!-- ============ WHATSAPP FINALISATION ============ -->
 <div class="ai-modal-overlay" id="whatsapp-modal-overlay" onclick="if(event.target===this) closeWhatsAppModal()">
   <div class="ai-modal">
     <button class="btn-icon" style="position:absolute; top:16px; right:16px;" onclick="closeWhatsAppModal()" aria-label="Fermer">
@@ -684,7 +697,7 @@
       <div class="stat-block"><div class="num data" id="artist-stat-supports">—</div><div class="lbl">Soutiens reçus</div></div>
     </div>
     <div class="artist-actions">
-      <button class="btn btn-primary" id="artist-page-support-btn" onclick="toast('Merci pour votre soutien à Bibi Mwana 🕊️')">Soutenir cet artiste</button>
+      <button class="btn btn-primary" id="artist-page-support-btn" onclick="openSupportArtistModal(currentArtistPageRealId, 'Bibi Mwana')">Soutenir cet artiste</button>
       <button class="btn btn-ghost" id="follow-btn" onclick="toggleFollow(this)">Suivre</button>
     </div>
     <p class="artist-bio" id="artist-page-bio">Bibi Mwana réinvente la rumba congolaise avec des arrangements modernes et une voix habitée. Entre Kinshasa et la diaspora, son univers tisse mémoire et avenir — chaque sortie est pensée comme un envol collectif pour la scène locale.</p>
@@ -739,13 +752,24 @@
     </div>
     <div class="dash-panel">
       <h3 class="serif">Historique des paiements</h3>
+      <p style="font-size:11.5px; color:var(--text-faint); margin-top:-10px; margin-bottom:14px;">Calculé en temps réel à partir de vos vraies écoutes — les versements réels restent gérés manuellement par l'équipe NUNI.</p>
       <table class="pay-table">
-        <thead><tr><th>Mois</th><th>Streams</th><th>Montant net</th><th>Statut</th></tr></thead>
-        <tbody>
-          <tr><td>Mai 2026</td><td class="data">44 120</td><td class="data">66 180 FCFA</td><td><span class="status-pill paid">Payé</span></td></tr>
-          <tr><td>Juin 2026</td><td class="data">48 320</td><td class="data">72 480 FCFA</td><td><span class="status-pill pending">En attente</span></td></tr>
+        <thead><tr><th>Mois</th><th>Streams</th><th>Revenu net (75%)</th></tr></thead>
+        <tbody id="pay-history-tbody">
+          <tr><td colspan="3" style="color:var(--text-faint); font-size:12.5px;">Chargement…</td></tr>
         </tbody>
       </table>
+    </div>
+    <div class="dash-panel">
+      <h3 class="serif">💛 Soutien direct de vos abonnés (Mobile Money)</h3>
+      <p style="font-size:12.5px; color:var(--text-faint); margin-top:-10px; margin-bottom:16px; line-height:1.65;">
+        Si vous renseignez votre numéro Mobile Money, vos abonnés pourront vous envoyer un soutien <b>directement</b> depuis votre page artiste — un don volontaire, en plus de vos revenus de streaming.
+        <br><b>NUNI ne traite jamais ce paiement et ne prend aucune commission dessus</b> : c'est un transfert Mobile Money classique, directement entre votre abonné et vous — exactement comme un envoi d'argent normal entre particuliers.
+        <br>Totalement <b>facultatif</b> : laissez le champ vide si vous ne souhaitez pas activer cette fonctionnalité.
+      </p>
+      <div class="field full"><label>Numéro Mobile Money (MTN ou Airtel)</label><input type="text" id="momo-number-input" placeholder="Ex : 06 895 16 00"></div>
+      <button class="btn btn-primary" style="margin-top:12px;" onclick="saveMomoNumber()">Enregistrer mon numéro</button>
+      <div id="momo-save-msg" style="margin-top:10px; font-size:12.5px;"></div>
     </div>
     <div class="dash-panel" id="upload-panel">
       <h3 class="serif">Importer ma musique</h3>
@@ -1023,7 +1047,7 @@
         </div>
       </div>
 
-      <button class="btn btn-primary fp-support-btn" onclick="toast('Merci pour votre soutien 🕊️')">❤️ Soutenir cet artiste</button>
+      <button class="btn btn-primary fp-support-btn" onclick="openSupportArtistModal(currentTrack.artistId || null, currentTrack.a)">❤️ Soutenir cet artiste</button>
     </div>
 
     <!-- Lyrics panel -->

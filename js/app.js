@@ -807,7 +807,12 @@ function enterApp(view){
   if(view === 'catalog'){ updateGreeting(); renderContinueListening(); }
   if(view === 'clips') renderClips();
   if(view === 'library') renderLibrary();
-  if(view === 'dashboard') loadArtistStats();
+  if(view === 'dashboard'){
+    loadArtistStats();
+    loadPaymentsHistory();
+    const momoInput = document.getElementById('momo-number-input');
+    if(momoInput) momoInput.value = (currentUser && currentUser.momo_number) || '';
+  }
   ['catalog','clips','ads','library','artist','dashboard','admin'].forEach(v=>{
     const el = document.getElementById('view-'+v);
     if(el) el.style.display = (v===view) ? 'block' : 'none';
@@ -849,7 +854,6 @@ function openArtistPage(name){
   document.getElementById('artist-page-bio').textContent = profile.bio;
   document.getElementById('artist-page-badge').style.display = reallyVerified ? 'inline-flex' : 'none';
   document.getElementById('artist-page-avatar').textContent = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-  document.getElementById('artist-page-support-btn').setAttribute('onclick', `toast('Merci pour votre soutien à ${name} 🕊️')`);
   document.getElementById('artist-page-calendar-title').textContent = 'Calendrier des sorties — ' + name;
   renderCertificationButton(isOwnArtistPage, reallyVerified);
 
@@ -873,6 +877,7 @@ function openArtistPage(name){
   const artistTracks = tracks.filter(t=>t.a===name);
   const realTrackOfArtist = artistTracks.find(t=>t.artistId);
   currentArtistPageRealId = realTrackOfArtist ? realTrackOfArtist.artistId : null;
+  document.getElementById('artist-page-support-btn').setAttribute('onclick', `openSupportArtistModal(${currentArtistPageRealId || 'null'}, ${JSON.stringify(name)})`);
   ['shelf-artist','shelf-artist-trending','shelf-artist-albums'].forEach(id=>{
     const row = document.getElementById(id);
     if(row) row.innerHTML = '';
@@ -939,6 +944,87 @@ function renderCertificationButton(isOwnArtistPage, reallyVerified){
 
   badge.insertAdjacentElement('afterend', wrap);
 }
+/* ============ SOUTIEN DIRECT (Mobile Money) ============
+   Don volontaire d'un fan vers l'artiste, en dehors de NUNI : NUNI n'y touche jamais,
+   ne prend aucune commission, se contente d'afficher le numéro que l'artiste a bien
+   voulu renseigner (facultatif). Simple transfert Mobile Money classique entre les deux. */
+async function openSupportArtistModal(artistId, artistName){
+  const title = document.getElementById('support-artist-title');
+  const body = document.getElementById('support-artist-body');
+  title.textContent = 'Soutenir ' + (artistName || 'cet artiste');
+  body.innerHTML = '<p style="color:var(--text-dim); font-size:13px;">Chargement…</p>';
+  document.getElementById('support-artist-overlay').classList.add('show');
+
+  if(!artistId){
+    body.innerHTML = `<p style="color:var(--text-faint); font-size:13px;">Cet artiste n'est pas encore relié à un vrai compte NUNI — le soutien direct n'est pas disponible pour ce profil de démonstration.</p>`;
+    return;
+  }
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/artist/' + artistId + '/support-info');
+    const data = await res.json();
+    if(!res.ok){ body.innerHTML = `<p style="color:var(--rose-braise); font-size:13px;">${data.error||'Erreur.'}</p>`; return; }
+    if(!data.momo_number){
+      body.innerHTML = `<p style="color:var(--text-faint); font-size:13px; line-height:1.6;">${data.artist_name} n'a pas encore activé le soutien direct Mobile Money sur son profil.</p>`;
+      return;
+    }
+    body.innerHTML = `
+      <div class="pi-sub-card" style="text-align:center; margin-bottom:14px;">
+        <div style="font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Numéro Mobile Money</div>
+        <div style="font-size:22px; font-weight:700; letter-spacing:1px; color:var(--accent);">${data.momo_number}</div>
+      </div>
+      <p style="font-size:12.5px; color:var(--text-dim); line-height:1.65;">
+        Envoyez le montant de votre choix directement à ce numéro depuis votre application MTN Mobile Money ou Airtel Money, comme un envoi d'argent classique.
+        <br><b>NUNI ne traite pas ce paiement et n'y prélève aucune commission</b> — c'est un don direct, volontaire, entre vous et ${data.artist_name}.
+      </p>`;
+  }catch(e){
+    body.innerHTML = `<p style="color:var(--rose-braise); font-size:13px;">Impossible de contacter le serveur NUNI.</p>`;
+  }
+}
+function closeSupportArtistModal(){
+  document.getElementById('support-artist-overlay').classList.remove('show');
+}
+
+async function saveMomoNumber(){
+  const input = document.getElementById('momo-number-input');
+  const msg = document.getElementById('momo-save-msg');
+  if(!realAuthToken){ msg.innerHTML = '<span style="color:var(--rose-braise)">Connectez-vous avec un vrai compte Artiste.</span>'; return; }
+  msg.textContent = 'Enregistrement…';
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/artist/momo', {
+      method:'PUT', headers:{'Content-Type':'application/json', 'Authorization':'Bearer ' + realAuthToken},
+      body: JSON.stringify({ momoNumber: input.value.trim() })
+    });
+    const data = await res.json();
+    if(!res.ok){ msg.innerHTML = '<span style="color:var(--rose-braise)">❌ ' + data.error + '</span>'; return; }
+    msg.innerHTML = '<span style="color:#7FC79A">✅ ' + data.message + '</span>';
+    toast(data.message);
+  }catch(e){ msg.innerHTML = '<span style="color:var(--rose-braise)">❌ Impossible de contacter le serveur NUNI.</span>'; }
+}
+
+/* ============ HISTORIQUE RÉEL DES PAIEMENTS (dashboard) ============
+   Avant : deux lignes "Mai 2026" / "Juin 2026" codées en dur. Maintenant : calculé en direct
+   à partir des vraies écoutes enregistrées pour les morceaux de cet artiste. */
+async function loadPaymentsHistory(){
+  const tbody = document.getElementById('pay-history-tbody');
+  if(!tbody) return;
+  if(!realAuthToken){ tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-faint); font-size:12.5px;">Connectez-vous avec un vrai compte Artiste.</td></tr>'; return; }
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/artist/payments-history', { headers:{ 'Authorization':'Bearer ' + realAuthToken } });
+    if(!res.ok) return;
+    const data = await res.json();
+    if(!data.history || !data.history.length){
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-faint); font-size:12.5px;">Aucune écoute enregistrée pour le moment.</td></tr>';
+      return;
+    }
+    const monthNames = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+    tbody.innerHTML = data.history.map(row=>{
+      const [y, m] = row.month.split('-');
+      const label = monthNames[Number(m)-1] + ' ' + y;
+      return `<tr><td>${label}</td><td class="data">${row.streams.toLocaleString('fr-FR')}</td><td class="data">${row.artist_share_fcfa.toLocaleString('fr-FR')} FCFA</td></tr>`;
+    }).join('');
+  }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
+}
+
 async function requestVerification(){
   if(!realAuthToken){ toast('Connectez-vous avec un vrai compte pour demander la certification.'); return; }
   try{
