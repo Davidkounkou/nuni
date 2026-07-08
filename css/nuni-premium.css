@@ -306,3 +306,18 @@ html.is-playing .full-player .fp-halo{ opacity: .5; }
   background: rgba(201,162,75,.16);
   border: 1px solid rgba(201,162,75,.3);
 }
+
+/* ============ RACCOURCI PHOTO — clic direct sur l'avatar de sa propre page artiste ============ */
+.artist-avatar.is-editable{ transition: filter .25s ease; }
+.artist-avatar.is-editable:hover{ filter: brightness(0.7); }
+.artist-avatar.is-editable::after{
+  content: '📷 Changer';
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.55);
+  color: #fff; font-size: 11px; font-weight: 700;
+  border-radius: inherit;
+  opacity: 0; transition: opacity .25s ease;
+  pointer-events: none;
+}
+.artist-avatar.is-editable:hover::after{ opacity: 1; }

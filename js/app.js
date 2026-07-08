@@ -863,6 +863,7 @@ function openArtistPage(name){
   document.getElementById('artist-page-bio').textContent = profile.bio;
   document.getElementById('artist-page-badge').style.display = reallyVerified ? 'inline-flex' : 'none';
   const artistPageAvatarEl = document.getElementById('artist-page-avatar');
+  artistPageAvatarEl.classList.toggle('is-editable', isOwnArtistPage);
   const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   if(isOwnArtistPage && currentUser.avatar_url){
     artistPageAvatarEl.style.backgroundImage = `url(${currentUser.avatar_url})`;

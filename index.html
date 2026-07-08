@@ -682,7 +682,7 @@
   <main class="app-main" id="view-artist" style="display:none; padding-top:0;">
     <div class="artist-cover"></div>
     <div class="artist-header">
-      <div class="artist-avatar" id="artist-page-avatar">BM</div>
+      <div class="artist-avatar" id="artist-page-avatar" style="cursor:pointer; position:relative;" title="Cliquer pour changer votre photo" onclick="if(currentUser && currentUser.account_type==='artist') document.getElementById('avatar-upload-input').click();">BM</div>
       <div class="artist-id">
         <div class="artist-name-row">
           <h1 class="serif" id="artist-page-name">Bibi Mwana</h1>
