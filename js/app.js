@@ -851,6 +851,10 @@ function enterApp(view){
       avatarDash.style.backgroundImage = `url(${currentUser.avatar_url})`;
       avatarDash.textContent = '';
     }
+    const coverDash = document.getElementById('cover-preview-dash');
+    if(coverDash && currentUser && currentUser.banner_url){
+      coverDash.style.backgroundImage = `url(${currentUser.banner_url})`;
+    }
   }
   ['catalog','clips','ads','library','artist','dashboard','admin'].forEach(v=>{
     const el = document.getElementById('view-'+v);
@@ -894,6 +898,17 @@ function openArtistPage(name){
   document.getElementById('artist-page-badge').style.display = reallyVerified ? 'inline-flex' : 'none';
   const artistPageAvatarEl = document.getElementById('artist-page-avatar');
   artistPageAvatarEl.classList.toggle('is-editable', isOwnArtistPage);
+  const artistCoverEl = document.querySelector('.artist-cover');
+  if(artistCoverEl){
+    artistCoverEl.classList.toggle('is-editable', isOwnArtistPage);
+    artistCoverEl.style.cursor = isOwnArtistPage ? 'pointer' : '';
+    artistCoverEl.onclick = isOwnArtistPage ? ()=> document.getElementById('cover-upload-input').click() : null;
+    if(isOwnArtistPage && currentUser.banner_url){
+      artistCoverEl.style.backgroundImage = `url(${currentUser.banner_url})`;
+    } else if(!isOwnArtistPage){
+      artistCoverEl.style.backgroundImage = '';
+    }
+  }
   const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   if(isOwnArtistPage && currentUser.avatar_url){
     artistPageAvatarEl.style.backgroundImage = `url(${currentUser.avatar_url})`;
@@ -932,6 +947,9 @@ function openArtistPage(name){
           if(data.avatar_url && !(isOwnArtistPage && currentUser.avatar_url)){
             artistPageAvatarEl.style.backgroundImage = `url(${data.avatar_url})`;
             artistPageAvatarEl.textContent = '';
+          }
+          if(data.banner_url && !(isOwnArtistPage && currentUser.banner_url) && artistCoverEl){
+            artistCoverEl.style.backgroundImage = `url(${data.banner_url})`;
           }
         }).catch(()=>{});
     } else {
@@ -2761,22 +2779,36 @@ async function handlePhotoUpload(e, kind){
     reader.onload = ()=> resolve(reader.result);
     reader.readAsDataURL(file);
   });
-  const url = `url(${localPreviewUrl})`;
   if(kind === 'avatar'){
     applyAvatarEverywhere(localPreviewUrl);
   } else {
-    const dash = document.getElementById('cover-preview-dash');
-    dash.style.backgroundImage = url;
-    const cover = document.querySelector('.artist-cover');
-    if(cover) cover.style.backgroundImage = url;
+    applyBannerEverywhere(localPreviewUrl);
   }
   e.target.value = '';
 
   // Envoi réel — avant, cette photo restait purement locale : elle disparaissait dès qu'on
-  // quittait l'onglet Artiste puis qu'on y revenait (openArtistPage réaffichait toujours les
-  // initiales), et n'était jamais visible pour les autres visiteurs ni après un rechargement.
+  // quittait l'onglet Artiste puis qu'on y revenait (openArtistPage réaffichait toujours le
+  // dégradé par défaut), et n'était jamais visible pour les autres visiteurs ni après un rechargement.
   if(kind !== 'avatar'){
-    toast('Photo de couverture mise à jour localement — l\'enregistrement réel de la couverture arrive bientôt.');
+    if(!realAuthToken){
+      toast('Connectez-vous avec un vrai compte Artiste pour que cette photo soit enregistrée.');
+      return;
+    }
+    toast('Envoi de la photo de couverture en cours…');
+    try{
+      const cloudUrl = await uploadFileToCloudinary(file, 'image');
+      const res = await fetch(NUNI_API_BASE + '/api/artist/banner', {
+        method:'PUT', headers:{'Content-Type':'application/json', 'Authorization':'Bearer ' + realAuthToken},
+        body: JSON.stringify({ bannerUrl: cloudUrl })
+      });
+      const data = await res.json();
+      if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+      currentUser.banner_url = cloudUrl;
+      applyBannerEverywhere(cloudUrl);
+      toast('✅ Photo de couverture enregistrée — visible sur votre page artiste.');
+    }catch(e){
+      toast('❌ Impossible d\'envoyer la photo : ' + (e.message || 'erreur inconnue'));
+    }
     return;
   }
   if(!realAuthToken){
@@ -2808,6 +2840,12 @@ function applyAvatarEverywhere(url){
   });
   const avatarDash = document.getElementById('avatar-preview-dash');
   if(avatarDash){ avatarDash.style.backgroundImage = `url(${url})`; avatarDash.textContent = ''; }
+}
+function applyBannerEverywhere(url){
+  const dash = document.getElementById('cover-preview-dash');
+  if(dash){ dash.style.backgroundImage = `url(${url})`; }
+  const cover = document.querySelector('.artist-cover');
+  if(cover){ cover.style.backgroundImage = `url(${url})`; }
 }
 
 // Point d'entrée unique pour changer sa photo de profil, quel que soit le bouton utilisé
