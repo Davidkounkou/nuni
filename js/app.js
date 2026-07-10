@@ -830,6 +830,8 @@ function renderContinueListening(){
   fillShelf('shelf-continue', recent);
 }
 
+let isOpeningArtistPage = false; // garde-fou anti-boucle : openArtistPage appelle enterApp('artist'),
+                                   // qui sans ce garde-fou rappellerait openArtistPage indéfiniment.
 function enterApp(view){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('app-shell').classList.add('active');
@@ -840,6 +842,10 @@ function enterApp(view){
   if(view === 'catalog'){ updateGreeting(); renderContinueListening(); }
   if(view === 'clips') renderClips();
   if(view === 'library') renderLibrary();
+  if(view === 'artist' && currentUser && currentUser.account_type === 'artist' && !isOpeningArtistPage){
+    openArtistPage(currentUser.artist_name); // sinon l'onglet ne fait qu'afficher l'ancien contenu, jamais rafraîchi
+    return; // openArtistPage rappelle enterApp('artist') lui-même (avec le garde-fou actif) pour finir l'affichage
+  }
   if(view === 'dashboard'){
     loadArtistStats();
     loadDashboardChart();
@@ -1051,7 +1057,9 @@ function openArtistPage(name){
 
   renderArtistClips(name);
 
+  isOpeningArtistPage = true;
   enterApp('artist');
+  isOpeningArtistPage = false;
 }
 const NUNI_CERT_MIN_TRACKS = 50;
 const NUNI_CERT_MIN_FOLLOWERS = 5000;
@@ -3858,7 +3866,7 @@ function runSearch(q){
     item.innerHTML = `<div class="sr-cover" style="background:var(--grad-envol); display:flex; align-items:center; justify-content:center; border-radius:50%; font-family:var(--font-data); font-weight:700; color:#0A0A10; font-size:12px;">${initials}</div>
       <div><div class="sr-t">${name}</div><div class="sr-a">Artiste — écouter maintenant</div></div>`;
     item.onclick = ()=>{
-      enterApp('artist');
+      openArtistPage(name);
       if(topTrack) playTrack(topTrack);
       box.classList.remove('open');
       document.getElementById('app-search-input').value='';
