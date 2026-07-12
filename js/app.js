@@ -3863,7 +3863,7 @@ const suggestedArtists = [
   {n:'Tcheza Nation', g:'Rap'},
   {n:'Les Anges du Rythme', g:'Traditionnel'},
 ];
-const artistSuggestRow = document.getElementById('artist-suggest-row');
+// artist-suggest-row est maintenant rempli dynamiquement par loadFeaturedArtists() plus bas.
 
 /* ============ BADGES D'AUDITEUR ============ */
 const listenerBadges = [
@@ -3883,29 +3883,63 @@ if(badgesRow){
     badgesRow.appendChild(chip);
   });
 }
-if(artistSuggestRow){
-  suggestedArtists.forEach(a=>{
-    const card = document.createElement('div');
-    card.className = 'artist-suggest-card';
-    const initials = a.n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    card.innerHTML = `
-      <div class="av">${initials}</div>
-      <div class="n">${a.n}</div>
-      <div class="g">${a.g}</div>
-      <button>Suivre</button>`;
-    card.querySelector('.av').onclick = ()=> openArtistPage(a.n);
-    card.querySelector('.n').onclick = ()=> openArtistPage(a.n);
-    card.querySelector('.n').style.cursor = 'pointer';
-    card.querySelector('.av').style.cursor = 'pointer';
-    card.querySelector('button').onclick = (e)=>{
-      const b = e.currentTarget;
-      const now = b.classList.toggle('is-following');
-      b.textContent = now ? 'Suivi ✓' : 'Suivre';
-      toast(now ? `Vous suivez maintenant ${a.n}.` : `Vous ne suivez plus ${a.n}.`);
-    };
-    artistSuggestRow.appendChild(card);
-  });
+async function loadFeaturedArtists(){
+  const row = document.getElementById('artist-suggest-row');
+  if(!row) return;
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/artists/featured');
+    const data = await res.json();
+    const list = data.artists || [];
+    row.innerHTML = '';
+    if(!list.length){
+      row.innerHTML = `<p style="font-size:12.5px; color:var(--text-faint);">Aucun artiste avec un Pass actif pour le moment — revenez bientôt !</p>`;
+      return;
+    }
+    list.forEach(a=>{
+      const name = a.artist_name || a.first_name;
+      const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      const avatarStyle = a.avatar_url ? `background-image:url(${a.avatar_url}); background-size:cover; background-position:center;` : '';
+      const card = document.createElement('div');
+      card.className = 'artist-suggest-card';
+      card.innerHTML = `
+        <div class="av" style="${avatarStyle}">${a.avatar_url ? '' : initials}</div>
+        <div class="n">${name}${a.is_verified ? ' ✅' : ''}</div>
+        <div class="g">${a.top_genre || 'Artiste NUNI'}</div>
+        <button>Suivre</button>`;
+      card.querySelector('.av').onclick = ()=> openArtistPage(name);
+      card.querySelector('.n').onclick = ()=> openArtistPage(name);
+      card.querySelector('.n').style.cursor = 'pointer';
+      card.querySelector('.av').style.cursor = 'pointer';
+      const followBtn = card.querySelector('button');
+      // Vrai suivi, envoyé au serveur — avant, ce bouton ne faisait que basculer un texte
+      // localement, sans jamais toucher la base de données.
+      followBtn.onclick = async ()=>{
+        if(!realAuthToken){ toast('Connectez-vous pour suivre un artiste et le soutenir.'); return; }
+        followBtn.disabled = true;
+        try{
+          const res2 = await fetch(NUNI_API_BASE + '/api/follow', {
+            method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer ' + realAuthToken},
+            body: JSON.stringify({ artistId: a.id })
+          });
+          const data2 = await res2.json();
+          followBtn.disabled = false;
+          if(!res2.ok){ toast('❌ ' + (data2.error || 'Erreur.')); return; }
+          followBtn.classList.toggle('is-following', data2.following);
+          followBtn.textContent = data2.following ? 'Suivi ✓' : 'Suivre';
+          toast(data2.following ? `Vous suivez maintenant ${name}.` : `Vous ne suivez plus ${name}.`);
+        }catch(e){ followBtn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
+      };
+      row.appendChild(card);
+    });
+  }catch(e){
+    row.innerHTML = `<p style="font-size:12.5px; color:var(--text-faint);">Suggestions momentanément indisponibles.</p>`;
+  }
 }
+loadFeaturedArtists();
+// Le serveur change déjà sa sélection tout seul toutes les 30 min (basé sur l'heure) —
+// ce setInterval sert juste à rafraîchir l'affichage pour quelqu'un qui reste longtemps
+// sur la page sans la recharger.
+setInterval(loadFeaturedArtists, 30*60*1000);
 
 /* ============ MOBILE TAB BAR ============ */
 function tabNav(view){
