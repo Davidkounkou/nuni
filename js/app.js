@@ -1590,10 +1590,18 @@ function openAlbumView(tr){
 
   requestAnimationFrame(()=> overlay.classList.add('show'));
 }
+function trackKeyOf(tr){ return (tr.t||'') + '|' + (tr.a||''); }
+function updateNowPlayingCards(){
+  const key = currentTrack ? trackKeyOf(currentTrack) : null;
+  document.querySelectorAll('.track-card').forEach(card=>{
+    card.classList.toggle('is-now-playing', !!(key && playing && card.dataset.trackKey === key));
+  });
+}
 function trackCard(tr){
   const card = document.createElement('div');
   card.className = 'track-card';
   if(tr.realId) card.dataset.trackId = tr.realId;
+  card.dataset.trackKey = trackKeyOf(tr);
   const coverInner = tr.cover
     ? `<div class="cover" style="background-image:url(${tr.cover}); background-size:cover; background-position:center;">`
     : `<div class="cover ${tr.p}"><div class="cover-glyph pal-pattern"></div>`;
@@ -1602,7 +1610,10 @@ function trackCard(tr){
     ${coverInner}
       ${tr.audioUrl ? '<span class="imported-badge" title="Votre import">Vous</span>' : ''}
       ${isMultiTrack ? `<span class="nuni-type-badge" title="${tr.releaseType}">💿 ${tr.releaseType}</span>` : ''}
-      <div class="play-fab"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      <div class="play-fab">
+        <svg viewBox="0 0 24 24" class="play-fab-icon"><path d="M8 5v14l11-7z"/></svg>
+        <span class="eq play-fab-eq"><i></i><i></i><i></i></span>
+      </div>
     </div>
     <div class="ttl">${tr.t}</div>
     <div class="art" style="cursor:pointer;">${tr.a}</div>
@@ -1610,6 +1621,7 @@ function trackCard(tr){
   card.querySelector('.cover').onclick = ()=> handleTrackCardClick(tr);
   card.querySelector('.ttl').onclick = ()=> handleTrackCardClick(tr);
   card.querySelector('.art').onclick = (e)=>{ e.stopPropagation(); openArtistPage(tr.a); };
+  if(currentTrack && playing && trackKeyOf(currentTrack) === trackKeyOf(tr)) card.classList.add('is-now-playing');
   return card;
 }
 function dedupeAlbums(list){
@@ -2002,6 +2014,7 @@ function playTrack(tr){
 function togglePlay(){
   playing = !playing;
   document.documentElement.classList.toggle('is-playing', playing);
+  updateNowPlayingCards();
   const iconPath = playing
     ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>'
     : '<path d="M8 5v14l11-7z"/>';

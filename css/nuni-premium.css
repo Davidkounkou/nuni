@@ -585,3 +585,31 @@ html.is-playing .full-player .fp-halo{ opacity: .5; }
 @media (prefers-reduced-motion: reduce){
   .home-wrap{ animation:none !important; }
 }
+
+/* ============ MORCEAU EN COURS DE LECTURE — effet sur la pochette ============
+   Avant : aucun indice visuel sur les pochettes pour savoir laquelle est en train de
+   jouer. Ici : halo doré autour de la pochette + l'icône ▶ est remplacée par un petit
+   égaliseur animé (réutilise le style .eq déjà utilisé à côté du logo dans la nav). */
+.track-card.is-now-playing .cover{
+  box-shadow: 0 0 0 3px var(--or-2, #E3BE6D), 0 14px 34px -10px rgba(201,162,75,.5);
+}
+.track-card.is-now-playing .play-fab{
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+  background: rgba(10,8,6,0.6);
+}
+.play-fab-eq{ display:none; }
+.track-card.is-now-playing .play-fab-icon{ display:none; }
+.track-card.is-now-playing .play-fab-eq{
+  display:flex; align-items:flex-end; gap:3px; height:16px; width:16px;
+}
+.track-card.is-now-playing .play-fab-eq i{
+  display:block; width:3px; border-radius:2px; background:var(--or-2, #E3BE6D);
+  height:30%; animation: eqBounce 0.9s ease-in-out infinite;
+}
+.track-card.is-now-playing .play-fab-eq i:nth-child(1){ animation-delay:0s; }
+.track-card.is-now-playing .play-fab-eq i:nth-child(2){ animation-delay:.15s; }
+.track-card.is-now-playing .play-fab-eq i:nth-child(3){ animation-delay:.3s; }
+@media (prefers-reduced-motion: reduce){
+  .track-card.is-now-playing .play-fab-eq i{ animation:none; height:70%; }
+}
