@@ -2390,7 +2390,10 @@ function ensureClipWatchStyles(){
     #clip-watch-overlay.show{opacity:1;}
     .cw-close{position:fixed; top:18px; right:22px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:#fff; font-size:17px; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;}
     .cw-close:hover{background:rgba(255,255,255,0.16);}
-    .cw-wrap{max-width:900px; margin:0 auto; padding:60px 24px 80px;}
+    .cw-wrap{max-width:1360px; margin:0 auto; padding:60px 24px 80px; display:grid; grid-template-columns:minmax(0,1fr) 380px; gap:32px; align-items:start;}
+    .cw-main{min-width:0;}
+    .cw-sidebar{min-width:0;}
+    @media (max-width:960px){ .cw-wrap{grid-template-columns:1fr;} }
     .cw-video-wrap{width:100%; aspect-ratio:16/9; background:#000; border-radius:14px; overflow:hidden; display:flex; align-items:center; justify-content:center; box-shadow:0 20px 50px rgba(0,0,0,0.5);}
     .cw-video-wrap video{width:100%; height:100%; object-fit:contain; background:#000;}
     .cw-video-placeholder{color:#6b6b78; font-size:14px; text-align:center; padding:24px;}
@@ -2403,7 +2406,7 @@ function ensureClipWatchStyles(){
     .cw-follow-btn{background:#fff; color:#0A0A10; border:none; border-radius:20px; padding:8px 18px; font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap;}
     .cw-follow-btn.is-following{background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.25);}
     .cw-actions{display:flex; gap:10px;}
-    .cw-related-title{color:#fff; font-size:15px; font-weight:700; margin:26px 0 14px;}
+    .cw-related-title{color:#fff; font-size:15px; font-weight:700; margin:0 0 14px;}
     .cw-related-item{display:flex; gap:12px; padding:8px; border-radius:10px; cursor:pointer; transition:background .15s ease;}
     .cw-related-item:hover{background:rgba(255,255,255,0.05);}
     .cw-related-thumb{width:130px; height:74px; border-radius:8px; background-size:cover; background-position:center; flex-shrink:0; position:relative; overflow:hidden;}
@@ -2452,6 +2455,9 @@ function openClipWatchPage(clip){
   };
 
   const initials = clip.artist.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const avatarInner = clip.artistAvatarUrl
+    ? `style="background-image:url(${clip.artistAvatarUrl}); background-size:cover; background-position:center;"`
+    : '';
   const videoInner = clip.videoUrl
     ? `<video src="${clip.videoUrl}" controls autoplay></video>`
     : `<div class="cw-video-placeholder">🎬 Aperçu vidéo non fourni pour ce clip de démonstration.</div>`;
@@ -2459,22 +2465,33 @@ function openClipWatchPage(clip){
   overlay.innerHTML = `
     <button class="cw-close" title="Fermer">✕</button>
     <div class="cw-wrap">
-      <div class="cw-video-wrap">${videoInner}</div>
-      <div class="cw-title">${clip.title}</div>
-      <div class="cw-meta">${formatLikes(clip.views)} vues · ${clip.date || "aujourd'hui"}</div>
-      <div class="cw-subrow">
-        <div class="cw-artist-block">
-          <div class="cw-avatar">${initials}</div>
-          <div class="cw-artist-name">${clip.artist}</div>
-          <button class="cw-follow-btn">Suivre</button>
-        </div>
-        <div class="cw-actions">
-          <button class="av-icon-btn cw-like-btn" title="J'aime"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></button>
-          <button class="av-icon-btn cw-share-btn" title="Partager"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg></button>
+      <div class="cw-main">
+        <div class="cw-video-wrap">${videoInner}</div>
+        <div class="cw-title">${clip.title}</div>
+        <div class="cw-meta">${formatLikes(clip.views)} vues · ${clip.date || "aujourd'hui"}</div>
+        <div class="cw-subrow">
+          <div class="cw-artist-block">
+            <div class="cw-avatar" ${avatarInner}>${clip.artistAvatarUrl ? '' : initials}</div>
+            <div class="cw-artist-name">${clip.artist}</div>
+            <button class="cw-follow-btn">Suivre</button>
+          </div>
+          <div class="cw-actions">
+            <button class="av-icon-btn cw-like-btn" title="J'aime">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+              <span class="cw-reaction-count">${clip.likes ? formatLikes(clip.likes) : ''}</span>
+            </button>
+            <button class="av-icon-btn cw-dislike-btn" title="Je n'aime pas">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:scaleY(-1);"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+              <span class="cw-reaction-count">${clip.dislikes ? formatLikes(clip.dislikes) : ''}</span>
+            </button>
+            <button class="av-icon-btn cw-share-btn" title="Partager"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg></button>
+          </div>
         </div>
       </div>
-      <div class="cw-related-title">À suivre</div>
-      <div class="cw-related-list"></div>
+      <div class="cw-sidebar">
+        <div class="cw-related-title">À suivre</div>
+        <div class="cw-related-list"></div>
+      </div>
     </div>
   `;
   ensureBadgeStyles(); // réutilise av-icon-btn déjà stylé par l'album view
@@ -2493,28 +2510,68 @@ function openClipWatchPage(clip){
     toast(now ? `Vous suivez maintenant ${clip.artist}.` : `Vous ne suivez plus ${clip.artist}.`);
   };
   const likeBtn = overlay.querySelector('.cw-like-btn');
+  const dislikeBtn = overlay.querySelector('.cw-dislike-btn');
+
+  // Précharge le vrai statut (déjà aimé / déjà pas-aimé) pour afficher les bons boutons actifs
+  // dès l'ouverture, plutôt que de toujours repartir de zéro visuellement.
+  if(clip.isReal && clip.realId && realAuthToken){
+    fetch(NUNI_API_BASE + '/api/clips/' + clip.realId + '/my-reaction', {
+      headers:{ 'Authorization':'Bearer ' + realAuthToken }
+    }).then(r=>r.json()).then(data=>{
+      likeBtn.classList.toggle('is-active', !!data.liked);
+      dislikeBtn.classList.toggle('is-active', !!data.disliked);
+    }).catch(()=>{});
+  }
+
   likeBtn.onclick = async ()=>{
     bounceEl(likeBtn);
     hapticPing();
     if(clip.isReal && clip.realId && realAuthToken){
-      likeBtn.disabled = true;
+      likeBtn.disabled = true; dislikeBtn.disabled = true;
       try{
         const res = await fetch(NUNI_API_BASE + '/api/clips/' + clip.realId + '/like', {
           method:'POST', headers:{ 'Authorization':'Bearer ' + realAuthToken }
         });
         const data = await res.json();
-        likeBtn.disabled = false;
+        likeBtn.disabled = false; dislikeBtn.disabled = false;
         if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
-        clip.likes = data.likes;
+        clip.likes = data.likes; clip.dislikes = data.dislikes;
         likeBtn.classList.toggle('is-active', data.liked);
-        const metaEl = overlay.querySelector('.cw-meta');
-        if(metaEl) metaEl.textContent = `${formatLikes(clip.views)} vues · ${clip.date || "aujourd'hui"}`;
-      }catch(e){ likeBtn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
+        dislikeBtn.classList.remove('is-active'); // exclusion mutuelle
+        likeBtn.querySelector('.cw-reaction-count').textContent = clip.likes ? formatLikes(clip.likes) : '';
+        dislikeBtn.querySelector('.cw-reaction-count').textContent = clip.dislikes ? formatLikes(clip.dislikes) : '';
+      }catch(e){ likeBtn.disabled = false; dislikeBtn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
       return;
     }
     // Clip de démonstration, ou visiteur non connecté : comportement local uniquement
     const liked = likeBtn.classList.toggle('is-active');
     clip.likes += liked ? 1 : -1;
+    if(liked) dislikeBtn.classList.remove('is-active');
+  };
+
+  dislikeBtn.onclick = async ()=>{
+    bounceEl(dislikeBtn);
+    hapticPing();
+    if(clip.isReal && clip.realId && realAuthToken){
+      likeBtn.disabled = true; dislikeBtn.disabled = true;
+      try{
+        const res = await fetch(NUNI_API_BASE + '/api/clips/' + clip.realId + '/dislike', {
+          method:'POST', headers:{ 'Authorization':'Bearer ' + realAuthToken }
+        });
+        const data = await res.json();
+        likeBtn.disabled = false; dislikeBtn.disabled = false;
+        if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+        clip.likes = data.likes; clip.dislikes = data.dislikes;
+        dislikeBtn.classList.toggle('is-active', data.disliked);
+        likeBtn.classList.remove('is-active'); // exclusion mutuelle
+        likeBtn.querySelector('.cw-reaction-count').textContent = clip.likes ? formatLikes(clip.likes) : '';
+        dislikeBtn.querySelector('.cw-reaction-count').textContent = clip.dislikes ? formatLikes(clip.dislikes) : '';
+      }catch(e){ likeBtn.disabled = false; dislikeBtn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
+      return;
+    }
+    const disliked = dislikeBtn.classList.toggle('is-active');
+    clip.dislikes = (clip.dislikes || 0) + (disliked ? 1 : -1);
+    if(disliked) likeBtn.classList.remove('is-active');
   };
   overlay.querySelector('.cw-share-btn').onclick = ()=>{
     toast('Lien du clip copié — partagez-le où vous voulez 🕊️');
@@ -2605,7 +2662,7 @@ async function loadRealClips(){
     const mapped = data.clips.map(c => ({
       id: 'real_' + c.id, realId: c.id, title: c.title, artist: c.artist_name || 'Artiste NUNI',
       thumb: c.thumb_url || null, pal: 'pal-1', videoUrl: c.video_url || null,
-      views: c.views || 0, likes: c.likes || 0, isReal: true,
+      views: c.views || 0, likes: c.likes || 0, dislikes: c.dislikes || 0, isReal: true,
       date: '', dur: '—:—',
       artistId: c.artist_id, artistAvatarUrl: c.artist_avatar_url || null,
     }));
