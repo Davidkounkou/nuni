@@ -504,6 +504,8 @@ function closeWhatsAppModal(){
 
 function openRedeemModal(){
   document.getElementById('redeem-feedback').innerHTML = '';
+  document.getElementById('redeem-submit-btn').disabled = false; // sinon un ancien essai pouvait laisser le bouton bloqué
+  redeemRequestId++; // annule tout essai précédent encore en cours (voir submitRedeem)
   if(realAuthToken){
     document.getElementById('redeem-email').closest('.field').style.display = 'none';
     document.getElementById('redeem-password').closest('.field').style.display = 'none';
@@ -516,7 +518,9 @@ function openRedeemModal(){
 function closeRedeemModal(){
   document.getElementById('redeem-overlay').classList.remove('show');
 }
+let redeemRequestId = 0; // protège contre un essai précédent qui répondrait en retard et écraserait un essai plus récent
 async function submitRedeem(){
+  const myRequestId = ++redeemRequestId;
   const feedback = document.getElementById('redeem-feedback');
   const btn = document.getElementById('redeem-submit-btn');
   const code = document.getElementById('redeem-code-input').value.trim().toUpperCase();
@@ -533,6 +537,7 @@ async function submitRedeem(){
         method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, password})
       });
       const loginData = await loginRes.json();
+      if(myRequestId !== redeemRequestId) return; // un essai plus récent a pris le relais entre-temps
       if(!loginRes.ok){
         feedback.style.color = 'var(--rose-braise)';
         feedback.textContent = '❌ ' + loginData.error;
@@ -554,6 +559,7 @@ async function submitRedeem(){
       body: JSON.stringify({code})
     });
     const data = await res.json();
+    if(myRequestId !== redeemRequestId) return; // un essai plus récent a pris le relais entre-temps
     if(!res.ok){
       feedback.style.color = 'var(--rose-braise)';
       feedback.textContent = '❌ ' + data.error;
@@ -567,6 +573,7 @@ async function submitRedeem(){
     applyAccountType();
     setTimeout(()=>{ closeRedeemModal(); enterApp('catalog'); }, 1200);
   }catch(e){
+    if(myRequestId !== redeemRequestId) return; // un essai plus récent a pris le relais entre-temps
     feedback.style.color = 'var(--rose-braise)';
     feedback.textContent = '❌ Impossible de contacter le serveur NUNI.';
     btn.disabled = false;
