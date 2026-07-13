@@ -1324,7 +1324,7 @@ function filterCatalogByGenre(genreName){
   let filtered;
   let heading;
   if(genreName === 'Nouveautés'){
-    filtered = [...tracks].slice(0, 8);
+    filtered = tracks.filter(t=> t.isReal).slice(0, 8);
     heading = 'Nouveautés';
   } else if(genreName === 'Top Congo'){
     filtered = [...tracks].sort((a,b)=> parseStreamsCount(b.streams) - parseStreamsCount(a.streams)).slice(0, 8);
