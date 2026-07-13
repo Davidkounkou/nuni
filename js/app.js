@@ -4488,6 +4488,112 @@ async function claimChallenge(key, btn){
     loadProgress();
   }catch(e){ toast('Impossible de contacter le serveur.'); if(btn) btn.disabled = false; }
 }
+// ---------- Top 100 artistes — vrai classement par abonnés ----------
+// Ouvert depuis "Tout voir" sous "Artistes à suivre". Réservé aux vrais comptes avec un
+// Pass Artiste actif, classés par leur vrai nombre d'abonnés (table follows côté serveur).
+function ensureTop100Styles(){
+  if(document.getElementById('top100-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'top100-styles';
+  style.textContent = `
+    #top100-overlay{position:fixed; inset:0; z-index:9999; background:#0A0A10; overflow-y:auto; opacity:0; transition:opacity .25s ease;}
+    #top100-overlay.show{opacity:1;}
+    .t100-close{position:fixed; top:18px; right:22px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:#fff; font-size:17px; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;}
+    .t100-close:hover{background:rgba(255,255,255,0.16);}
+    .t100-wrap{max-width:720px; margin:0 auto; padding:60px 24px 80px;}
+    .t100-title{color:#fff; font-size:26px; font-weight:800; margin-bottom:6px;}
+    .t100-sub{color:#8a8a94; font-size:13px; margin-bottom:28px;}
+    .t100-row{display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:rgba(255,255,255,0.04); margin-bottom:8px;}
+    .t100-rank{width:32px; text-align:center; font-weight:700; color:#8a8a94; font-family:var(--font-data, monospace); flex-shrink:0;}
+    .t100-av{width:42px; height:42px; border-radius:50%; background:var(--grad-envol); display:flex; align-items:center; justify-content:center; color:#0A0A10; font-weight:700; font-size:14px; flex-shrink:0; background-size:cover; background-position:center; cursor:pointer;}
+    .t100-info{flex:1; min-width:0; cursor:pointer;}
+    .t100-name{color:#fff; font-weight:700; font-size:14px;}
+    .t100-meta{color:#8a8a94; font-size:12px;}
+    .t100-followers{color:var(--accent,#D4AF6A); font-weight:700; font-size:13px; white-space:nowrap;}
+    .t100-follow-btn{background:var(--grad-envol); border:none; color:#241708; font-weight:700; font-size:12px; padding:7px 14px; border-radius:999px; cursor:pointer; white-space:nowrap;}
+    .t100-follow-btn.is-following{background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.25);}
+    .t100-empty{color:var(--text-faint,#8a8a94); font-size:13px; text-align:center; padding:40px 0;}
+  `;
+  document.head.appendChild(style);
+}
+async function openTop100ArtistsPage(){
+  ensureTop100Styles();
+  let overlay = document.getElementById('top100-overlay');
+  if(overlay) overlay.remove();
+  overlay = document.createElement('div');
+  overlay.id = 'top100-overlay';
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+  const closeOverlay = ()=>{ overlay.classList.remove('show'); document.body.style.overflow = ''; setTimeout(()=> overlay.remove(), 200); };
+
+  overlay.innerHTML = `
+    <button class="t100-close" title="Fermer">✕</button>
+    <div class="t100-wrap">
+      <div class="t100-title">Top 100 artistes NUNI</div>
+      <div class="t100-sub">Classement réel par nombre d'abonnés — uniquement les comptes avec un Pass Artiste actif.</div>
+      <div id="t100-list">Chargement…</div>
+    </div>`;
+  overlay.querySelector('.t100-close').onclick = closeOverlay;
+  requestAnimationFrame(()=> overlay.classList.add('show'));
+
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/artists/top100');
+    const data = await res.json();
+    const list = document.getElementById('t100-list');
+    if(!list) return; // overlay fermé entre-temps
+    const artists = data.artists || [];
+    if(!artists.length){
+      list.innerHTML = `<div class="t100-empty">Aucun artiste avec un Pass actif pour le moment.</div>`;
+      return;
+    }
+    list.innerHTML = '';
+    artists.forEach(a=>{
+      const name = a.artist_name || a.first_name;
+      const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      const avatarStyle = a.avatar_url ? `background-image:url(${a.avatar_url});` : '';
+      const row = document.createElement('div');
+      row.className = 't100-row';
+      row.innerHTML = `
+        <div class="t100-rank">#${a.rnk}</div>
+        <div class="t100-av" style="${avatarStyle}">${a.avatar_url ? '' : initials}</div>
+        <div class="t100-info">
+          <div class="t100-name">${name}${a.is_verified ? ' ✅' : ''}</div>
+          <div class="t100-meta">${a.top_genre || 'Artiste NUNI'}</div>
+        </div>
+        <div class="t100-followers">${(a.follower_count||0).toLocaleString('fr-FR')} abonnés</div>
+        <button class="t100-follow-btn">Suivre</button>`;
+      const goToArtist = ()=>{ closeOverlay(); openArtistPage(name); };
+      row.querySelector('.t100-av').onclick = goToArtist;
+      row.querySelector('.t100-info').onclick = goToArtist;
+      const followBtn = row.querySelector('.t100-follow-btn');
+      if(realAuthToken){
+        fetch(NUNI_API_BASE + '/api/follow/' + a.id + '/status', { headers:{ 'Authorization':'Bearer ' + realAuthToken } })
+          .then(r=>r.json()).then(d=>{ followBtn.textContent = d.following ? 'Suivi ✓' : 'Suivre'; followBtn.classList.toggle('is-following', d.following); })
+          .catch(()=>{});
+      }
+      followBtn.onclick = async ()=>{
+        if(!realAuthToken){ toast('Connectez-vous pour suivre un artiste.'); return; }
+        followBtn.disabled = true;
+        try{
+          const res2 = await fetch(NUNI_API_BASE + '/api/follow', {
+            method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer ' + realAuthToken},
+            body: JSON.stringify({ artistId: a.id })
+          });
+          const data2 = await res2.json();
+          followBtn.disabled = false;
+          if(!res2.ok){ toast('❌ ' + (data2.error || 'Erreur.')); return; }
+          followBtn.textContent = data2.following ? 'Suivi ✓' : 'Suivre';
+          followBtn.classList.toggle('is-following', data2.following);
+        }catch(e){ followBtn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
+      };
+      list.appendChild(row);
+    });
+  }catch(e){
+    const list = document.getElementById('t100-list');
+    if(list) list.innerHTML = `<div class="t100-empty">Classement momentanément indisponible.</div>`;
+  }
+}
+
 async function loadFeaturedArtists(){
   const row = document.getElementById('artist-suggest-row');
   if(!row) return;
