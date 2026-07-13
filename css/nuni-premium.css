@@ -667,3 +667,5 @@ html.is-playing .full-player .fp-halo{ opacity: .5; }
   .premium-hero-content{ padding:24px; max-width:100%; }
   .premium-hero-title{ font-size:28px; }
 }
+#top-congo-hero{ min-height:260px; margin-bottom:24px; }
+#top-congo-hero .premium-hero-title{ font-size:32px; }

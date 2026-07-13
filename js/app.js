@@ -1337,6 +1337,34 @@ function filterCatalogByGenre(genreName){
   defaultShelves.style.display = 'none';
   shelvesWrap.style.display = 'block';
   document.getElementById('genre-filtered-heading').textContent = heading;
+
+  // Bannière hero uniquement pour Top Congo, avec les vraies données du #1 actuel —
+  // jamais de nom ou de chiffre inventé, tout vient de "filtered" (déjà trié par vrais streams).
+  const heroEl = document.getElementById('top-congo-hero');
+  if(heroEl){
+    if(genreName === 'Top Congo' && filtered.length){
+      const leader = filtered[0];
+      const totalListeners = filtered.reduce((s,t)=> s + parseStreamsCount(t.streams), 0);
+      heroEl.style.display = 'flex';
+      heroEl.style.backgroundImage = "url('assets/hero/hero-topcongo.jpg')";
+      heroEl.innerHTML = `
+        <div class="premium-hero-overlay"></div>
+        <div class="premium-hero-content">
+          <span class="premium-hero-badge">👑 CLASSEMENT OFFICIEL</span>
+          <h2 class="premium-hero-title">Top Congo</h2>
+          <p class="premium-hero-sub">${formatLikes(totalListeners)} écoutes cumulées cette semaine sur les titres classés.</p>
+          <div class="premium-hero-tags"><span style="cursor:default;">🥇 En tête : ${leader.a} — « ${leader.t} »</span></div>
+          <div class="premium-hero-actions">
+            <button class="btn btn-primary" id="top-congo-hero-play-btn">▶ Écouter le classement</button>
+          </div>
+        </div>`;
+      document.getElementById('top-congo-hero-play-btn').onclick = ()=>{ playTrack(leader); openFullPlayer(); };
+    } else {
+      heroEl.style.display = 'none';
+      heroEl.innerHTML = '';
+    }
+  }
+
   const row = document.getElementById('genre-filtered-row');
   row.innerHTML = '';
   if(!filtered.length){
