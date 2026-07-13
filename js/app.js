@@ -3989,8 +3989,50 @@ async function loadProgress(){
   }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
   loadChallenges();
   loadShop();
+  loadLeaderboard();
 }
 loadProgress();
+
+/* ============ CLASSEMENT PUBLIC (XP) ============
+   Étape 5 de la gamification. Top 5 affiché sur l'accueil, avec médaille pour le podium.
+   Le propre rang de la personne connectée est affiché en dessous si elle n'est pas dans
+   le top (pas besoin d'être connecté pour voir le classement, juste pour voir son rang). */
+async function loadLeaderboard(){
+  const wrap = document.getElementById('shelf-leaderboard');
+  const list = document.getElementById('leaderboard-list');
+  const myRankEl = document.getElementById('leaderboard-my-rank');
+  if(!wrap || !list) return;
+  try{
+    const headers = realAuthToken ? { 'Authorization':'Bearer ' + realAuthToken } : {};
+    const res = await fetch(NUNI_API_BASE + '/api/leaderboard', { headers });
+    if(!res.ok) return;
+    const data = await res.json();
+    if(!data.top || !data.top.length){ wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    const medals = { 1:'🥇', 2:'🥈', 3:'🥉' };
+    list.innerHTML = data.top.slice(0, 5).map(r=>{
+      const initial = (r.name || '?').charAt(0).toUpperCase();
+      const avatar = r.avatar_url
+        ? `<img class="lb-avatar" src="${r.avatar_url}" alt="">`
+        : `<div class="lb-avatar">${initial}</div>`;
+      return `
+        <div class="leaderboard-row${r.rank <= 3 ? ' is-medal' : ''}">
+          <div class="lb-rank">${medals[r.rank] || '#' + r.rank}</div>
+          ${avatar}
+          <div class="lb-name">${r.name}</div>
+          <div class="lb-xp">${r.xp} XP</div>
+        </div>`;
+    }).join('');
+    if(myRankEl){
+      if(data.my_rank){
+        myRankEl.style.display = '';
+        myRankEl.textContent = `Votre rang : #${data.my_rank.rank} — ${data.my_rank.xp} XP`;
+      } else {
+        myRankEl.style.display = 'none';
+      }
+    }
+  }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
+}
 
 /* ============ BOUTIQUE NUNI POINTS ============
    Étape 4 de la gamification. Articles cosmétiques achetés avec les points gagnés en
