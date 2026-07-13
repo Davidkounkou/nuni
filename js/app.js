@@ -256,6 +256,7 @@ async function restoreSession(){
     realAuthToken = stored.token;
     startAccountStatusWatcher();
     syncLikedTracksFromServer();
+    loadProgress();
     realUserId = stored.userId;
     currentUser = data.user;
     applyAccountType();
@@ -391,6 +392,7 @@ async function submitLogin(){
       return;
     }
     realAuthToken = data.token;
+    loadProgress();
     startAccountStatusWatcher();
     syncLikedTracksFromServer();
     realUserId = data.user.id;
@@ -479,6 +481,7 @@ async function submitRealRegistration(){
       return;
     }
     realAuthToken = data.token;
+    loadProgress();
     startAccountStatusWatcher();
     syncLikedTracksFromServer();
     realUserId = data.user.id;
@@ -584,6 +587,7 @@ async function submitRedeem(){
         return;
       }
       realAuthToken = loginData.token;
+      loadProgress();
       startAccountStatusWatcher();
       syncLikedTracksFromServer();
       realUserId = loginData.user.id;
@@ -884,7 +888,7 @@ function enterApp(view){
   document.getElementById('mobile-tabbar').style.removeProperty('display');
   document.getElementById('demo-nav').classList.remove('no-player');
   document.getElementById('mimi-widget').classList.remove('no-player');
-  if(view === 'catalog'){ updateGreeting(); renderContinueListening(); }
+  if(view === 'catalog'){ updateGreeting(); renderContinueListening(); loadProgress(); }
   if(view === 'clips') loadRealClips(); // recharge les vrais clips à chaque ouverture (loadRealClips appelle renderClips())
   if(view === 'library') renderLibrary();
   if(view === 'artist' && currentUser && currentUser.account_type === 'artist' && !isOpeningArtistPage){
@@ -3942,24 +3946,46 @@ const suggestedArtists = [
 ];
 // artist-suggest-row est maintenant rempli dynamiquement par loadFeaturedArtists() plus bas.
 
-/* ============ BADGES D'AUDITEUR ============ */
-const listenerBadges = [
-  {ic:'🕊️', n:"Fan de la première heure", d:'Compte créé', locked:false},
-  {ic:'🎧', n:'100 titres découverts', d:'62/100', locked:false},
-  {ic:'🔥', n:'7 jours d\'écoute d\'affilée', d:'Série en cours', locked:false},
-  {ic:'🌍', n:'5 genres explorés', d:'3/5', locked:true},
-  {ic:'💛', n:'10 artistes soutenus', d:'4/10', locked:true},
-  {ic:'🏆', n:'Top auditeur du mois', d:'Verrouillé', locked:true},
-];
-const badgesRow = document.getElementById('badges-row');
-if(badgesRow){
-  listenerBadges.forEach(b=>{
-    const chip = document.createElement('div');
-    chip.className = 'badge-chip' + (b.locked ? ' locked' : '');
-    chip.innerHTML = `<div class="ic">${b.ic}</div><div class="n">${b.n}</div><div class="d">${b.d}</div>`;
-    badgesRow.appendChild(chip);
-  });
+/* ============ PROGRESSION RÉELLE (niveau, XP, badges) ============
+   Avant : listenerBadges était un tableau codé en dur, identique pour tout le monde,
+   jamais branché à aucune vraie donnée. Ici : tout vient de /api/me/progress, calculé
+   en direct côté serveur à partir des vraies écoutes, genres, artistes suivis, etc. */
+async function loadProgress(){
+  const badgesRow = document.getElementById('badges-row');
+  const levelWrap = document.getElementById('level-progress-wrap');
+  if(!badgesRow && !levelWrap) return;
+  if(!realAuthToken) return; // besoin d'être connecté pour avoir une vraie progression
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/me/progress', {
+      headers:{ 'Authorization':'Bearer ' + realAuthToken }
+    });
+    if(!res.ok) return;
+    const data = await res.json();
+
+    if(badgesRow){
+      badgesRow.innerHTML = '';
+      data.badges.forEach(b=>{
+        const chip = document.createElement('div');
+        chip.className = 'badge-chip' + (b.locked ? ' locked' : '');
+        chip.innerHTML = `<div class="ic">${b.ic}</div><div class="n">${b.n}</div><div class="d">${b.d}</div>`;
+        badgesRow.appendChild(chip);
+      });
+    }
+    if(levelWrap){
+      levelWrap.style.display = '';
+      levelWrap.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+          <span style="font-weight:700; color:var(--text);">Niveau ${data.level} — ${data.name}</span>
+          <span style="font-size:12px; color:var(--text-faint);">${data.xp} XP${data.xp_for_next ? ' / ' + data.xp_for_next + ' XP' : ' (niveau max)'}</span>
+        </div>
+        <div style="height:8px; border-radius:999px; background:rgba(244,238,225,0.1); overflow:hidden;">
+          <div style="height:100%; width:${data.progress_pct}%; background:var(--grad-envol); border-radius:999px; transition:width .6s ease;"></div>
+        </div>
+        ${data.next_level_name ? `<p style="font-size:11px; color:var(--text-faint); margin-top:6px;">Prochain niveau : ${data.next_level_name}</p>` : ''}`;
+    }
+  }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
 }
+loadProgress();
 async function loadFeaturedArtists(){
   const row = document.getElementById('artist-suggest-row');
   if(!row) return;
