@@ -337,6 +337,8 @@
         <div><div class="t" id="dj-track-t">—</div><div class="a" id="dj-track-a">—</div></div>
       </div>
       <button class="btn btn-primary" style="width:100%;" id="dj-play-btn" onclick="djTogglePlay()">▶ Lancer le DJ</button>
+      <input type="file" id="dj-local-file-input" accept="audio/*" style="display:none;" onchange="handleDjLocalUpload(event)">
+      <button class="btn" style="width:100%; margin-top:8px;" onclick="document.getElementById('dj-local-file-input').click()">🎵 Ajouter un son depuis mon PC</button>
       <p style="font-size:11px; color:var(--text-faint); text-align:center; margin-top:10px; line-height:1.5;">Simulation d'ambiance : le BPM et le beatmatching affichés sont indicatifs — l'enchaînement réel des morceaux utilise votre catalogue NUNI.</p>
     </div>
   </div>

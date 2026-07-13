@@ -1850,6 +1850,16 @@ realAudio.addEventListener('loadedmetadata', ()=>{
 });
 realAudio.addEventListener('timeupdate', ()=>{
   if(usingRealAudio){ elapsed = realAudio.currentTime; updateProgress(); }
+  // Fondu enchaîné façon Apple Music, uniquement en mode DJ : dès qu'il reste moins de
+  // DJ_CROSSFADE_SECONDS, on lance la transition — bien avant que le morceau ne se termine
+  // vraiment, contrairement à l'ancien comportement (coupure nette à 'ended').
+  if(djMode && usingRealAudio && !djCrossfadeTriggered && isFinite(duration) && duration > 0){
+    const remaining = duration - elapsed;
+    if(remaining > 0 && remaining <= DJ_CROSSFADE_SECONDS){
+      djCrossfadeTriggered = true;
+      startDjCrossfade();
+    }
+  }
 });
 realAudio.addEventListener('ended', ()=>{ if(usingRealAudio) nextTrack(); });
 realAudio.addEventListener('error', ()=>{
@@ -2051,6 +2061,12 @@ function applyCoverTo(el, tr){
 let listeningHistory = [];
 let favoritesPlaylist = [];
 function playTrack(tr){
+  // Un morceau change (manuellement, ou via le crossfade lui-même) : on annule tout
+  // fondu enchaîné encore en cours pour ne jamais superposer deux transitions.
+  if(djFadeTimer){ clearInterval(djFadeTimer); djFadeTimer = null; }
+  if(djFadeAudio){ djFadeAudio.pause(); }
+  djCrossfadeTriggered = false;
+
   currentTrack = tr;
   document.getElementById('player-title').textContent = tr.t;
   document.getElementById('player-artist').textContent = tr.a;
@@ -2233,20 +2249,23 @@ function getCurrentPlaybackPool(){
 // repassait sur n'importe quel morceau du catalogue, dans l'ordre brut. Quand la file est
 // épuisée, elle est re-mélangée pour continuer indéfiniment sans jamais se répéter à
 // l'identique d'un tour à l'autre (et sans recoller le dernier morceau joué au premier du tour suivant).
+function djAdvanceQueue(){
+  djQueuePos++;
+  if(djQueuePos >= djQueue.length){
+    const m = djModes.find(x=>x.id===djModeId);
+    const last = djQueue[djQueue.length-1];
+    const reshuffled = m.filter();
+    if(reshuffled.length > 1 && reshuffled[0].t === last.t && reshuffled[0].a === last.a){
+      reshuffled.push(reshuffled.shift());
+    }
+    djQueue = reshuffled;
+    djQueuePos = 0;
+  }
+  return djQueue[djQueuePos];
+}
 function nextTrack(){
   if(djMode && djQueue.length){
-    djQueuePos++;
-    if(djQueuePos >= djQueue.length){
-      const m = djModes.find(x=>x.id===djModeId);
-      const last = djQueue[djQueue.length-1];
-      const reshuffled = m.filter();
-      if(reshuffled.length > 1 && reshuffled[0].t === last.t && reshuffled[0].a === last.a){
-        reshuffled.push(reshuffled.shift());
-      }
-      djQueue = reshuffled;
-      djQueuePos = 0;
-    }
-    playTrack(djQueue[djQueuePos]);
+    playTrack(djAdvanceQueue());
     return;
   }
   const pool = getCurrentPlaybackPool();
@@ -4049,6 +4068,74 @@ function djSpeak(force){
   }catch(e){ /* synthèse vocale indisponible sur ce navigateur : pas bloquant */ }
 }
 
+// ---------- Fondu enchaîné (crossfade) façon Apple Music DJ ----------
+// Quelques secondes avant la fin du morceau en cours, le morceau suivant démarre en
+// parallèle sur un second élément audio dédié, à volume 0. Les deux volumes se croisent
+// progressivement, puis on "passe la main" au vrai lecteur (realAudio) exactement à la
+// même position — aucune coupure nette, aucun redémarrage audible à 0.
+const DJ_CROSSFADE_SECONDS = 4;
+let djCrossfadeTriggered = false;
+let djFadeAudio = null;
+let djFadeTimer = null;
+function startDjCrossfade(){
+  if(!djMode || djQueue.length < 2) return; // pas de morceau suivant : le 'ended' naturel prendra le relais
+  const nextTr = djQueue[(djQueuePos + 1) % djQueue.length];
+  if(!nextTr || !nextTr.audioUrl) return; // repli sur le comportement naturel si le suivant n'est pas jouable
+
+  if(!djFadeAudio) djFadeAudio = new Audio();
+  djFadeAudio.src = nextTr.audioUrl;
+  djFadeAudio.currentTime = 0;
+  djFadeAudio.volume = 0;
+  djFadeAudio.play().catch(()=>{});
+
+  const steps = 28;
+  const stepMs = (DJ_CROSSFADE_SECONDS * 1000) / steps;
+  let i = 0;
+  djFadeTimer = setInterval(()=>{
+    i++;
+    const t = i / steps;
+    realAudio.volume = Math.max(0, userVolume * (1 - t));
+    djFadeAudio.volume = Math.min(userVolume, userVolume * t);
+    if(i >= steps){
+      clearInterval(djFadeTimer);
+      djFadeTimer = null;
+      const handoffTime = djFadeAudio.currentTime;
+      const tr = djAdvanceQueue(); // fait vraiment avancer la file (mêmes règles anti-répétition qu'ailleurs)
+      playTrack(tr); // remet tout en ordre : métadonnées, vrai stream compté, historique, avatar, voix…
+      realAudio.currentTime = handoffTime; // reprend exactement où le fondu s'est arrêté, pas de saut à 0
+      realAudio.volume = userVolume;
+    }
+  }, stepMs);
+}
+
+// ---------- Ajout d'un son local pendant le DJ ----------
+// Insère un fichier audio depuis l'ordinateur directement dans la file du mode DJ en cours,
+// juste après le morceau en train de jouer — sans passer par tout le formulaire de
+// publication (titre/genre/pochette/droits). Reste purement local à cette session : pas
+// envoyé à Cloudinary, pas ajouté au catalogue partagé, pas de vrai stream compté (puisque
+// ce n'est pas un vrai morceau publié par un artiste).
+function handleDjLocalUpload(e){
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  if(!djMode || !djPlaying){
+    toast('Lancez d\'abord le DJ avant d\'ajouter un son local.');
+    return;
+  }
+  const localTrack = {
+    t: file.name.replace(/\.[^/.]+$/, ''),
+    a: 'Import local',
+    p: 'pal-1',
+    genre: djModes.find(x=>x.id===djModeId).name,
+    likes: 0,
+    streams: '0',
+    audioUrl: URL.createObjectURL(file),
+    isReal: false, // pas de vrai stream compté : fichier local, non publié
+  };
+  djQueue.splice(djQueuePos + 1, 0, localTrack);
+  toast(`"${localTrack.t}" ajouté à la file — jouera juste après le morceau en cours.`);
+}
+
 function djTogglePlay(){
   djPlaying = !djPlaying;
   const btn = document.getElementById('dj-play-btn');
@@ -4062,6 +4149,9 @@ function djTogglePlay(){
     btn.textContent = '▶ Lancer le DJ';
     djMode = false;
     clearInterval(djTimer);
+    if(djFadeTimer){ clearInterval(djFadeTimer); djFadeTimer = null; }
+    if(djFadeAudio) djFadeAudio.pause();
+    djCrossfadeTriggered = false;
     if(djAvatarInstance) djAvatarInstance.stop();
     if('speechSynthesis' in window) window.speechSynthesis.cancel();
     realAudio.volume = userVolume; // filet de sécurité : jamais de volume coincé bas si on coupe le DJ en pleine phrase
