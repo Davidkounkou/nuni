@@ -3950,6 +3950,7 @@ const suggestedArtists = [
    Avant : listenerBadges était un tableau codé en dur, identique pour tout le monde,
    jamais branché à aucune vraie donnée. Ici : tout vient de /api/me/progress, calculé
    en direct côté serveur à partir des vraies écoutes, genres, artistes suivis, etc. */
+let lastKnownLevel = null; // sert à détecter un vrai passage de niveau entre deux rafraîchissements
 async function loadProgress(){
   const badgesRow = document.getElementById('badges-row');
   const levelWrap = document.getElementById('level-progress-wrap');
@@ -3986,12 +3987,46 @@ async function loadProgress(){
           <span style="font-size:12px; font-weight:700; color:var(--accent,#D4AF6A);">💎 ${data.nuni_points || 0} NUNI Points</span>
         </div>`;
     }
+    // Vrai passage de niveau détecté (pas juste au tout premier chargement) — célébration visuelle.
+    if(lastKnownLevel !== null && data.level > lastKnownLevel){
+      celebrateLevelUp(data.level, data.name);
+    }
+    lastKnownLevel = data.level;
   }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
   loadChallenges();
   loadShop();
   loadLeaderboard();
 }
 loadProgress();
+
+/* Confettis + carte animée au passage de niveau — bien plus marquant qu'un simple toast
+   pour le moment le plus gratifiant de la progression. */
+function celebrateLevelUp(level, name){
+  const overlay = document.getElementById('levelup-overlay');
+  if(!overlay) return;
+  overlay.innerHTML = `
+    <div class="levelup-card">
+      <div class="lu-eyebrow">Niveau supérieur</div>
+      <div class="lu-title">Niveau ${level} — ${name}</div>
+    </div>`;
+  const colors = ['#D4AF6A','#1E8449','#C0392B','#8E63C9','#E8C77E'];
+  for(let i=0;i<24;i++){
+    const c = document.createElement('span');
+    c.className = 'levelup-confetti';
+    const angle = Math.random()*Math.PI*2;
+    const dist = 120 + Math.random()*160;
+    c.style.setProperty('--cx', Math.cos(angle)*dist + 'px');
+    c.style.setProperty('--cy', Math.sin(angle)*dist + 'px');
+    c.style.setProperty('--cr', (Math.random()*720-360) + 'deg');
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDelay = (Math.random()*0.15) + 's';
+    overlay.appendChild(c);
+  }
+  overlay.classList.add('show');
+  toast(`🎉 Niveau ${level} atteint — ${name} !`);
+  hapticPing();
+  setTimeout(()=>{ overlay.classList.remove('show'); setTimeout(()=>{ overlay.innerHTML = ''; }, 350); }, 2600);
+}
 
 /* ============ CLASSEMENT PUBLIC (XP) ============
    Étape 5 de la gamification. Top 5 affiché sur l'accueil, avec médaille pour le podium.

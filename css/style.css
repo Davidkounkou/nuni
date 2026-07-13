@@ -475,6 +475,28 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 }
 .leaderboard-row .lb-name{ flex:1; font-size:13px; font-weight:600; }
 .leaderboard-row .lb-xp{ font-size:12px; color:var(--text-faint); font-weight:700; }
+
+#levelup-overlay{
+  position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center;
+  pointer-events:none; opacity:0; transition:opacity .3s ease;
+}
+#levelup-overlay.show{ opacity:1; }
+.levelup-card{
+  background:var(--bg-card); border:1px solid var(--border); border-radius:20px; padding:32px 44px;
+  text-align:center; box-shadow:0 30px 70px rgba(0,0,0,0.5); transform:scale(.85);
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+#levelup-overlay.show .levelup-card{ transform:scale(1); }
+.levelup-card .lu-eyebrow{ font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text-faint); margin-bottom:6px; }
+.levelup-card .lu-title{ font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--accent,#D4AF6A); }
+.levelup-confetti{
+  position:absolute; top:50%; left:50%; width:8px; height:14px; opacity:0;
+  animation:luConfetti 1.4s ease-out forwards;
+}
+@keyframes luConfetti{
+  0%{ opacity:1; transform:translate(-50%,-50%) rotate(0deg); }
+  100%{ opacity:0; transform:translate(calc(-50% + var(--cx)), calc(-50% + var(--cy))) rotate(var(--cr)); }
+}
 .artist-suggest-card{
   flex-shrink:0; width:128px; text-align:center; background:var(--bg-elev); border:1px solid var(--border);
   border-radius:18px; padding:18px 12px;
