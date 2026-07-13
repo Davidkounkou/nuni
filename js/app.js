@@ -306,6 +306,23 @@ function startAccountStatusWatcher(){
         clearInterval(accountStatusCheckTimer);
         toast('❌ ' + (errData.error || 'Session invalide.'));
         logoutUser();
+        return;
+      }
+      if(res.ok){
+        // Avant : cette vérification périodique ne servait qu'à détecter une suspension —
+        // elle récupérait bien les vraies données à jour du compte, mais les jetait sans
+        // jamais les appliquer. Résultat : un client déjà connecté au moment où l'admin
+        // active son Pass ne voyait jamais son compte passer "actif" tout seul, même après
+        // plusieurs minutes — il fallait se déconnecter/reconnecter pour que ça se mette à jour.
+        const data = await res.json();
+        const wasActive = currentUser && currentUser.subscription_status === 'active';
+        const nowActive = data.user && data.user.subscription_status === 'active';
+        currentUser = data.user;
+        saveSession(realAuthToken, currentUser, true);
+        applyAccountType();
+        if(!wasActive && nowActive){
+          toast('🎉 Votre Pass est maintenant actif — bienvenue sur NUNI en intégralité !');
+        }
       }
     }catch(e){ /* pas de réseau : on ne déconnecte pas sur un simple souci de connexion */ }
   }, 120000); // toutes les 2 minutes
