@@ -3689,82 +3689,84 @@ function closeTuner(){
   document.getElementById('tuner-modal-overlay').classList.remove('show');
 }
 
-/* ============ NUNI TALENT — TOP 100 ============ */
-const talentExtraNames = [
-  'Mokili Stars','Kin Beatz','Rumba Nouvelle','Sista Ngoma','Fally Junior','Baila Africa','Zaiko Nouveau',
-  'DJ Mbote','Bana Kin','Congo Vibes','Etoile ya Ndenge','Lumière Kongo','Vox Poto','Mabele Sound',
-  'Rythme na Biso','Sango Malamu','Nzoto Kin','Papa Style','Mama Rumba','Yaya Talent','Baba Ngoma',
-  'Nzela Music','Bilombe','Kongo Fire','Boma Sound',
-];
+/* ============ NUNI TALENT — TOP 100 (vraies écoutes + vrais votes hebdomadaires) ============ */
 let talentTop100 = null;
-function buildTalentTop100(){
-  if(talentTop100) return talentTop100;
-  const base = suggestedArtists.map(a => ({
-    name: a.n, genre: a.g.split(' · ')[0],
-    streams: tracks.filter(t=>t.a===a.n).reduce((s,t)=> s + (t.likes||0)*37, 50000 + Math.floor(Math.random()*400000)),
-  }));
-  const genresPool = ['Rumba','Afro','Gospel','Rap','Hip-Hop','Traditionnel'];
-  const extra = talentExtraNames.map((n,i) => ({
-    name: n, genre: genresPool[i % genresPool.length],
-    streams: Math.floor(380000 - i*11000 + Math.random()*15000),
-  }));
-  talentTop100 = [...base, ...extra]
-    .sort((a,b)=> b.streams - a.streams)
-    .map((a,i)=> ({ ...a, rank: i+1, voted: false, votesThisWeek: 0 }));
-  return talentTop100;
-}
-function openTalentModal(){
-  const list = buildTalentTop100();
+let talentMyVoteArtistId = null;
+async function openTalentModal(){
   const wrap = document.getElementById('talent-rank-list');
-  wrap.innerHTML = '';
-  list.forEach(a=>{
-    const item = document.createElement('div');
-    item.className = 'talent-rank-item' + (a.rank<=3 ? ' top3' : '');
-    const initials = a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    item.innerHTML = `
-      <div class="talent-rank-num">${a.rank<=3 ? ['🥇','🥈','🥉'][a.rank-1] : '#'+a.rank}</div>
-      <div class="talent-rank-av">${initials}</div>
-      <div class="talent-rank-info">
-        <div class="talent-rank-name">${a.name}</div>
-        <div class="talent-rank-meta">${a.genre} · ${formatLikes(a.streams)} écoutes</div>
-      </div>
-      <button class="talent-vote-btn ${a.voted?'voted':''}" onclick="voteForArtist(${a.rank}, this, event)">${a.voted ? '✓ Voté' : 'Voter'}</button>`;
-    wrap.appendChild(item);
-  });
-  renderWeeklyWinner();
+  wrap.innerHTML = '<p style="color:var(--text-faint); font-size:13px; text-align:center; padding:20px 0;">Chargement…</p>';
   spawnTalentBubbles();
   document.getElementById('talent-modal-overlay').classList.add('show');
+
+  try{
+    const headers = realAuthToken ? { 'Authorization':'Bearer ' + realAuthToken } : {};
+    const res = await fetch(NUNI_API_BASE + '/api/talent/top100', { headers });
+    const data = await res.json();
+    talentTop100 = data.artists || [];
+    talentMyVoteArtistId = data.my_vote_artist_id || null;
+
+    wrap.innerHTML = '';
+    if(!talentTop100.length){
+      wrap.innerHTML = `<p style="color:var(--text-faint); font-size:13px; text-align:center; padding:20px 0;">Aucun artiste avec un Pass actif pour le moment.</p>`;
+    }
+    talentTop100.forEach(a=>{
+      const name = a.artist_name || a.first_name;
+      const item = document.createElement('div');
+      item.className = 'talent-rank-item' + (a.rank<=3 ? ' top3' : '');
+      const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      const avatarStyle = a.avatar_url ? `background-image:url(${a.avatar_url}); background-size:cover; background-position:center;` : '';
+      const alreadyVotedThis = talentMyVoteArtistId === a.id;
+      const votedElsewhere = talentMyVoteArtistId && talentMyVoteArtistId !== a.id;
+      item.innerHTML = `
+        <div class="talent-rank-num">${a.rank<=3 ? ['🥇','🥈','🥉'][a.rank-1] : '#'+a.rank}</div>
+        <div class="talent-rank-av" style="${avatarStyle}">${a.avatar_url ? '' : initials}</div>
+        <div class="talent-rank-info">
+          <div class="talent-rank-name">${name}</div>
+          <div class="talent-rank-meta">${a.genre || 'Artiste NUNI'} · ${formatLikes(a.total_streams)} écoutes${a.votes_this_week ? ' · ' + a.votes_this_week + ' vote(s) cette semaine' : ''}</div>
+        </div>
+        <button class="talent-vote-btn ${alreadyVotedThis?'voted':''}" ${votedElsewhere ? 'disabled' : ''} onclick="voteForArtist(${a.id}, this)">${alreadyVotedThis ? '✓ Voté' : 'Voter'}</button>`;
+      wrap.appendChild(item);
+    });
+    renderWeeklyWinner(data.weekly_winner);
+  }catch(e){
+    wrap.innerHTML = `<p style="color:var(--text-faint); font-size:13px; text-align:center; padding:20px 0;">Classement momentanément indisponible.</p>`;
+  }
 }
 function closeTalentModal(){
   document.getElementById('talent-modal-overlay').classList.remove('show');
 }
-function renderWeeklyWinner(){
+function renderWeeklyWinner(winner){
   const card = document.getElementById('talent-winner-card');
-  if(!talentTop100 || !card) return;
-  const winner = [...talentTop100].sort((a,b)=> b.votesThisWeek - a.votesThisWeek || b.streams - a.streams)[0];
-  const initials = winner.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-  const nextSunday = new Date('2026-07-05');
-  const fmtDate = nextSunday.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long'});
+  if(!card) return;
+  if(!winner){ card.innerHTML = ''; return; }
+  const name = winner.artist_name || winner.first_name;
+  const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const avatarStyle = winner.avatar_url ? `background-image:url(${winner.avatar_url}); background-size:cover; background-position:center;` : '';
   card.innerHTML = `
-    <div class="av">${initials}</div>
+    <div class="av" style="${avatarStyle}">${winner.avatar_url ? '' : initials}</div>
     <div>
       <span class="badge">🏆 Artiste le plus aimé &amp; voté cette semaine</span>
-      <div class="name">${winner.name}</div>
-      <div class="meta">${winner.votesThisWeek} vote(s) cette semaine · résultat final ${fmtDate}</div>
+      <div class="name">${name}</div>
+      <div class="meta">${winner.votes_this_week || 0} vote(s) cette semaine</div>
     </div>`;
 }
-function voteForArtist(rank, btn, evt){
-  const entry = talentTop100.find(a=>a.rank===rank);
-  if(!entry || entry.voted) return;
-  entry.voted = true;
-  entry.streams += 500;
-  entry.votesThisWeek = (entry.votesThisWeek||0) + 1;
-  btn.textContent = '✓ Voté';
-  btn.classList.add('voted');
-  const rect = btn.getBoundingClientRect();
-  spawnVoteBubble(rect.left + rect.width/2, rect.top + rect.height/2);
-  renderWeeklyWinner();
-  toast(`Vote enregistré pour ${entry.name} 🕊️`);
+async function voteForArtist(artistId, btn){
+  if(!realAuthToken){ toast('Connectez-vous pour voter.'); return; }
+  if(btn) btn.disabled = true;
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/talent/vote', {
+      method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer ' + realAuthToken},
+      body: JSON.stringify({ artistId })
+    });
+    const data = await res.json();
+    if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); if(btn) btn.disabled = false; return; }
+    if(btn){
+      const rect = btn.getBoundingClientRect();
+      spawnVoteBubble(rect.left + rect.width/2, rect.top + rect.height/2);
+    }
+    toast(data.message || 'Vote enregistré !');
+    openTalentModal(); // recharge le vrai classement à jour
+  }catch(e){ if(btn) btn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
 }
 function spawnVoteBubble(x, y){
   for(let i=0;i<5;i++){
