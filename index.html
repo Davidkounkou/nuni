@@ -432,8 +432,11 @@
           <li>${ico('check')} Aucune carte ni Mobile Money requis</li>
           <li>${ico('check')} Un assistant IA vous guide à la fin</li>
         </ul>
-        <p style="font-size:11.5px; color:var(--text-faint); margin:-14px 0 18px; line-height:1.5;">Idéal pour découvrir le site avant de choisir entre Pass Consommateur et Pass Artiste.</p>
-        <button class="btn btn-ghost" style="width:100%; border-color:#7FC79A; color:#7FC79A;" onclick="startDiscovery()">Démarrer la découverte gratuite</button>
+        <p style="font-size:11.5px; color:var(--text-faint); margin:-14px 0 18px; line-height:1.5;">Un vrai compte est créé, activé 24h. Passé ce délai, vous avez 2h pour valider un vrai Pass, sinon le compte est supprimé automatiquement.</p>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-ghost" style="flex:1; border-color:#7FC79A; color:#7FC79A;" onclick="choosePlan('consumer', true)">Comme auditeur</button>
+          <button class="btn btn-ghost" style="flex:1; border-color:#7FC79A; color:#7FC79A;" onclick="choosePlan('artist', true)">Comme artiste</button>
+        </div>
       </div>
       <div class="plan-card consumer">
         <span class="plan-tag">Pass consommateur</span>

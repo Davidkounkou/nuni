@@ -281,12 +281,9 @@ function readStoredSession(){
 async function restoreSession(){
   const stored = readStoredSession();
   if(!stored || !stored.token){
-    // Personne n'est connecté : reprendre un essai Pass Découverte encore valide si la page
-    // a simplement été rechargée en plein essai, sinon l'écran de connexion classique. La
-    // tabbar mobile, la barre lecteur et Mimi restent cachées sur l'écran de connexion (avant,
-    // rien ne les cachait explicitement au tout premier chargement — elles ne l'étaient
-    // qu'après une déconnexion manuelle).
-    if(resumeDiscoveryIfActive()) return;
+    // Personne n'est connecté : s'assurer que la tabbar mobile, la barre lecteur et Mimi
+    // restent cachées sur l'écran de connexion (avant, rien ne les cachait explicitement
+    // au tout premier chargement — elles ne l'étaient qu'après une déconnexion manuelle).
     goTo('home');
     return;
   }
@@ -312,6 +309,7 @@ async function restoreSession(){
     if(currentUser.subscription_status === 'active'){
       enterApp('catalog');
       toast(`Bon retour, ${currentUser.first_name} 👋`);
+      if(currentUser.plan === 'discovery') startDiscoveryFromServer();
     } else if(currentUser.plan && currentUser.plan !== 'discovery'){
       choosePlan(currentUser.plan); // Pass déjà connu : pas besoin de re-remplir l'inscription
       toast(`Bon retour, ${currentUser.first_name} — votre Pass n'est plus actif, réactivez-le.`);
@@ -484,6 +482,7 @@ async function submitLogin(){
       closeLoginModal();
       if(currentUser.subscription_status === 'active'){
         enterApp('catalog');
+        if(currentUser.plan === 'discovery') startDiscoveryFromServer();
       } else if(currentUser.plan && currentUser.plan !== 'discovery'){
         choosePlan(currentUser.plan);
       } else {
@@ -497,8 +496,10 @@ async function submitLogin(){
   }
 }
 
-async function choosePlan(type){
+let pendingIsDiscovery = false;
+async function choosePlan(type, isDiscovery){
   pendingPlanType = type;
+  pendingIsDiscovery = !!isDiscovery;
   // Compte déjà existant et connecté : pas besoin de repasser par le formulaire d'inscription
   // complet — on redemande juste le Pass, puis on l'envoie directement sur WhatsApp payer,
   // et il n'aura plus qu'à saisir son nouveau code d'accès une fois le paiement confirmé.
@@ -513,7 +514,9 @@ async function choosePlan(type){
     document.getElementById('whatsapp-modal-overlay').classList.add('show');
     return;
   }
-  document.getElementById('rr-title').textContent = type === 'artist' ? 'Créer mon compte Artiste' : 'Créer mon compte Consommateur';
+  document.getElementById('rr-title').textContent = pendingIsDiscovery
+    ? (type === 'artist' ? 'Créer mon compte Découverte (Artiste)' : 'Créer mon compte Découverte (Auditeur)')
+    : (type === 'artist' ? 'Créer mon compte Artiste' : 'Créer mon compte Consommateur');
   document.getElementById('rr-artist-fields').style.display = type === 'artist' ? 'block' : 'none';
   document.getElementById('rr-feedback').innerHTML = '';
   document.getElementById('real-register-overlay').classList.add('show');
@@ -546,7 +549,7 @@ async function submitRealRegistration(){
   btn.disabled = true;
 
   try{
-    const res = await fetch(NUNI_API_BASE + '/api/register', {
+    const res = await fetch(NUNI_API_BASE + (pendingIsDiscovery ? '/api/register-discovery' : '/api/register'), {
       method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
     });
     const data = await res.json();
@@ -563,6 +566,20 @@ async function submitRealRegistration(){
     realUserId = data.user.id;
     currentUser = data.user;
     saveSession(data.token, data.user, true); // toujours mémorisé après une inscription fraîche
+
+    if(pendingIsDiscovery){
+      // Pass Découverte : déjà actif 24h côté serveur dès l'inscription, aucun passage par
+      // WhatsApp — accès immédiat, vraie échéance suivie via subscription_expires_at.
+      feedback.style.color = '#7FC79A';
+      feedback.textContent = '✅ Compte créé — Pass Découverte activé pour 24h !';
+      btn.disabled = false;
+      setTimeout(()=>{
+        closeRealRegister();
+        enterApp('catalog');
+        startDiscoveryFromServer();
+      }, 900);
+      return;
+    }
 
     // demande de Pass, tout de suite après la création du compte
     const subRes = await fetch(NUNI_API_BASE + '/api/subscribe/request', {
@@ -709,51 +726,51 @@ async function submitRedeem(){
      d'afficher la proposition de Pass, au lieu de laisser l'app ouverte en arrière-plan.
    Un vrai blocage à toute épreuve (résistant à la navigation privée / vidage du stockage
    local) demanderait un vrai suivi côté serveur — hors de portée d'un simple correctif ici. */
-const NUNI_DISCOVERY_KEY = 'nuni_discovery_end';
-let discoveryEndTime = null, discoveryTimer = null;
-function getCongoNow(){
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Brazzaville' }));
-}
-function startDiscovery(){
-  discoveryEndTime = getCongoNow().getTime() + 24*60*60*1000;
-  try{ localStorage.setItem(NUNI_DISCOVERY_KEY, String(discoveryEndTime)); }catch(e){}
+/* ============ PASS DÉCOUVERTE — vrai compte, vrai suivi serveur (24h + 2h de grâce) ============
+   Le compte est réellement créé et activé côté serveur (voir /api/register-discovery). Tout
+   se base sur `currentUser.subscription_expires_at`, un vrai instant serveur — plus besoin
+   de bricoler un fuseau horaire local, une comparaison d'horodatages absolus suffit et reste
+   juste quel que soit le fuseau du visiteur. Passé ce délai, un vrai palier de grâce de 2h
+   est affiché (le serveur, lui, supprimera réellement le compte après ce délai si aucun vrai
+   Pass n'a été validé — voir enforceDiscoveryDeletion côté serveur). */
+let discoveryTimer = null;
+function startDiscoveryFromServer(){
+  if(!currentUser || currentUser.plan !== 'discovery' || !currentUser.subscription_expires_at) return;
   document.getElementById('discovery-banner').style.display = 'flex';
-  toast('Pass Découverte activé — 24h pour explorer NUNI (heure de Brazzaville).');
-  enterApp('catalog');
   updateDiscoveryCountdown();
+  clearInterval(discoveryTimer);
   discoveryTimer = setInterval(updateDiscoveryCountdown, 1000);
-}
-// Reprend un essai déjà en cours si la page est rechargée avant les 24h — sinon nettoie
-// un essai expiré resté en mémoire locale.
-function resumeDiscoveryIfActive(){
-  let saved = null;
-  try{ saved = parseInt(localStorage.getItem(NUNI_DISCOVERY_KEY), 10); }catch(e){}
-  if(!saved || isNaN(saved)) return false;
-  if(saved <= getCongoNow().getTime()){ try{ localStorage.removeItem(NUNI_DISCOVERY_KEY); }catch(e){} return false; }
-  discoveryEndTime = saved;
-  document.getElementById('discovery-banner').style.display = 'flex';
-  enterApp('catalog');
-  updateDiscoveryCountdown();
-  discoveryTimer = setInterval(updateDiscoveryCountdown, 1000);
-  return true;
 }
 function updateDiscoveryCountdown(){
-  const remaining = discoveryEndTime - getCongoNow().getTime();
-  if(remaining <= 0){ endDiscovery(); return; }
-  const h = String(Math.floor(remaining/3600000)).padStart(2,'0');
-  const m = String(Math.floor((remaining%3600000)/60000)).padStart(2,'0');
-  const s = String(Math.floor((remaining%60000)/1000)).padStart(2,'0');
+  if(!currentUser || currentUser.plan !== 'discovery'){ clearInterval(discoveryTimer); return; }
+  const expiresAt = new Date(currentUser.subscription_expires_at).getTime();
+  const remaining = expiresAt - Date.now();
   const el = document.getElementById('discovery-countdown');
-  if(el) el.textContent = `${h}:${m}:${s}`;
+  if(remaining > 0){
+    const h = String(Math.floor(remaining/3600000)).padStart(2,'0');
+    const m = String(Math.floor((remaining%3600000)/60000)).padStart(2,'0');
+    const s = String(Math.floor((remaining%60000)/1000)).padStart(2,'0');
+    if(el) el.textContent = `${h}:${m}:${s}`;
+    return;
+  }
+  // Essai terminé : palier de grâce réel de 2h avant suppression définitive du compte côté serveur.
+  const graceRemaining = (expiresAt + 2*3600000) - Date.now();
+  if(graceRemaining > 0){
+    const h = String(Math.floor(graceRemaining/3600000)).padStart(2,'0');
+    const m = String(Math.floor((graceRemaining%3600000)/60000)).padStart(2,'0');
+    if(el) el.textContent = `Compte supprimé dans ${h}h${m}`;
+    document.getElementById('discovery-banner').style.background = 'rgba(200,60,60,.18)';
+    showDiscoveryGraceModal();
+  } else {
+    // Le délai de grâce est aussi passé : le compte a normalement déjà été supprimé côté
+    // serveur (la prochaine vérification /api/me ou tentative de connexion le confirmera).
+    clearInterval(discoveryTimer);
+  }
 }
-function endDiscovery(){
-  clearInterval(discoveryTimer);
-  try{ localStorage.removeItem(NUNI_DISCOVERY_KEY); }catch(e){}
-  document.getElementById('discovery-banner').style.display = 'none';
-  // Vrai blocage : on coupe l'accès à l'app (retour à l'écran de connexion/Pass) AVANT
-  // de proposer un Pass — avant, la popup se fermait et l'app entière restait utilisable.
-  stopAllPlayback();
-  goTo('plans');
+let discoveryGraceModalShown = false;
+function showDiscoveryGraceModal(){
+  if(discoveryGraceModalShown) return;
+  discoveryGraceModalShown = true;
   document.getElementById('ai-modal-overlay').classList.add('show');
 }
 function closeAiModal(){
