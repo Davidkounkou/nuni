@@ -1443,6 +1443,7 @@ html.is-playing .fp-title{ font-weight:800; }
   .artist-header{ flex-direction:column; align-items:flex-start; gap:14px; }
   .artist-avatar{ width:96px; height:96px; border-radius:24px; font-size:34px; }
   .mobile-tabbar{ display:flex; }
+  .bird-hero{ width:64px; height:64px; margin-bottom:14px; box-shadow:0 8px 20px -8px rgba(14,61,44,.5); }
   .player-bar{ bottom:64px; padding-bottom:0; }
   .demo-nav{ bottom:calc(170px + env(safe-area-inset-bottom,0)); }
   .demo-nav.no-player{ bottom:calc(20px + env(safe-area-inset-bottom,0)); }
