@@ -439,6 +439,15 @@ const NUNI_API_BASE = 'https://nuni-backend.onrender.com';
 const palette = ['#1E8449','#D4AF6A','#e11d48','#059669','#d97706','#0891b2','#be185d','#4d7c0f','#9333ea','#0284c7','#b45309'];
 let artists = [];
 
+/* Affichage adaptatif : nombre brut, K ou M selon le vrai volume — pas de "0.0M" trompeur
+   pour une plateforme jeune où les vrais chiffres sont encore petits. */
+function formatStreams(n){
+  n = n || 0;
+  if(n >= 1000000) return (n/1000000).toFixed(n>=10000000?0:1)+'M';
+  if(n >= 1000) return (n/1000).toFixed(n>=10000?0:1)+'K';
+  return String(n);
+}
+
 function initials(name){ return (name||'?').slice(0,2).toUpperCase(); }
 
 /* Vraie photo de profil quand disponible (avatar_url, uploadée sur Cloudinary comme
@@ -463,7 +472,7 @@ async function fetchTopArtists(){
     const list = (data.artists || []).map((a, i) => ({
       id: a.id,
       name: a.artist_name || a.first_name || 'Artiste',
-      streams: (a.total_streams || 0) / 1e6, // affiché en millions, comme avant
+      streams: a.total_streams || 0, // vrai nombre brut, formaté à l'affichage
       color: palette[i % palette.length],
       avatar_url: a.avatar_url,
       verified: !!a.is_verified,
@@ -513,7 +522,7 @@ function render(){
       }
       inner += avatarMarkup(a);
       inner += `<div class="name">${a.name} <span class="verified">✔</span></div>`;
-      inner += `<div class="streams">🔥 <span class="n">${a.streams.toFixed(1)}</span>M streams</div>`;
+      inner += `<div class="streams">🔥 <span class="n">${formatStreams(a.streams)}</span> streams</div>`;
       inner += `<div class="preview-tag">Aperçu dans 1s…</div>`;
       card.innerHTML = inner;
 
@@ -576,7 +585,7 @@ function openProfile(a){
     ? `${initials(a.name)}<img src="${a.avatar_url}" alt="${a.name}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:20px;" onerror="this.remove();">`
     : initials(a.name);
   document.getElementById('pName').textContent = a.name;
-  document.getElementById('pStreams').textContent = a.streams.toFixed(1)+'M';
+  document.getElementById('pStreams').textContent = formatStreams(a.streams);
   document.getElementById('pAuditeurs').textContent = (a.streams*0.15).toFixed(0)+'K';
   document.getElementById('pAbonnes').textContent = (a.streams*0.09).toFixed(0)+'K';
   overlayBg.classList.add('show');
@@ -596,7 +605,7 @@ let tickerMsgs = [];
 function buildTickerMsgs(){
   if(artists.length < 5) return [`👑 Classement NUNI en direct`];
   return [
-    `🔥 ${artists[0].name} est en tête avec ${artists[0].streams.toFixed(1)}M de streams`,
+    `🔥 ${artists[0].name} est en tête avec ${formatStreams(artists[0].streams)} de streams`,
     `🚀 ${artists[2].name} est #3 du classement`,
     `⭐ ${artists[3].name} est #4`,
     `👑 Roi du Congo : ${artists[0].name}`,
@@ -612,7 +621,7 @@ function renderTicker(){
 function renderFlux(){
   const list = document.getElementById('fluxList');
   list.innerHTML = artists.slice(0,4).map((a,i)=>{
-    return `<div class="flux-item"><div><div class="flux-name">${a.name}</div><div class="flux-meta">#${i+1} · ${a.streams.toFixed(1)}M streams</div></div></div>`;
+    return `<div class="flux-item"><div><div class="flux-name">${a.name}</div><div class="flux-meta">#${i+1} · ${formatStreams(a.streams)} streams</div></div></div>`;
   }).join('');
 }
 
@@ -624,10 +633,10 @@ function buildIaMessages(){
   const second = artists[1];
   const gap = leader.streams - second.streams;
   const msgs = [
-    `${leader.name} est en tête avec ${leader.streams.toFixed(1)}M de streams, ${gap.toFixed(1)}M devant ${second.name}.`,
+    `${leader.name} est en tête avec ${formatStreams(leader.streams)} de streams, ${formatStreams(gap)} devant ${second.name}.`,
   ];
   if(artists.length >= 4){
-    msgs.push(`${artists[3].name} occupe la 4ᵉ place avec ${artists[3].streams.toFixed(1)}M de streams cumulés.`);
+    msgs.push(`${artists[3].name} occupe la 4ᵉ place avec ${formatStreams(artists[3].streams)} de streams cumulés.`);
   }
   msgs.push(`Classement basé sur les écoutes réelles enregistrées sur NUNI, mis à jour en direct.`);
   return msgs;
@@ -842,7 +851,7 @@ async function loadArtistBadges(){
     // Barre de progression vers le prochain vrai palier
     document.getElementById('evoBar').style.width = d.milestoneProgressPct + '%';
     document.getElementById('evoMilestoneLabel').textContent =
-      `${(d.total_streams/1e6).toFixed(2)}M / ${(d.nextMilestone/1e6).toFixed(1)}M streams`;
+      `${formatStreams(d.total_streams)} / ${formatStreams(d.nextMilestone)} streams`;
 
     // Badges réellement obtenus (le reste reste grisé)
     document.querySelectorAll('.badge-item').forEach(el=>{
