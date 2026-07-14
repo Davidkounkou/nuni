@@ -1,5 +1,37 @@
 console.log('🎵 NUNI app.js chargé — version K4 (Vrai système de clips : publication, partage, vues uniques)');
 
+/* ============ POSITIONNEMENT RÉEL DE LA BULLE MIMI ============
+   Avant : la distance du bas dépendait d'une classe CSS "no-player" à synchroniser
+   manuellement à chaque endroit où la barre lecteur apparaît/disparaît — facile à
+   oublier, et ça finissait par faire flotter Mimi au milieu du contenu (ex. par-dessus
+   le texte de la bannière NUNI Radio) au lieu de rester juste au-dessus des vraies
+   barres visibles. Ici : on mesure la vraie hauteur des barres réellement affichées
+   (tabbar mobile + barre lecteur, uniquement si visibles) et on positionne Mimi
+   juste au-dessus, à chaque changement d'état — plus de désynchronisation possible. */
+function positionMimiWidget(){
+  const widget = document.getElementById('mimi-widget');
+  if(!widget) return;
+  const tabbar = document.getElementById('mobile-tabbar');
+  const playerBar = document.getElementById('player-bar');
+  let clearance = 20;
+  if(tabbar && getComputedStyle(tabbar).display !== 'none' && tabbar.offsetHeight){
+    clearance = tabbar.offsetHeight + 14;
+  }
+  if(playerBar && getComputedStyle(playerBar).display !== 'none' && playerBar.offsetHeight){
+    clearance += playerBar.offsetHeight + 14;
+  }
+  widget.style.bottom = `calc(${clearance}px + env(safe-area-inset-bottom,0))`;
+}
+window.addEventListener('load', positionMimiWidget);
+window.addEventListener('resize', positionMimiWidget);
+positionMimiWidget(); // premier calcul immédiat (le DOM est déjà prêt à ce point du script)
+// Filet de sécurité : si jamais l'affichage de la tabbar ou de la barre lecteur change
+// sans passer par un endroit connu, on se recale quand même automatiquement.
+['mobile-tabbar','player-bar'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) new MutationObserver(positionMimiWidget).observe(el, { attributes:true, attributeFilter:['style','class'] });
+});
+
 /* ============ ÉCRAN DE CHARGEMENT (SPLASH) ============
    Séquence différente si en ligne ou hors ligne (comme demandé). Durée volontairement
    courte et fixe : elle sert à donner une impression de qualité et à masquer la

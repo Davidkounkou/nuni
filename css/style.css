@@ -1184,10 +1184,16 @@ html.is-playing .fp-title{ font-weight:800; }
   display:none; position:fixed; left:0; right:0; bottom:0; z-index:32; height:64px; box-sizing:content-box;
   background:var(--bg-elev); border-top:1px solid var(--border); align-items:center; justify-content:space-around;
   padding-bottom:env(safe-area-inset-bottom,0);
+  overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
 }
-.tab-btn{ display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--text-faint); font-size:10px; padding:6px 10px; border-radius:10px; transition:color .3s; }
+.mobile-tabbar::-webkit-scrollbar{ display:none; }
+.tab-btn{ display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--text-faint); font-size:10px; padding:6px 10px; border-radius:10px; transition:color .3s; flex-shrink:0; }
 .tab-btn svg{ width:20px; height:20px; }
 .tab-btn.is-active{ color:var(--accent); }
+@media(max-width:400px){
+  .tab-btn{ padding:6px 7px; font-size:9px; }
+  .tab-btn svg{ width:18px; height:18px; }
+}
 
 .demo-nav{
   position:fixed; right:20px; bottom:calc(106px + env(safe-area-inset-bottom,0)); z-index:50; display:flex; flex-direction:column; align-items:flex-end; gap:10px;
@@ -1430,7 +1436,7 @@ html.is-playing .fp-title{ font-weight:800; }
 
 @media(max-width:680px){
   .app-main{ padding:28px 18px 86px; }
-  .app-topnav{ padding:14px 18px; }
+  .app-topnav{ padding:14px 18px; padding-top:calc(14px + env(safe-area-inset-top,0)); }
   .app-nav-links{ display:none; }
   .app-search-wrap{ display:none; }
   .dash-grid{ grid-template-columns:1fr 1fr; }
