@@ -710,8 +710,8 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 .track-card:hover .cover.pal-4{ box-shadow:0 16px 36px -10px rgba(0,0,0,0.6), 0 0 34px -6px rgba(142,99,201,0.45); }
 .track-card:hover .cover.pal-5{ box-shadow:0 16px 36px -10px rgba(0,0,0,0.6), 0 0 34px -6px rgba(142,99,201,0.55); }
 .track-card:hover .cover.pal-6{ box-shadow:0 16px 36px -10px rgba(0,0,0,0.6), 0 0 34px -6px rgba(30,132,73,0.5); }
-.track-card .ttl{ font-size:14px; font-weight:600; margin-top:12px; }
-.track-card .art{ font-size:12.5px; color:var(--text-faint); margin-top:3px; }
+.track-card .ttl{ font-size:14px; font-weight:600; margin-top:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.track-card .art{ font-size:12.5px; color:var(--text-faint); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .track-card .likes{ font-size:11px; color:var(--rose-braise); margin-top:4px; display:flex; align-items:center; gap:4px; }
 .cover-glyph{ position:absolute; inset:0; opacity:.5; }
 .imported-badge{
@@ -757,8 +757,8 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
   color:#0A0A10; border:5px solid var(--bg); box-shadow:var(--shadow);
 }
 .artist-id{ padding-bottom:18px; }
-.artist-name-row{ display:flex; align-items:center; gap:10px; }
-.artist-name-row h1{ font-family:var(--font-display); font-weight:600; font-size:clamp(26px,4vw,40px); }
+.artist-name-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.artist-name-row h1{ font-family:var(--font-display); font-weight:600; font-size:clamp(26px,4vw,40px); overflow-wrap:break-word; word-break:break-word; }
 .badge-verified{ display:flex; align-items:center; gap:5px; background:rgba(212,175,106,.18); color:var(--accent); font-size:11.5px; font-weight:600; padding:5px 11px; border-radius:999px; }
 .badge-verified svg{ width:12px; height:12px; }
 .artist-meta{ color:var(--text-dim); font-size:14px; margin-top:6px; }
@@ -767,7 +767,7 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 .stat-block .num{ font-family:var(--font-data); font-size:26px; font-weight:600; }
 .stat-block .lbl{ font-size:12px; color:var(--text-faint); margin-top:2px; }
 
-.artist-actions{ display:flex; gap:12px; padding:24px 28px 0; }
+.artist-actions{ display:flex; gap:12px; padding:24px 28px 0; flex-wrap:wrap; }
 
 .artist-bio{ max-width:680px; padding:26px 28px 0; color:var(--text-dim); line-height:1.7; font-size:14.5px; }
 
@@ -782,7 +782,7 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 .kpi-card .trend{ font-size:12px; margin-top:8px; color:#7FC79A; }
 .kpi-card.commission .val{ color:var(--rose-braise); }
 
-.dash-panel{ background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-l); padding:30px; margin-bottom:24px; }
+.dash-panel{ background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-l); padding:30px; margin-bottom:24px; overflow-x:auto; }
 
 /* ============ FOOTER APP ============ */
 .app-footer{ background:var(--bg-elev); border-top:2px solid var(--accent); margin-top:20px; padding:52px 34px 0; }
@@ -978,7 +978,7 @@ html.is-playing .full-player .fp-halo{ opacity:.58; animation-duration:6s; }
 .fp-particles{ position:absolute; inset:0; z-index:0; background-image:radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.18), transparent), radial-gradient(2px 2px at 70% 60%, rgba(255,255,255,.14), transparent), radial-gradient(1.5px 1.5px at 40% 80%, rgba(255,255,255,.12), transparent); opacity:.6; }
 .fp-topbar{ position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; padding:20px 24px; padding-top:calc(20px + env(safe-area-inset-top,0)); }
 .fp-eyebrow{ font-family:var(--font-data); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--text-faint); }
-.fp-scroll{ position:relative; z-index:2; height:calc(100vh - 70px); overflow-y:auto; padding:0 24px 40px; scroll-behavior:smooth; }
+.fp-scroll{ position:relative; z-index:2; height:calc(100vh - 70px - env(safe-area-inset-top,0)); overflow-y:auto; padding:0 24px calc(40px + env(safe-area-inset-bottom,0)); scroll-behavior:smooth; }
 .fp-hero{ max-width:480px; margin:0 auto; display:flex; flex-direction:column; align-items:center; text-align:center; padding-top:10px; }
 
 .fp-cover-wrap{ position:relative; width:248px; height:248px; margin-bottom:22px; transition:transform .2s ease-out; transform-style:preserve-3d; }
@@ -1273,10 +1273,11 @@ html.is-playing .fp-title{ font-weight:800; }
   display:flex; align-items:center; gap:12px; background:var(--bg-card); border:1px solid var(--border);
   border-radius:14px; padding:12px 14px; cursor:pointer; transition:all .25s;
 }
+.pi-item > div:last-child{ min-width:0; flex:1; }
 .pi-item:hover{ border-color:var(--accent); }
 .pi-item .cov{ width:42px; height:42px; border-radius:10px; background:var(--grad-envol); flex-shrink:0; background-size:cover; background-position:center; }
-.pi-item .t{ font-size:13.5px; font-weight:600; }
-.pi-item .s{ font-size:11.5px; color:var(--text-faint); margin-top:2px; }
+.pi-item .t{ font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pi-item .s{ font-size:11.5px; color:var(--text-faint); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pi-empty{ text-align:center; color:var(--text-faint); font-size:13px; padding:30px 10px; }
 .pi-lang-row{ display:flex; flex-direction:column; gap:10px; }
 .pi-lang-opt{
@@ -1488,7 +1489,7 @@ html.is-playing .fp-title{ font-weight:800; }
 
 /* ---- MODE PAYSAGE TÉLÉPHONE : le point le plus fragile, on adapte la mise en page en profondeur ---- */
 @media(orientation:landscape) and (max-height:500px){
-  .full-player .fp-scroll{ height:calc(100vh - 56px); padding-bottom:10px; }
+  .full-player .fp-scroll{ height:calc(100vh - 56px - env(safe-area-inset-top,0)); padding-bottom:calc(10px + env(safe-area-inset-bottom,0)); }
   .fp-hero{ flex-direction:row; align-items:center; gap:28px; text-align:left; max-width:100%; padding:0 12px; }
   .fp-cover-wrap, .fp-cover{ width:130px; height:130px; margin-bottom:0; }
   .fp-halo{ inset:-24px; }
