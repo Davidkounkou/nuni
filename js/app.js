@@ -310,6 +310,7 @@ async function restoreSession(){
       enterApp('catalog');
       toast(`Bon retour, ${currentUser.first_name} 👋`);
       if(currentUser.plan === 'discovery') startDiscoveryFromServer();
+      handleSharedTrackLink(); // reprend un lien partagé en attente, si la personne y était arrivée avant de se connecter
     } else if(currentUser.plan && currentUser.plan !== 'discovery'){
       choosePlan(currentUser.plan); // Pass déjà connu : pas besoin de re-remplir l'inscription
       toast(`Bon retour, ${currentUser.first_name} — votre Pass n'est plus actif, réactivez-le.`);
@@ -483,6 +484,7 @@ async function submitLogin(){
       if(currentUser.subscription_status === 'active'){
         enterApp('catalog');
         if(currentUser.plan === 'discovery') startDiscoveryFromServer();
+      handleSharedTrackLink(); // reprend un lien partagé en attente, si la personne y était arrivée avant de se connecter
       } else if(currentUser.plan && currentUser.plan !== 'discovery'){
         choosePlan(currentUser.plan);
       } else {
@@ -2010,6 +2012,7 @@ async function loadRealTracks(){
       applyCoverTo(document.getElementById('player-cover'), currentTrack);
       syncFullPlayer();
     }
+    handleSharedTrackLink();
   }catch(e){ /* pas grave si le serveur est indisponible, le catalogue de démo reste affiché */ }
 }
 loadRealTracks();
@@ -3748,6 +3751,87 @@ async function loadTechnicalInfo(tr){
     }
     section.style.display = '';
   }catch(e){ /* mesure impossible (CORS, réseau) : section reste cachée, jamais de valeur inventée */ }
+}
+
+/* ============ PARTAGE / TÉLÉCHARGEMENT / SIGNALEMENT — vrais comportements ============
+   Avant : les trois boutons affichaient un message de succès sans jamais rien faire de réel
+   (pas de lien copié, pas de fichier téléchargé, pas de signalement enregistré). */
+function shareCurrentTrack(){
+  const tr = currentTrack;
+  if(!tr.isReal || !tr.realId){
+    toast("Ce morceau de démonstration n'a pas de lien partageable.");
+    return;
+  }
+  const url = `${location.origin}${location.pathname}?track=${tr.realId}`;
+  if(navigator.share){
+    navigator.share({ title: tr.t + ' — ' + tr.a, text: `Écoutez "${tr.t}" de ${tr.a} sur NUNI 🕊️`, url }).catch(()=>{});
+    return;
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>{
+      toast('Lien copié — il ouvre directement ce morceau sur NUNI.');
+    }).catch(()=>{
+      toast('Voici le lien à partager : ' + url);
+    });
+  } else {
+    toast('Voici le lien à partager : ' + url);
+  }
+}
+function downloadCurrentTrack(){
+  const tr = currentTrack;
+  if(!tr.audioUrl){
+    toast('Aucun fichier audio disponible pour ce titre.');
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = tr.audioUrl;
+  a.download = (tr.t || 'nuni-son').replace(/[^\w\s-]/g,'') + '.mp3';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  toast('Téléchargement lancé — "' + tr.t + '".');
+}
+async function reportCurrentTrack(){
+  closeQuickMenu();
+  const tr = currentTrack;
+  if(!tr.isReal || !tr.realId){
+    toast("Ce morceau de démonstration ne peut pas être signalé.");
+    return;
+  }
+  const reason = prompt('Pourquoi signalez-vous ce morceau ? (facultatif)');
+  if(reason === null) return; // annulé
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/tracks/' + tr.realId + '/report', {
+      method:'POST',
+      headers: Object.assign({'Content-Type':'application/json'}, realAuthToken ? {'Authorization':'Bearer '+realAuthToken} : {}),
+      body: JSON.stringify({ reason: reason || null })
+    });
+    const data = await res.json();
+    if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+    toast('✅ ' + data.message);
+  }catch(e){ toast('❌ Impossible de contacter le serveur NUNI.'); }
+}
+
+/* Ouverture directe d'un morceau partagé (?track=ID dans l'URL) — dès que le vrai catalogue
+   est chargé, on cherche ce morceau précis et on l'ouvre en plein écran automatiquement.
+   Si la personne n'est pas encore connectée, le lien reste en attente (l'URL n'est pas
+   nettoyée) : il sera repris juste après une connexion/inscription réussie. */
+function handleSharedTrackLink(){
+  const params = new URLSearchParams(location.search);
+  const sharedId = params.get('track');
+  if(!sharedId) return;
+  if(!currentUser || currentUser.subscription_status !== 'active'){
+    toast('Connectez-vous pour écouter le morceau partagé.');
+    return;
+  }
+  const found = tracks.find(t=> t.isReal && String(t.realId) === String(sharedId));
+  if(found){
+    enterApp('catalog');
+    playTrack(found);
+    openFullPlayer();
+    // Nettoie l'URL pour éviter de rouvrir le même morceau à chaque navigation ultérieure.
+    history.replaceState(null, '', location.pathname);
+  }
 }
 
 /* ============ VISUELS DU LECTEUR : fond dégradé + halo + pochette (via NuniPalette) ============ */

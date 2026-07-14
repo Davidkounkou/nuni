@@ -1115,16 +1115,15 @@
 
       <div class="fp-actions-row">
         <button class="btn-icon" id="fp-like-btn" onclick="toggleLike(this)" aria-label="Aimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></button>
-        <button class="btn-icon" onclick="toast('Ajouté à une playlist.')" aria-label="Ajouter à une playlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13M9 9l12-2M6 18a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM18 16a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg></button>
-        <button class="btn-icon" onclick="toast('Téléchargement démarré (simulation).')" aria-label="Télécharger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg></button>
-        <button class="btn-icon" onclick="toast('Lien copié — partagez ce titre.')" aria-label="Partager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
-        <button class="btn-icon" onclick="enterApp('artist'); closeFullPlayer();" aria-label="Voir l'artiste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></button>
+        <button class="btn-icon" onclick="downloadCurrentTrack()" aria-label="Télécharger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg></button>
+        <button class="btn-icon" onclick="shareCurrentTrack()" aria-label="Partager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+        <button class="btn-icon" onclick="closeFullPlayer(); openArtistPage(currentTrack.a, currentTrack.artistId);" aria-label="Voir l'artiste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></button>
         <div class="fp-quick-menu-wrap">
           <button class="btn-icon" onclick="toggleQuickMenu(event)" aria-label="Plus d'options"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
           <div class="fp-quick-menu" id="fp-quick-menu">
             <button onclick="openFpAlbum()">💿 <span>Voir l'album</span></button>
             <button onclick="openFpCredits()">📋 <span>Afficher les crédits</span></button>
-            <button onclick="toast('Signalement envoyé — merci de votre vigilance.'); closeQuickMenu();">🚩 <span>Signaler</span></button>
+            <button onclick="reportCurrentTrack()">🚩 <span>Signaler</span></button>
           </div>
         </div>
       </div>
