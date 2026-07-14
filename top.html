@@ -878,6 +878,7 @@ async function loadArtistBadges(){
   }
 }
 loadArtistBadges();
+setInterval(loadArtistBadges, 30000); // resynchronise le panneau personnel toutes les 30s, comme le classement
 </script>
 </body>
 </html>
