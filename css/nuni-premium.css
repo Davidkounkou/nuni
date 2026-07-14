@@ -816,5 +816,5 @@ html[data-theme="light"] .player-bar{ background:rgba(255,255,255,0.55); }
 .player-bar .volume-fill{ background:linear-gradient(90deg, var(--emeraude,#1E8449), var(--or,#D4AF6A)); }
 
 @media(max-width:640px){
-  .player-bar{ left:8px; right:8px; bottom:8px; border-radius:16px; }
+  .player-bar{ left:8px; right:8px; bottom:calc(72px + env(safe-area-inset-bottom,0)); border-radius:16px; }
 }

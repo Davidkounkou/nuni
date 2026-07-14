@@ -1499,7 +1499,8 @@ html.is-playing .fp-title{ font-weight:800; }
   .fp-artist-stat-card{ display:none; }
   .fp-progress, .fp-controls, .fp-subcontrols, .fp-actions-row{ max-width:340px; margin-left:0; margin-right:0; }
   .fp-section{ margin-top:20px; }
-  .home-wrap{ padding-top:20px; padding-bottom:20px; }
+  .home-wrap{ padding-top:calc(104px + env(safe-area-inset-top,0)); padding-bottom:20px; }
+  .splash-logo{ width:120px; height:120px; }
   .bird-hero{ width:96px; height:96px; margin-bottom:10px; }
   .home-title{ font-size:clamp(26px,5vw,40px); }
   .home-actions{ margin-top:20px; }
