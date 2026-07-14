@@ -990,7 +990,7 @@ html.is-playing .fp-cover::after{ animation: fpSheen 4.5s ease-in-out infinite; 
 @keyframes fpSheen{ 0%{ transform:translateX(-120%); opacity:0; } 8%{ opacity:.5; } 45%{ transform:translateX(120%); opacity:0; } 100%{ transform:translateX(120%); opacity:0; } }
 .fp-ring{ position:absolute; inset:-16px; border-radius:50%; border:1px solid var(--border-strong); opacity:0; }
 html.is-playing .fp-ring{ opacity:1; animation:ringPulse 2.4s ease-out infinite; }
-@keyframes fpFloat{ 0%,100%{ transform:translateY(0) rotate(0deg);} 50%{ transform:translateY(-10px) rotate(.6deg);} }
+@keyframes fpFloat{ 0%,100%{ transform:translateY(0) rotate(0deg) scale(1);} 50%{ transform:translateY(-10px) rotate(.6deg) scale(1.015);} }
 @keyframes ringPulse{ 0%{ transform:scale(.92); opacity:.7;} 100%{ transform:scale(1.18); opacity:0;} }
 
 .fp-vibe-hint{ font-size:11px; color:var(--text-faint); margin-bottom:14px; cursor:pointer; }
@@ -1188,7 +1188,7 @@ html.is-playing .fp-title{ font-weight:800; }
 
 @media(max-width:560px){
   .fp-tech-grid{ grid-template-columns:1fr 1fr; }
-  .fp-cover-wrap, .fp-cover{ width:200px; height:200px; }
+  .fp-cover-wrap, .fp-cover{ width:min(280px, 74vw); height:min(280px, 74vw); }
 }
 
 /* ============ DEMO NAV (écrans) ============ */
