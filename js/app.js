@@ -281,9 +281,12 @@ function readStoredSession(){
 async function restoreSession(){
   const stored = readStoredSession();
   if(!stored || !stored.token){
-    // Personne n'est connecté : s'assurer que la tabbar mobile, la barre lecteur et Mimi
-    // restent cachées sur l'écran de connexion (avant, rien ne les cachait explicitement
-    // au tout premier chargement — elles ne l'étaient qu'après une déconnexion manuelle).
+    // Personne n'est connecté : reprendre un essai Pass Découverte encore valide si la page
+    // a simplement été rechargée en plein essai, sinon l'écran de connexion classique. La
+    // tabbar mobile, la barre lecteur et Mimi restent cachées sur l'écran de connexion (avant,
+    // rien ne les cachait explicitement au tout premier chargement — elles ne l'étaient
+    // qu'après une déconnexion manuelle).
+    if(resumeDiscoveryIfActive()) return;
     goTo('home');
     return;
   }
@@ -695,18 +698,44 @@ async function submitRedeem(){
   }
 }
 
-/* ============ PASS DÉCOUVERTE (essai gratuit 24h, heure du Congo) ============ */
+/* ============ PASS DÉCOUVERTE (essai gratuit 24h, heure du Congo) ============
+   Important : ceci reste un essai CÔTÉ NAVIGATEUR (aucun compte n'est créé). Avant, le
+   compte à rebours vivait uniquement dans une variable JS — recharger la page, ou rouvrir
+   le site plus tard, redonnait 24h fraîches à l'infini, et à l'expiration on affichait juste
+   une popup fermable sans jamais réellement bloquer l'accès au catalogue. Maintenant :
+   - l'heure de fin est mémorisée dans localStorage, donc un rechargement ne relance pas un
+     nouvel essai tant que les 24h ne sont pas vraiment passées ;
+   - à l'expiration, l'accès est réellement coupé (retour à l'écran de connexion) avant
+     d'afficher la proposition de Pass, au lieu de laisser l'app ouverte en arrière-plan.
+   Un vrai blocage à toute épreuve (résistant à la navigation privée / vidage du stockage
+   local) demanderait un vrai suivi côté serveur — hors de portée d'un simple correctif ici. */
+const NUNI_DISCOVERY_KEY = 'nuni_discovery_end';
 let discoveryEndTime = null, discoveryTimer = null;
 function getCongoNow(){
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Brazzaville' }));
 }
 function startDiscovery(){
   discoveryEndTime = getCongoNow().getTime() + 24*60*60*1000;
+  try{ localStorage.setItem(NUNI_DISCOVERY_KEY, String(discoveryEndTime)); }catch(e){}
   document.getElementById('discovery-banner').style.display = 'flex';
   toast('Pass Découverte activé — 24h pour explorer NUNI (heure de Brazzaville).');
   enterApp('catalog');
   updateDiscoveryCountdown();
   discoveryTimer = setInterval(updateDiscoveryCountdown, 1000);
+}
+// Reprend un essai déjà en cours si la page est rechargée avant les 24h — sinon nettoie
+// un essai expiré resté en mémoire locale.
+function resumeDiscoveryIfActive(){
+  let saved = null;
+  try{ saved = parseInt(localStorage.getItem(NUNI_DISCOVERY_KEY), 10); }catch(e){}
+  if(!saved || isNaN(saved)) return false;
+  if(saved <= getCongoNow().getTime()){ try{ localStorage.removeItem(NUNI_DISCOVERY_KEY); }catch(e){} return false; }
+  discoveryEndTime = saved;
+  document.getElementById('discovery-banner').style.display = 'flex';
+  enterApp('catalog');
+  updateDiscoveryCountdown();
+  discoveryTimer = setInterval(updateDiscoveryCountdown, 1000);
+  return true;
 }
 function updateDiscoveryCountdown(){
   const remaining = discoveryEndTime - getCongoNow().getTime();
@@ -719,7 +748,12 @@ function updateDiscoveryCountdown(){
 }
 function endDiscovery(){
   clearInterval(discoveryTimer);
+  try{ localStorage.removeItem(NUNI_DISCOVERY_KEY); }catch(e){}
   document.getElementById('discovery-banner').style.display = 'none';
+  // Vrai blocage : on coupe l'accès à l'app (retour à l'écran de connexion/Pass) AVANT
+  // de proposer un Pass — avant, la popup se fermait et l'app entière restait utilisable.
+  stopAllPlayback();
+  goTo('plans');
   document.getElementById('ai-modal-overlay').classList.add('show');
 }
 function closeAiModal(){
@@ -899,7 +933,8 @@ function closeLegal(){
 }
 function aiChoosePlan(type){
   closeAiModal();
-  goTo('plans');
+  goTo('plans'); // affiche d'abord l'écran des Pass en arrière-plan (cohérent visuellement)
+  choosePlan(type); // puis ouvre directement le vrai formulaire d'inscription, sans clic supplémentaire
   toast(type==='artist' ? "L'assistant NUNI vous a dirigé vers le Pass Artiste 🎤" : "L'assistant NUNI vous a dirigé vers le Pass Consommateur 🎧");
 }
 
