@@ -4767,6 +4767,72 @@ loadFeaturedArtists();
 // sur la page sans la recharger.
 setInterval(loadFeaturedArtists, 30*60*1000);
 
+// ---------- Nouveautés — page dédiée, vrais morceaux, ordre aléatoire ----------
+// Avant : "Tout voir" ne faisait rien (lien mort). Ici : un vrai overlay avec tous les
+// vrais morceaux publiés récemment (t.isReal), mélangés aléatoirement à chaque ouverture,
+// et qui se remélangent tout seuls toutes les 20s tant que la page reste ouverte.
+let newReleasesShuffleTimer = null;
+function ensureNewReleasesStyles(){
+  if(document.getElementById('newreleases-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'newreleases-styles';
+  style.textContent = `
+    #newreleases-overlay{position:fixed; inset:0; z-index:9999; background:#0A0A10; overflow-y:auto; opacity:0; transition:opacity .25s ease;}
+    #newreleases-overlay.show{opacity:1;}
+    .nr-close{position:fixed; top:18px; right:22px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:#fff; font-size:17px; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;}
+    .nr-close:hover{background:rgba(255,255,255,0.16);}
+    .nr-wrap{max-width:1080px; margin:0 auto; padding:60px 24px 80px;}
+    .nr-title{color:#fff; font-size:26px; font-weight:800; margin-bottom:6px;}
+    .nr-sub{color:#8a8a94; font-size:13px; margin-bottom:28px;}
+    .nr-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:20px;}
+    .nr-empty{color:var(--text-faint,#8a8a94); font-size:13px; text-align:center; padding:40px 0; grid-column:1/-1;}
+  `;
+  document.head.appendChild(style);
+}
+function renderNewReleasesGrid(){
+  const grid = document.getElementById('nr-grid');
+  if(!grid) return;
+  const realNew = shuffleArray(tracks.filter(t=> t.isReal));
+  grid.innerHTML = '';
+  if(!realNew.length){
+    grid.innerHTML = `<div class="nr-empty">Aucune vraie sortie publiée pour le moment — revenez bientôt !</div>`;
+    return;
+  }
+  realNew.forEach((tr,i)=>{
+    const card = trackCard(tr);
+    card.style.animationDelay = (i*0.04) + 's';
+    card.classList.add('reveal-in');
+    grid.appendChild(card);
+  });
+}
+function openNewReleasesPage(){
+  ensureNewReleasesStyles();
+  let overlay = document.getElementById('newreleases-overlay');
+  if(overlay) overlay.remove();
+  overlay = document.createElement('div');
+  overlay.id = 'newreleases-overlay';
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+  const closeOverlay = ()=>{
+    clearInterval(newReleasesShuffleTimer);
+    overlay.classList.remove('show');
+    document.body.style.overflow = '';
+    setTimeout(()=> overlay.remove(), 200);
+  };
+  overlay.innerHTML = `
+    <button class="nr-close" title="Fermer">✕</button>
+    <div class="nr-wrap">
+      <div class="nr-title">Nouveautés</div>
+      <div class="nr-sub">Les vrais morceaux publiés récemment par les artistes NUNI — l'ordre change tout seul.</div>
+      <div class="nr-grid" id="nr-grid"></div>
+    </div>`;
+  overlay.querySelector('.nr-close').onclick = closeOverlay;
+  requestAnimationFrame(()=> overlay.classList.add('show'));
+  renderNewReleasesGrid();
+  clearInterval(newReleasesShuffleTimer);
+  newReleasesShuffleTimer = setInterval(renderNewReleasesGrid, 20000);
+}
+
 /* ============ MOBILE TAB BAR ============ */
 function tabNav(view){
   enterApp(view);
