@@ -851,6 +851,60 @@ const mimiKnowledge = [
   { k: ['sape', 'sapeur', 'sapeurs'],
     a: "La <b>SAPE</b> (Société des Ambianceurs et des Personnes Élégantes) est un mouvement vestimentaire né à Brazzaville puis Kinshasa, intimement lié à la musique congolaise — Papa Wemba en était l'une des grandes figures." },
 ];
+/* ============ MIMI — vraies réponses connectées aux données de la personne ============
+   Avant : uniquement des réponses génériques par mot-clé, jamais reliées à de vraies
+   données. Ici : un petit lot de questions fréquentes reçoit une vraie réponse construite à
+   partir des vraies données déjà chargées (favoris, XP/niveau, historique) — pas de fausse
+   promesse de "tout comprendre", juste ce qui est honnêtement réalisable sans vraie IA. */
+function mimiRealDataAnswer(q){
+  if(/mes favoris|ma playlist favor/.test(q)){
+    if(!favoritesPlaylist.length) return "Vous n'avez pas encore de favoris — appuyez sur ❤️ sur un morceau pour commencer votre playlist Favoris.";
+    const list = favoritesPlaylist.slice(0,5).map(t=>`« ${t.t} » — ${t.a}`).join('<br>');
+    return `Voici vos ${favoritesPlaylist.length > 5 ? '5 derniers' : ''} favoris :<br>${list}`;
+  }
+  if(/mon (niveau|xp)|combien.*(xp|niveau)/.test(q)){
+    if(!currentUser || !realAuthToken) return "Connectez-vous pour que je puisse vous dire votre niveau et votre XP réels.";
+    return "Je vérifie votre vraie progression…"; // remplacé juste après par le vrai chiffre (appel réel ci-dessous)
+  }
+  if(/dernier son|dernier morceau|qu'est-ce que j'ai écouté|derniere ecoute|dernière écoute/.test(q)){
+    if(!listeningHistory.length) return "Vous n'avez encore rien écouté durant cette session.";
+    const last = listeningHistory[0].track;
+    return `Le dernier morceau que vous avez écouté : « ${last.t} » — ${last.a}.`;
+  }
+  if(/mon historique|qu'ai-je écouté/.test(q)){
+    if(!listeningHistory.length) return "Rien dans votre historique pour l'instant durant cette session.";
+    const seen = new Set(); const recent = [];
+    for(const h of listeningHistory){ if(!seen.has(h.track.t)){ seen.add(h.track.t); recent.push(h.track); if(recent.length>=5) break; } }
+    return `Vos ${recent.length} derniers morceaux écoutés :<br>` + recent.map(t=>`« ${t.t} » — ${t.a}`).join('<br>');
+  }
+  if(/artistes.*(je suis|suivis)|qui.*(je suis|suis-je)/.test(q)){
+    if(!currentUser || !realAuthToken) return "Connectez-vous pour que je puisse vous dire quels artistes vous suivez.";
+    return "Je vérifie vos vrais abonnements…"; // remplacé juste après par le vrai appel réseau
+  }
+  return null;
+}
+async function mimiAnswerFollowingLive(botMsgEl){
+  if(!realAuthToken) return;
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/me/following', { headers:{ 'Authorization':'Bearer '+realAuthToken } });
+    if(!res.ok) return;
+    const data = await res.json();
+    const list = data.following || [];
+    if(!list.length){ botMsgEl.textContent = "Vous ne suivez encore aucun artiste — allez faire un tour sur une page artiste et appuyez sur « Suivre » !"; return; }
+    const names = list.slice(0,8).map(a=> (a.artist_name || a.first_name) + (a.is_verified ? ' ✅' : '')).join('<br>');
+    botMsgEl.innerHTML = `Vous suivez ${list.length} artiste${list.length>1?'s':''} :<br>${names}`;
+  }catch(e){ /* pas grave, le message d'attente reste affiché */ }
+}
+async function mimiAnswerXpLive(botMsgEl){
+  if(!realAuthToken) return;
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/me/progress', { headers:{ 'Authorization':'Bearer '+realAuthToken } });
+    if(!res.ok) return;
+    const data = await res.json();
+    botMsgEl.innerHTML = `Vous êtes niveau ${data.level} — ${data.name}, avec ${data.xp} XP${data.xp_for_next ? ' (encore ' + (data.xp_for_next - data.xp) + ' XP avant le niveau suivant)' : ' (niveau max atteint !)'} 🎉`;
+  }catch(e){ /* pas grave, le message d'attente reste affiché */ }
+}
+
 function mimiAsk(question){
   const box = document.getElementById('mimi-messages');
   const userMsg = document.createElement('div');
@@ -860,14 +914,19 @@ function mimiAsk(question){
   mimiFace('thinking');
 
   const q = question.toLowerCase();
-  let answer = "Pour un début, je peux discuter simplement avec vous, vous recommander de la musique selon votre humeur, ou vous parler de nos grandes figures historiques (Grand Kallé, Franco, Tabu Ley, Papa Wemba...) et des styles comme la rumba ou le soukous 🕊️";
-  let found = false;
-  for(const entry of mimiConversation){
-    if(entry.k.some(word => q.includes(word))){ answer = entry.a; found = true; break; }
+  const realAnswer = mimiRealDataAnswer(q);
+  let answer = realAnswer || pickVariedFallback();
+  let found = !!realAnswer;
+  const isLiveXpQuery = /mon (niveau|xp)|combien.*(xp|niveau)/.test(q) && currentUser && realAuthToken;
+  const isLiveFollowingQuery = /artistes.*(je suis|suivis)|qui.*(je suis|suis-je)/.test(q) && currentUser && realAuthToken;
+  if(!found){
+    for(const entry of mimiConversation){
+      if(entry.k.some(word => q.includes(word))){ answer = pickVariant(entry); found = true; break; }
+    }
   }
   if(!found){
     for(const entry of mimiKnowledge){
-      if(entry.k.some(word => q.includes(word))){ answer = entry.a; break; }
+      if(entry.k.some(word => q.includes(word))){ answer = pickVariant(entry); break; }
     }
   }
   setTimeout(()=>{
@@ -880,9 +939,25 @@ function mimiAsk(question){
     const plainLen = answer.replace(/<[^>]+>/g,'').length;
     const talkMs = Math.min(3200, Math.max(700, plainLen*35));
     setTimeout(()=>mimiFace('idle'), talkMs);
+    if(isLiveXpQuery) mimiAnswerXpLive(botMsg);
+    if(isLiveFollowingQuery) mimiAnswerFollowingLive(botMsg);
   }, 450);
   box.scrollTop = box.scrollHeight;
 }
+// Petites variantes pour ne pas répéter mot pour mot la même phrase — entry.a reste la
+// réponse principale, entry.alt (facultatif) ajoute 1-2 autres façons de le dire.
+function pickVariant(entry){
+  if(entry.alt && entry.alt.length && Math.random() < 0.5){
+    return entry.alt[Math.floor(Math.random()*entry.alt.length)];
+  }
+  return entry.a;
+}
+const mimiFallbacks = [
+  "Pour un début, je peux discuter simplement avec vous, vous recommander de la musique selon votre humeur, ou vous parler de nos grandes figures historiques (Grand Kallé, Franco, Tabu Ley, Papa Wemba...) et des styles comme la rumba ou le soukous 🕊️",
+  "Je ne suis pas sûre d'avoir compris — mais je peux vous parler de la musique congolaise, vous recommander un style selon votre humeur, ou vous dire vos favoris/dernier morceau écouté si vous êtes connecté(e).",
+  "Essayez de me demander « mes favoris », « mon niveau », ou parlez-moi de la rumba, du soukous, ou d'un artiste comme Franco ou Papa Wemba 🎶",
+];
+function pickVariedFallback(){ return mimiFallbacks[Math.floor(Math.random()*mimiFallbacks.length)]; }
 function mimiSend(){
   const input = document.getElementById('mimi-input');
   const q = input.value.trim();
