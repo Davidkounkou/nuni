@@ -383,6 +383,17 @@ function logoutUser(){
   realUserId = null;
   currentUser = null;
   demoOverride = false;
+  // Remise à zéro complète de tout ce qui vit en mémoire côté compte — sans ça, le compte
+  // suivant qui se connecte sur ce même appareil pouvait hériter des favoris, de
+  // l'historique d'écoute, ou déclencher une fausse animation "passage de niveau" si son
+  // vrai niveau se trouvait être plus haut que le dernier niveau vu pour le compte précédent.
+  lastKnownLevel = null;
+  favoritesPlaylist = [];
+  listeningHistory = [];
+  const badgesRow = document.getElementById('badges-row');
+  if(badgesRow) badgesRow.innerHTML = '';
+  const levelWrap = document.getElementById('level-progress-wrap');
+  if(levelWrap) levelWrap.innerHTML = '';
   closeProfileMenu();
   applyAccountType();
   goTo('home');
