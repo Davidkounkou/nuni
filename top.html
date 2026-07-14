@@ -470,7 +470,8 @@ async function fetchTopArtists(){
     if(!res.ok) throw new Error('Réponse serveur invalide');
     const data = await res.json();
     const list = (data.artists || []).map((a, i) => ({
-      id: a.id,
+      id: a.id, // identifiant unique en base (sert de clé, pas d'affichage)
+      position: i + 1, // vraie position dans le classement (1er, 2e, 3e...)
       name: a.artist_name || a.first_name || 'Artiste',
       streams: a.total_streams || 0, // vrai nombre brut, formaté à l'affichage
       color: palette[i % palette.length],
@@ -514,7 +515,7 @@ function render(){
       if(tierIndex===0){
         inner += `<div class="aurora"></div><div class="crown">👑</div>`;
       }
-      inner += `<div class="rank-chip">${a.id+1}</div>`;
+      inner += `<div class="rank-chip">${a.position}</div>`;
       inner += `<div class="trail"></div>`;
       if(tierIndex===0){
         inner += `<div class="gold-particles">${Array.from({length:8}).map((_,i)=>`<span class="gp" style="left:${10+i*10}%;animation-delay:${(i*0.4).toFixed(2)}s"></span>`).join('')}</div>`;
