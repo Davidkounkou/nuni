@@ -1824,20 +1824,16 @@ function renderTopCongo(){
 }
 fillShelf('shelf-new', tracks.slice(0,5));
 renderTopCongo();
-fillShelf('shelf-playlists', tracks.slice(2,7));
 fillShelf('shelf-artist', tracks.filter(t=>t.a==='Bibi Mwana').concat(tracks.slice(0,4)));
 fillShelf('shelf-artist-trending', [...tracks.filter(t=>t.a==='Bibi Mwana')].sort((a,b)=> b.likes - a.likes));
 fillShelf('shelf-artist-albums', tracks.filter(t=>t.a==='Bibi Mwana'));
 
 /* ============ VRAIS MORCEAUX PUBLIÉS (serveur NUNI) ============ */
 function refreshMainShelves(){
-  ['shelf-new','shelf-playlists'].forEach(id=>{
-    const row = document.getElementById(id);
-    if(row) row.innerHTML = '';
-  });
+  const row = document.getElementById('shelf-new');
+  if(row) row.innerHTML = '';
   fillShelf('shelf-new', tracks.slice(0,5));
   renderTopCongo();
-  fillShelf('shelf-playlists', tracks.slice(2,7));
 }
 /* ============ RESYNCHRONISATION DES LIKES APRÈS CONNEXION ============
    Avant : les cœurs (Favoris) vivaient uniquement dans un tableau en mémoire du navigateur,
@@ -4861,6 +4857,120 @@ function openGenreCategoryPage(genreName){
     ()=> tracks.filter(t=> t.isReal && t.genre === genreName),
     false,
   );
+}
+
+// ---------- Playlists NUNI — vraies playlists curées par l'équipe (admin.html) ----------
+function mapPlaylistTrack(r){
+  return {
+    t: r.title, a: r.artist_name || r.first_name || 'Artiste NUNI', p: 'pal-1',
+    genre: r.genre || 'Afro', streams: String(r.streams || 0), likes: r.likes || 0,
+    cover: r.cover_url || null, audioUrl: r.audio_url || null, isReal: true,
+    releaseType: r.release_type || 'Single', realId: r.id, artistId: r.artist_id,
+    verified: !!r.is_verified,
+  };
+}
+function playlistCard(p){
+  const card = document.createElement('div');
+  card.className = 'track-card';
+  const coverInner = p.cover_url
+    ? `<div class="cover" style="background-image:url(${p.cover_url}); background-size:cover; background-position:center;">`
+    : `<div class="cover pal-1"><div class="cover-glyph pal-pattern"></div>`;
+  card.innerHTML = `
+    ${coverInner}
+      <div class="play-fab"><svg viewBox="0 0 24 24" class="play-fab-icon"><path d="M8 5v14l11-7z"/></svg></div>
+    </div>
+    <div class="ttl">${p.title}</div>
+    <div class="art">NUNI</div>
+    <div class="likes">🎵 <span>${p.track_count}</span> titre${p.track_count>1?'s':''}</div>`;
+  card.onclick = ()=> openPlaylistPage(p.id);
+  return card;
+}
+async function loadPlaylistsShelf(){
+  const row = document.getElementById('shelf-playlists');
+  if(!row) return;
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/playlists');
+    const data = await res.json();
+    const list = data.playlists || [];
+    row.innerHTML = '';
+    if(!list.length){
+      row.innerHTML = `<p style="font-size:12.5px; color:var(--text-faint);">Aucune playlist NUNI publiée pour le moment.</p>`;
+      return;
+    }
+    list.forEach(p=> row.appendChild(playlistCard(p)));
+  }catch(e){
+    row.innerHTML = `<p style="font-size:12.5px; color:var(--text-faint);">Playlists momentanément indisponibles.</p>`;
+  }
+}
+loadPlaylistsShelf();
+
+async function openPlaylistPage(id){
+  ensureCategoryPageStyles();
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/playlists/' + id);
+    const data = await res.json();
+    if(!res.ok){ toast('❌ ' + (data.error || 'Playlist introuvable.')); return; }
+    const mapped = (data.tracks || []).map(mapPlaylistTrack);
+    openCategoryPage(
+      data.playlist.title,
+      data.playlist.description || 'Une sélection curée par l\'équipe NUNI.',
+      ()=> mapped,
+      false,
+    );
+  }catch(e){ toast('❌ Impossible de contacter le serveur NUNI.'); }
+}
+
+function ensurePlaylistsPageStyles(){
+  if(document.getElementById('allplaylists-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'allplaylists-styles';
+  style.textContent = `
+    #allplaylists-overlay{position:fixed; inset:0; z-index:9999; background:#0A0A10; overflow-y:auto; opacity:0; transition:opacity .25s ease;}
+    #allplaylists-overlay.show{opacity:1;}
+    .apl-close{position:fixed; top:18px; right:22px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:#fff; font-size:17px; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;}
+    .apl-close:hover{background:rgba(255,255,255,0.16);}
+    .apl-wrap{max-width:1080px; margin:0 auto; padding:60px 24px 80px;}
+    .apl-title{color:#fff; font-size:26px; font-weight:800; margin-bottom:6px;}
+    .apl-sub{color:#8a8a94; font-size:13px; margin-bottom:28px;}
+    .apl-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:20px;}
+    .apl-empty{color:var(--text-faint,#8a8a94); font-size:13px; text-align:center; padding:40px 0; grid-column:1/-1;}
+  `;
+  document.head.appendChild(style);
+}
+async function openAllPlaylistsPage(){
+  ensurePlaylistsPageStyles();
+  let overlay = document.getElementById('allplaylists-overlay');
+  if(overlay) overlay.remove();
+  overlay = document.createElement('div');
+  overlay.id = 'allplaylists-overlay';
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+  const closeOverlay = ()=>{ overlay.classList.remove('show'); document.body.style.overflow = ''; setTimeout(()=> overlay.remove(), 200); };
+  overlay.innerHTML = `
+    <button class="apl-close" title="Fermer">✕</button>
+    <div class="apl-wrap">
+      <div class="apl-title">Playlists NUNI</div>
+      <div class="apl-sub">Nos sélections, curées à la main pour partager nos goûts avec vous.</div>
+      <div class="apl-grid" id="apl-grid">Chargement…</div>
+    </div>`;
+  overlay.querySelector('.apl-close').onclick = closeOverlay;
+  requestAnimationFrame(()=> overlay.classList.add('show'));
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/playlists');
+    const data = await res.json();
+    const grid = document.getElementById('apl-grid');
+    if(!grid) return;
+    const list = data.playlists || [];
+    grid.innerHTML = '';
+    if(!list.length){
+      grid.innerHTML = `<div class="apl-empty">Aucune playlist NUNI publiée pour le moment.</div>`;
+      return;
+    }
+    list.forEach(p=> grid.appendChild(playlistCard(p)));
+  }catch(e){
+    const grid = document.getElementById('apl-grid');
+    if(grid) grid.innerHTML = `<div class="apl-empty">Playlists momentanément indisponibles.</div>`;
+  }
 }
 
 /* ============ MOBILE TAB BAR ============ */
