@@ -5792,3 +5792,77 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+
+/* ============ NOTIFICATIONS PUSH RÉELLES (Web Push) ============
+   Fonctionne sur Android Chrome directement, et sur iPhone à partir d'iOS 16.4 — mais
+   Apple impose que le site soit d'abord "ajouté à l'écran d'accueil" (installé en PWA) : un
+   simple onglet Safari ne peut pas recevoir de vraies notifications push, c'est une
+   restriction du système, pas de NUNI. On le précise honnêtement si la demande échoue pour
+   cette raison plutôt que de laisser croire à un bug. */
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+async function updatePushToggleLabel(){
+  const label = document.getElementById('push-toggle-label');
+  if(!label) return;
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+    label.textContent = 'Notifications push non supportées sur ce navigateur';
+    return;
+  }
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    label.textContent = sub ? 'Désactiver les notifications push' : 'Activer les notifications push';
+  }catch(e){ /* pas grave, le libellé par défaut reste affiché */ }
+}
+async function togglePushNotifications(){
+  if(!realAuthToken){ toast('Connectez-vous pour activer les notifications push.'); return; }
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+    toast('Notifications push non supportées sur ce navigateur.');
+    return;
+  }
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    if(existing){
+      await fetch(NUNI_API_BASE + '/api/push/unsubscribe', {
+        method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+realAuthToken},
+        body: JSON.stringify({ endpoint: existing.endpoint })
+      });
+      await existing.unsubscribe();
+      toast('Notifications push désactivées.');
+      updatePushToggleLabel();
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted'){
+      toast(permission === 'denied'
+        ? "Notifications bloquées — autorisez-les dans les réglages du navigateur pour NUNI."
+        : "Notifications non activées.");
+      return;
+    }
+    const keyRes = await fetch(NUNI_API_BASE + '/api/push/public-key');
+    const { publicKey } = await keyRes.json();
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+    const subJson = sub.toJSON();
+    await fetch(NUNI_API_BASE + '/api/push/subscribe', {
+      method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+realAuthToken},
+      body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys })
+    });
+    toast('✅ Notifications push activées — vous recevrez les vraies alertes NUNI même app fermée.');
+    updatePushToggleLabel();
+  }catch(e){
+    console.error(e);
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    toast(isIOS
+      ? "Sur iPhone, ajoutez d'abord NUNI à l'écran d'accueil (Partager → Sur l'écran d'accueil) avant d'activer les notifications push — c'est une exigence d'Apple."
+      : "Impossible d'activer les notifications push pour l'instant.");
+  }
+}
+if('serviceWorker' in navigator) navigator.serviceWorker.ready.then(updatePushToggleLabel).catch(()=>{});

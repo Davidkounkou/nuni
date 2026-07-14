@@ -10,6 +10,38 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// ---------- Notifications push réelles ----------
+// Reçoit le vrai contenu envoyé par le serveur NUNI (titre, texte, lien) et affiche une vraie
+// notification système — pas de contenu inventé ici, tout vient du payload envoyé par le
+// serveur (voir sendPushToUser dans server.js).
+self.addEventListener('push', (event) => {
+  let data = { title: 'NUNI', body: 'Vous avez une nouvelle notification.', url: '/' };
+  try { if (event.data) data = Object.assign(data, event.data.json()); } catch (e) { /* payload non-JSON, on garde les valeurs par défaut */ }
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: 'assets/icons/icon-192.png',
+      badge: 'assets/icons/icon-96.png',
+      data: { url: data.url || '/' },
+    })
+  );
+});
+
+// Tap sur la notification : ramène sur un onglet NUNI déjà ouvert s'il y en a un, sinon en
+// ouvre un nouveau — jamais une simple fermeture silencieuse sans action.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+    })
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
