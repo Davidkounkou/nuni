@@ -2084,6 +2084,16 @@ realAudio.addEventListener('timeupdate', ()=>{
   }
 });
 realAudio.addEventListener('ended', ()=>{ if(usingRealAudio) handleTrackEnded(); });
+// Avant : le bouton passait instantanément sur "Pause" dès le clic, même si le son mettait
+// encore plusieurs secondes à charger (taille du fichier, qualité de connexion) — donnant
+// l'impression que la lecture avait planté. Ici : un vrai état "chargement" honnête pendant
+// que ça mémorise réellement, remplacé par l'icône pause seulement quand le son démarre pour de vrai.
+function setPlayerLoadingState(isLoading){
+  document.querySelectorAll('.play-pause, .fp-play').forEach(el=> el.classList.toggle('is-buffering', isLoading));
+}
+realAudio.addEventListener('waiting', ()=>{ if(usingRealAudio && playing) setPlayerLoadingState(true); });
+realAudio.addEventListener('playing', ()=> setPlayerLoadingState(false));
+realAudio.addEventListener('canplay', ()=> setPlayerLoadingState(false));
 realAudio.addEventListener('error', ()=>{
   if(!usingRealAudio) return;
   const codes = {1:'lecture annulée', 2:'erreur réseau', 3:'fichier illisible (décodage impossible)', 4:'format audio non supporté par le navigateur'};
@@ -2347,7 +2357,13 @@ function togglePlay(){
   const fpIcon = document.getElementById('fp-play-icon');
   if(fpIcon) fpIcon.innerHTML = iconPath;
   if(usingRealAudio){
-    if(playing) realAudio.play().catch(err => toast('Le navigateur a bloqué la lecture automatique — appuyez sur ▶ pour lancer le son manuellement.')); else realAudio.pause();
+    if(playing){
+      setPlayerLoadingState(true);
+      realAudio.play().then(()=> setPlayerLoadingState(false)).catch(err => { setPlayerLoadingState(false); toast('Le navigateur a bloqué la lecture automatique — appuyez sur ▶ pour lancer le son manuellement.'); });
+    } else {
+      setPlayerLoadingState(false);
+      realAudio.pause();
+    }
     return;
   }
   if(playing){

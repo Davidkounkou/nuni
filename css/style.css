@@ -370,6 +370,11 @@ html.is-playing .eq i:nth-child(3){ animation-delay:.3s; }
   display:none; position:absolute; top:calc(100% + 10px); right:0; width:300px; background:var(--bg-elev); border:1px solid var(--border);
   border-radius:16px; box-shadow:var(--shadow); z-index:40; overflow:hidden;
 }
+@media(max-width:520px){
+  .notif-panel{
+    position:fixed; top:calc(64px + env(safe-area-inset-top,0)); right:14px; left:14px; width:auto;
+  }
+}
 .notif-panel.open{ display:block; }
 .notif-head{ padding:14px 16px; font-size:13px; font-weight:600; border-bottom:1px solid var(--border); }
 .notif-item{ display:flex; gap:11px; padding:13px 16px; border-bottom:1px solid var(--border); }
@@ -940,8 +945,16 @@ html.is-playing .player-track-info .t{ font-weight:700; }
 .player-controls svg{ width:17px; height:17px; }
 .play-pause{
   width:36px; height:36px; border-radius:50%; background:var(--text); color:var(--bg); display:flex; align-items:center; justify-content:center;
+  position:relative;
 }
 .play-pause svg{ width:14px; height:14px; }
+.play-pause.is-buffering svg, .fp-play.is-buffering svg{ opacity:.35; }
+.play-pause.is-buffering::after, .fp-play.is-buffering::after{
+  content:''; position:absolute; inset:6px; border-radius:50%;
+  border:2px solid transparent; border-top-color:currentColor; opacity:.65;
+  animation:nuniBufferSpin .7s linear infinite;
+}
+@keyframes nuniBufferSpin{ to{ transform:rotate(360deg); } }
 .progress-row{ display:flex; align-items:center; gap:10px; width:100%; }
 .progress-row .time{ font-family:var(--font-data); font-size:10.5px; color:var(--text-faint); width:34px; }
 .progress-track{ flex:1; height:4px; border-radius:4px; background:var(--bg-card); position:relative; cursor:pointer; transition:height .15s ease; }
@@ -1063,7 +1076,7 @@ html.is-playing .fp-title{ font-weight:800; }
 .fp-progress{ width:100%; max-width:420px; margin-bottom:14px; }
 .fp-controls{ gap:26px; margin-bottom:18px; }
 .fp-controls button:not(.fp-play){ padding:12px; margin:-12px; border-radius:50%; }
-.fp-play{ width:56px; height:56px; }
+.fp-play{ width:56px; height:56px; position:relative; }
 .fp-play svg{ width:20px; height:20px; }
 .fp-subcontrols{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:24px; }
 .fp-pill{ font-size:12px; padding:8px 14px; border-radius:999px; background:var(--bg-card); border:1px solid var(--border); color:var(--text-dim); transition:all .3s; }
