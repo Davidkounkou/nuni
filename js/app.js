@@ -1129,13 +1129,35 @@ function enterApp(view){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
-// Avant : ce bouton laissait n'importe quel visiteur (sans compte, sans payer) accéder
-// directement au catalogue, au dashboard ou à une page artiste — un vrai contournement du
-// système de Pass, resté actif depuis le développement initial. Désactivé : seul un vrai
-// compte avec un Pass actif peut désormais accéder à ces écrans (via connexion normale).
-function jumpDemo(screen){
-  toast('Aperçu désactivé — connectez-vous ou créez un compte pour accéder à NUNI.');
+/* ============ AIDE / SUPPORT ============
+   Bouton flottant repurposé (avant : contournait le système de Pass, désormais désactivé
+   ailleurs) — vrai contact WhatsApp/email déjà utilisés partout ailleurs sur NUNI, et une
+   vraie FAQ honnête, sans rien inventer sur le fonctionnement réel de la plateforme. */
+function openHelpWhatsApp(){
   document.getElementById('demo-menu').classList.remove('open');
+  window.open('https://wa.me/242068951600', '_blank');
+}
+function openHelpEmail(){
+  document.getElementById('demo-menu').classList.remove('open');
+  window.location.href = 'mailto:nunimisiki@gmail.com';
+}
+const faqContent = `
+  <h4>Comment fonctionne le Pass Découverte ?</h4>
+  <p>Un vrai compte est créé, activé gratuitement 24h. Passé ce délai, vous avez 2h pour choisir un vrai Pass avant que le compte ne soit automatiquement supprimé.</p>
+  <h4>Comment les artistes sont-ils payés ?</h4>
+  <p>Chaque écoute réelle (Pass Consommateur payant) génère un revenu, dont 75% revient directement à l'artiste. Les écoutes en Pass Découverte ne comptent pas tant qu'aucun Pass payant n'est validé.</p>
+  <h4>Comment payer mon Pass ?</h4>
+  <p>Après avoir choisi un Pass, vous êtes redirigé vers WhatsApp pour finaliser le paiement (Mobile Money). Un code d'accès vous est ensuite envoyé par email pour activer votre compte.</p>
+  <h4>J'ai un problème avec mon compte</h4>
+  <p>Contactez-nous directement sur WhatsApp ou par email — nous répondons sous 48h.</p>
+  <h4>Comment supprimer mon compte ?</h4>
+  <p>Contactez le support par WhatsApp ou email, en précisant l'adresse email de votre compte NUNI.</p>
+`;
+function openHelpFaq(){
+  document.getElementById('demo-menu').classList.remove('open');
+  document.getElementById('legal-title').textContent = 'Questions fréquentes';
+  document.getElementById('legal-body').innerHTML = faqContent;
+  document.getElementById('legal-modal-overlay').classList.add('show');
 }
 document.getElementById('demo-toggle').addEventListener('click', ()=>{
   document.getElementById('demo-menu').classList.toggle('open');

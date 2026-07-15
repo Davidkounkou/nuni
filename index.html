@@ -1287,16 +1287,13 @@
 <!-- ============ DEMO NAV ============ -->
 <div class="demo-nav" id="demo-nav">
   <div class="demo-menu" id="demo-menu">
-    <div class="label">Aperçu des écrans</div>
-    <button data-screen="home" onclick="jumpDemo('home')">① Accueil</button>
-    <button data-screen="plans" onclick="jumpDemo('plans')">② Sélection de Pass</button>
-    <button data-screen="catalog" onclick="jumpDemo('catalog')">③ Catalogue</button>
-    <button data-screen="artist" onclick="jumpDemo('artist')">④ Lecteur (en bas)</button>
-    <button data-screen="artist" onclick="jumpDemo('artist')">⑤ Page Artiste</button>
-    <button data-screen="dashboard" onclick="jumpDemo('dashboard')">⑥ Dashboard</button>
+    <div class="label">Besoin d'aide ?</div>
+    <button onclick="openHelpWhatsApp()">💬 WhatsApp</button>
+    <button onclick="openHelpEmail()">📧 Email</button>
+    <button onclick="openHelpFaq()">❓ Questions fréquentes</button>
   </div>
-  <button class="demo-toggle" id="demo-toggle" aria-label="Navigation démo">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  <button class="demo-toggle" id="demo-toggle" aria-label="Aide et support">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>
   </button>
 </div>
 

@@ -1231,8 +1231,7 @@ html.is-playing .fp-title{ font-weight:800; }
 }
 
 .demo-nav{
-  display:none; /* désactivé — contournait le système de Pass, en attente d'un nouveau rôle */
-  position:fixed; right:20px; bottom:calc(106px + env(safe-area-inset-bottom,0)); z-index:50; flex-direction:column; align-items:flex-end; gap:10px;
+  position:fixed; right:20px; bottom:calc(106px + env(safe-area-inset-bottom,0)); z-index:50; display:flex; flex-direction:column; align-items:flex-end; gap:10px;
 }
 .demo-nav.no-player{ bottom:calc(20px + env(safe-area-inset-bottom,0)); }
 .demo-toggle{
