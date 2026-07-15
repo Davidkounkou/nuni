@@ -4236,7 +4236,19 @@ document.addEventListener('click', (e)=>{
   if(kind === 'user'){ tr = userQueue[idx]; if(tr) userQueue.splice(idx,1); }
   else if(kind === 'next'){ tr = fpQueueUpcoming[idx]; }
   else { tr = fpQueueHistoryList[idx]; }
-  if(tr) playTrack(tr);
+  if(tr){
+    playTrack(tr);
+    // Avant : le panneau file d'attente restait ouvert après la sélection — le changement
+    // de pochette/titre se produisait bien, mais hors de vue en haut du lecteur, donnant
+    // l'impression que rien ne s'était passé. On referme le panneau et on remonte pour que
+    // le vrai changement soit immédiatement visible.
+    const queuePanel = document.getElementById('fp-queue');
+    const queueBtn = document.getElementById('queue-toggle-btn');
+    if(queuePanel) queuePanel.classList.remove('open');
+    if(queueBtn) queueBtn.classList.remove('is-active');
+    const scrollEl = document.getElementById('fp-scroll');
+    if(scrollEl) scrollEl.scrollTo({ top:0, behavior:'smooth' });
+  }
 });
 function toggleQueuePanel(){
   const panel = document.getElementById('fp-queue');
