@@ -2664,6 +2664,49 @@ function setupFpProgressScrub(){
   track.addEventListener('touchcancel', endDrag);
 }
 setupFpProgressScrub();
+
+/* ============ GLISSER VERS LE BAS POUR FERMER (lecteur plein écran) ============
+   Avant : aucun geste tactile n'existait pour fermer le lecteur — seul le bouton flèche
+   fonctionnait. Attaché uniquement à la barre du haut (fp-topbar), jamais à la zone de
+   contenu défilante, pour ne jamais entrer en conflit avec le scroll normal (paroles, file
+   d'attente, bio...). Suit vraiment le doigt en temps réel, avec un vrai seuil de fermeture
+   basé sur la distance ET la vitesse du geste (comme sur une vraie app native). */
+function setupFullPlayerSwipeToClose(){
+  const topbar = document.querySelector('.fp-topbar');
+  const panel = document.getElementById('full-player');
+  if(!topbar || !panel) return;
+  let startY = 0, startTime = 0, dragging = false;
+  topbar.addEventListener('touchstart', (e)=>{
+    startY = e.touches[0].clientY;
+    startTime = Date.now();
+    dragging = true;
+    panel.style.transition = 'none';
+  }, { passive:true });
+  topbar.addEventListener('touchmove', (e)=>{
+    if(!dragging) return;
+    const dy = Math.max(0, e.touches[0].clientY - startY); // ne suit que vers le bas
+    panel.style.transform = `translateY(${dy}px)`;
+    panel.style.opacity = String(Math.max(0.4, 1 - dy / 600));
+  }, { passive:true });
+  const endSwipe = (e)=>{
+    if(!dragging) return;
+    dragging = false;
+    panel.style.transition = '';
+    const endY = (e.changedTouches && e.changedTouches[0].clientY) || startY;
+    const dy = endY - startY;
+    const elapsedMs = Date.now() - startTime;
+    const velocity = dy / Math.max(elapsedMs, 1); // px/ms
+    // Fermeture si glissé assez loin (>110px) OU geste rapide vers le bas (flick), même court.
+    if(dy > 110 || (dy > 30 && velocity > 0.5)){
+      closeFullPlayer();
+    }
+    panel.style.transform = '';
+    panel.style.opacity = '';
+  };
+  topbar.addEventListener('touchend', endSwipe);
+  topbar.addEventListener('touchcancel', endSwipe);
+}
+setupFullPlayerSwipeToClose();
 let userVolume = 1; // vrai niveau voulu par la personne — jamais écrasé par le ducking du DJ
 try{
   const savedVolume = parseFloat(localStorage.getItem('nuni_volume'));
