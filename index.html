@@ -500,7 +500,7 @@
     </div>
     <div class="app-search-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" id="app-search-input" placeholder="Titres, artistes, albums…" oninput="runSearch(this.value)" onfocus="document.getElementById('search-results').classList.add('open')">
+      <input type="text" id="app-search-input" placeholder="Titres, artistes, albums…" oninput="debouncedRunSearch(this.value)" onfocus="document.getElementById('search-results').classList.add('open')">
       <div class="search-results" id="search-results"></div>
     </div>
     <div class="app-topnav-right">

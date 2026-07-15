@@ -5581,6 +5581,16 @@ function tabNav(view){
 }
 
 /* ============ RECHERCHE ============ */
+/* Avant : runSearch() se relançait à CHAQUE frappe, reconstruisant tout le HTML des
+   résultats immédiatement — coûteux sur mobile, et ça ne fera qu'empirer à mesure que le
+   catalogue grossit. Un vrai anti-rebond de 200ms attend une petite pause dans la saisie
+   avant de vraiment chercher, sans changer le comportement ressenti (toujours quasi
+   instantané), juste sans reconstruire le DOM à chaque lettre tapée. */
+let searchDebounceTimer = null;
+function debouncedRunSearch(q){
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(()=> runSearch(q), 200);
+}
 function runSearch(q){
   const box = document.getElementById('search-results');
   box.classList.add('open');
