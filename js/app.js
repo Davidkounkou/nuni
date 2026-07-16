@@ -1924,7 +1924,7 @@ function openAlbumView(tr){
 
   overlay.querySelector('.av-close').onclick = closeOverlay;
   overlay.querySelector('.av-artist-link').onclick = ()=>{ closeOverlay(); openArtistPage(tr.a, tr.artistId); };
-  overlay.querySelector('.av-play-all').onclick = ()=>{ playTrack(albumTracks[0]); closeOverlay(); };
+  overlay.querySelector('.av-play-all').onclick = ()=>{ playTrack(albumTracks[0]); refreshAvRowHighlights(); };
   overlay.querySelector('.av-shuffle-btn').onclick = ()=>{
     const randomTrack = albumTracks[Math.floor(Math.random()*albumTracks.length)];
     playTrack(randomTrack);
@@ -1961,6 +1961,18 @@ function openAlbumView(tr){
   };
 
   const list = overlay.querySelector('.av-list-panel');
+  function refreshAvRowHighlights(){
+    list.querySelectorAll('.av-row').forEach((row, i)=>{
+      const t = albumTracks[i];
+      const isPlaying = playing && currentTrack && currentTrack.t === t.t;
+      row.classList.toggle('is-playing', isPlaying);
+      const numEl = row.querySelector('.av-row-num');
+      if(numEl) numEl.textContent = isPlaying ? '♪' : i+1;
+      const existingDot = row.querySelector('.av-row-dot');
+      if(isPlaying && !existingDot) row.querySelector('.av-row-title').insertAdjacentHTML('afterend', '<span class="av-row-dot"></span>');
+      if(!isPlaying && existingDot) existingDot.remove();
+    });
+  }
   albumTracks.forEach((t, i)=>{
     const row = document.createElement('div');
     const isPlaying = playing && currentTrack && currentTrack.t === t.t;
@@ -1971,7 +1983,7 @@ function openAlbumView(tr){
       <div class="av-row-title">${t.t}</div>
       ${isPlaying ? '<span class="av-row-dot"></span>' : ''}
       <div class="av-row-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>`;
-    row.onclick = ()=>{ playTrack(t); closeOverlay(); };
+    row.onclick = ()=>{ playTrack(t); refreshAvRowHighlights(); };
     list.appendChild(row);
   });
 
@@ -5817,6 +5829,16 @@ async function openPlaylistPage(id){
     overlay.querySelector('.plv-meta').textContent = `${data.playlist.description || 'Sélection curée par l\'équipe NUNI'} · ${mapped.length} titre${mapped.length>1?'s':''}`;
 
     const list = overlay.querySelector('.plv-list');
+    function refreshPlvRowHighlights(){
+      list.querySelectorAll('.plv-row').forEach((row, i)=>{
+        const tr = mapped[i];
+        const isPlaying = playing && currentTrack && currentTrack.t === tr.t;
+        row.classList.toggle('is-playing', isPlaying);
+        const existingDot = row.querySelector('.plv-row-dot');
+        if(isPlaying && !existingDot) row.insertAdjacentHTML('beforeend', '<span class="plv-row-dot"></span>');
+        if(!isPlaying && existingDot) existingDot.remove();
+      });
+    }
     if(!mapped.length){
       list.innerHTML = `<div class="plv-empty">Cette playlist ne contient aucun morceau pour le moment.</div>`;
     } else {
@@ -5829,11 +5851,11 @@ async function openPlaylistPage(id){
           <div class="plv-row-thumb" style="${tr.cover ? `background-image:url(${tr.cover})` : ''}"></div>
           <div class="plv-row-info"><div class="plv-row-title">${tr.t}</div><div class="plv-row-artist">${tr.a}</div></div>
           ${isPlaying ? '<span class="plv-row-dot"></span>' : ''}`;
-        row.onclick = ()=>{ playTrack(tr); closeOverlay(); };
+        row.onclick = ()=>{ playTrack(tr); refreshPlvRowHighlights(); };
         list.appendChild(row);
       });
     }
-    overlay.querySelector('.plv-play-all').onclick = ()=>{ if(mapped.length){ playTrack(mapped[0]); closeOverlay(); } };
+    overlay.querySelector('.plv-play-all').onclick = ()=>{ if(mapped.length){ playTrack(mapped[0]); refreshPlvRowHighlights(); } };
     overlay.querySelector('.plv-shuffle-btn').onclick = ()=>{
       if(!mapped.length) return;
       const random = mapped[Math.floor(Math.random()*mapped.length)];
