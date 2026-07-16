@@ -5587,20 +5587,95 @@ async function loadPlaylistsShelf(){
 }
 loadPlaylistsShelf();
 
+function ensurePlaylistViewStyles(){
+  if(document.getElementById('plv-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'plv-styles';
+  style.textContent = `
+    #plv-overlay{position:fixed; inset:0; z-index:9999; background:#0A0A10; overflow-y:auto; opacity:0; transition:opacity .25s ease;}
+    #plv-overlay.show{opacity:1;}
+    .plv-close{position:fixed; top:calc(18px + env(safe-area-inset-top,0)); right:22px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:#fff; font-size:17px; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;}
+    .plv-close:hover{background:rgba(255,255,255,0.16);}
+    .plv-hero{position:relative; padding:56px 24px 32px; overflow:hidden;}
+    .plv-hero-bg{position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(38px) saturate(1.3) brightness(0.5); transform:scale(1.15);}
+    .plv-hero-fade{position:absolute; inset:0; background:linear-gradient(180deg, rgba(10,10,16,0.15) 0%, #0A0A10 92%);}
+    .plv-hero-content{position:relative; max-width:760px; margin:0 auto; display:flex; gap:24px; align-items:flex-end; flex-wrap:wrap;}
+    .plv-cover{width:168px; height:168px; border-radius:14px; background-size:cover; background-position:center; flex-shrink:0; box-shadow:0 18px 40px rgba(0,0,0,0.55); border:1px solid rgba(212,175,106,0.25);}
+    .plv-badge{display:inline-flex; align-items:center; gap:6px; background:rgba(212,175,106,0.16); backdrop-filter:blur(6px); color:#E8C77E; border:1px solid rgba(212,175,106,0.45); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; border-radius:20px; margin-bottom:10px;}
+    .plv-title{color:#fff; font-size:28px; font-weight:800; line-height:1.15; margin:0 0 8px;}
+    .plv-meta{color:#B9C2B4; font-size:13.5px;}
+    .plv-actions{max-width:760px; margin:22px auto 0; padding:0 24px; display:flex; gap:14px; align-items:center;}
+    .plv-play-all{background:linear-gradient(135deg,#1E8449,#0E3D2C); color:#F3E6C8; border:1px solid rgba(212,175,106,0.5); font-weight:700; font-size:14px; padding:12px 26px; border-radius:30px; cursor:pointer; display:flex; align-items:center; gap:8px;}
+    .plv-shuffle-btn{width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); color:#EDEDED; cursor:pointer; display:flex; align-items:center; justify-content:center;}
+    .plv-shuffle-btn:hover{background:rgba(212,175,106,0.18); color:#D4AF6A;}
+    .plv-list{max-width:760px; margin:26px auto 80px; padding:0 24px;}
+    .plv-row{display:flex; align-items:center; gap:14px; padding:10px; border-radius:10px; cursor:pointer; transition:background .15s ease; opacity:0; animation:plvRowIn .35s ease forwards;}
+    @keyframes plvRowIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+    .plv-row:hover{background:rgba(212,175,106,0.07);}
+    .plv-row-thumb{width:48px; height:48px; border-radius:8px; background-size:cover; background-position:center; flex-shrink:0; background-color:#1a1a22;}
+    .plv-row-info{flex:1; min-width:0;}
+    .plv-row-title{color:#EDEDED; font-size:14.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .plv-row-artist{color:#8a8a94; font-size:12.5px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .plv-row.is-playing{background:linear-gradient(90deg, rgba(212,175,106,0.16), transparent);}
+    .plv-row.is-playing .plv-row-title{color:#F3E6C8;}
+    .plv-row-dot{width:6px; height:6px; border-radius:50%; background:#D4AF6A; box-shadow:0 0 6px #D4AF6A; flex-shrink:0;}
+    .plv-empty{color:#8a8a94; font-size:13px; text-align:center; padding:40px 0;}
+  `;
+  document.head.appendChild(style);
+}
 async function openPlaylistPage(id){
-  ensureCategoryPageStyles();
+  ensurePlaylistViewStyles();
+  let overlay = document.getElementById('plv-overlay');
+  if(overlay) overlay.remove();
+  overlay = document.createElement('div');
+  overlay.id = 'plv-overlay';
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+  const closeOverlay = ()=>{ overlay.classList.remove('show'); document.body.style.overflow = ''; setTimeout(()=> overlay.remove(), 200); };
+  overlay.innerHTML = `<button class="plv-close" title="Fermer">✕</button><div class="plv-hero"><div class="plv-hero-fade"></div><div class="plv-hero-content"><div class="plv-cover"></div><div><span class="plv-badge">🎧 Playlist NUNI</span><h2 class="plv-title">Chargement…</h2><div class="plv-meta"></div></div></div></div><div class="plv-actions"><button class="plv-play-all"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Tout écouter</button><button class="plv-shuffle-btn" title="Aléatoire"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h3.5a3 3 0 0 1 2.4 1.2L15 15a3 3 0 0 0 2.4 1.2H20M4 18h3.5a3 3 0 0 0 2.4-1.2l1-1.3M16.5 6H20M16.5 18H20"/><path d="M18 3l3 3-3 3M18 15l3 3-3 3"/></svg></button></div><div class="plv-list"></div>`;
+  overlay.querySelector('.plv-close').onclick = closeOverlay;
+  requestAnimationFrame(()=> overlay.classList.add('show'));
+  attachSwipeDownToClose(overlay, closeOverlay);
+
   try{
     const res = await fetch(NUNI_API_BASE + '/api/playlists/' + id);
     const data = await res.json();
-    if(!res.ok){ toast('❌ ' + (data.error || 'Playlist introuvable.')); return; }
+    if(!res.ok){ toast('❌ ' + (data.error || 'Playlist introuvable.')); closeOverlay(); return; }
     const mapped = (data.tracks || []).map(mapPlaylistTrack);
-    openCategoryPage(
-      data.playlist.title,
-      data.playlist.description || 'Une sélection curée par l\'équipe NUNI.',
-      ()=> mapped,
-      false,
-    );
-  }catch(e){ toast('❌ Impossible de contacter le serveur NUNI.'); }
+    const cover = mapped.find(t=>t.cover) ? mapped.find(t=>t.cover).cover : null;
+
+    const heroBg = overlay.querySelector('.plv-hero');
+    if(cover) heroBg.insertAdjacentHTML('afterbegin', `<div class="plv-hero-bg" style="background-image:url(${cover})"></div>`);
+    overlay.querySelector('.plv-cover').style.backgroundImage = cover ? `url(${cover})` : 'linear-gradient(135deg,#1E8449,#0E3D2C)';
+    overlay.querySelector('.plv-title').textContent = data.playlist.title;
+    overlay.querySelector('.plv-meta').textContent = `${data.playlist.description || 'Sélection curée par l\'équipe NUNI'} · ${mapped.length} titre${mapped.length>1?'s':''}`;
+
+    const list = overlay.querySelector('.plv-list');
+    if(!mapped.length){
+      list.innerHTML = `<div class="plv-empty">Cette playlist ne contient aucun morceau pour le moment.</div>`;
+    } else {
+      mapped.forEach((tr,i)=>{
+        const row = document.createElement('div');
+        const isPlaying = playing && currentTrack && currentTrack.t === tr.t;
+        row.className = 'plv-row' + (isPlaying ? ' is-playing' : '');
+        row.style.animationDelay = (i*0.04) + 's';
+        row.innerHTML = `
+          <div class="plv-row-thumb" style="${tr.cover ? `background-image:url(${tr.cover})` : ''}"></div>
+          <div class="plv-row-info"><div class="plv-row-title">${tr.t}</div><div class="plv-row-artist">${tr.a}</div></div>
+          ${isPlaying ? '<span class="plv-row-dot"></span>' : ''}`;
+        row.onclick = ()=>{ playTrack(tr); closeOverlay(); };
+        list.appendChild(row);
+      });
+    }
+    overlay.querySelector('.plv-play-all').onclick = ()=>{ if(mapped.length){ playTrack(mapped[0]); closeOverlay(); } };
+    overlay.querySelector('.plv-shuffle-btn').onclick = ()=>{
+      if(!mapped.length) return;
+      const random = mapped[Math.floor(Math.random()*mapped.length)];
+      playTrack(random);
+      closeOverlay();
+      toast('Lecture aléatoire de « ' + data.playlist.title + ' »');
+    };
+  }catch(e){ toast('❌ Impossible de contacter le serveur NUNI.'); closeOverlay(); }
 }
 
 function ensurePlaylistsPageStyles(){
