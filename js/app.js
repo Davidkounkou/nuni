@@ -1764,15 +1764,11 @@ async function submitAdRequest(){
 function seedAds(){
   const row = document.getElementById('ads-row');
   if(!row) return;
-  [
-    {n:'Café Mboka', l:'wa.me/2426xxxxxxx', d:'Café torréfié artisanal — livraison à Brazzaville', g:'linear-gradient(135deg,#7A4E2A,#D4AF6A)', ic:'☕'},
-    {n:'Kin Fashion Store', l:'wa.me/2436xxxxxxx', d:'Vêtements &amp; accessoires — nouvelle collection', g:'linear-gradient(135deg,#C0392B,#6E45A8)', ic:'👗'},
-    {n:'Studio Ébène', l:'wa.me/2426xxxxxxx', d:'Location de studio d\'enregistrement à Kinshasa', g:'linear-gradient(135deg,#1E8449,#141A38)', ic:'🎙️'},
-  ].forEach(a=>{
-    const card = adCard(a.n, a.l, null, a.d, a.ic);
-    card.querySelector('.ad-img').style.background = a.g;
-    row.appendChild(card);
-  });
+  // Avant : 3 publicités entièrement inventées ("Café Mboka", "Kin Fashion Store", "Studio
+  // Ébène"), avec de faux liens WhatsApp, affichées en permanence peu importe si un vrai
+  // annonceur avait payé quoi que ce soit. Aucun vrai système de gestion des pubs approuvées
+  // n'existe encore côté admin — un état vide honnête vaut mieux qu'inventer des annonces.
+  row.innerHTML = `<p style="font-size:12.5px; color:var(--text-faint); padding:8px 0;">Aucune annonce sponsorisée pour le moment — proposez la vôtre ci-dessous !</p>`;
 }
 seedAds();
 
