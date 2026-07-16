@@ -1112,6 +1112,7 @@ function enterApp(view){
     loadArtistStats();
     loadDashboardChart();
     loadPaymentsHistory();
+    applySavedRevenuePrivacy();
     const momoInput = document.getElementById('momo-number-input');
     if(momoInput) momoInput.value = (currentUser && currentUser.momo_number) || '';
     const avatarDash = document.getElementById('avatar-preview-dash');
@@ -2238,6 +2239,10 @@ setInterval(loadUpcomingReleases, 60000); // se resynchronise avec les vraies da
 /* ============ PLAYER LOGIC ============ */
 let progressTimer, elapsed = 0, duration = 204; // 3:24
 let playbackSpeed = 1, qualityIndex = 1;
+try{
+  const savedSpeed = parseFloat(localStorage.getItem('nuni_playback_speed'));
+  if([1, 1.25, 1.5, 0.75].includes(savedSpeed)) playbackSpeed = savedSpeed;
+}catch(e){ /* pas bloquant */ }
 let usingRealAudio = false;
 const realAudio = new Audio();
 realAudio.volume = 1;
@@ -2554,6 +2559,7 @@ function playTrack(tr){
   if(usingRealAudio){
     realAudio.src = tr.audioUrl;
     realAudio.currentTime = 0;
+    realAudio.playbackRate = playbackSpeed; // le navigateur remet sinon la vitesse à 1× à chaque nouveau morceau
   }
   updateProgress();
   syncFullPlayer();
@@ -2962,12 +2968,26 @@ function toggleFollow(btn){
   btn.textContent = following ? 'Suivre' : 'Suivi ✓';
   toast(following ? 'Vous ne suivez plus Bibi Mwana.' : 'Vous suivez maintenant Bibi Mwana.');
 }
+/* Avant : ce réglage n'était jamais mémorisé — un artiste qui masquait ses revenus pour la
+   confidentialité les revoyait affichés au rechargement suivant, sans s'en rendre compte.
+   Plus sensible qu'un simple confort (vraie question de vie privée), donc mémorisé comme
+   thème/langue/volume. */
+const NUNI_REVENUE_PRIVACY_KEY = 'nuni_revenue_hidden';
 function toggleRevenuePrivacy(){
   const btn = document.getElementById('privacy-toggle');
   const hidden = !btn.classList.contains('is-on');
   btn.classList.toggle('is-on', hidden);
   document.querySelectorAll('.revenue-figure .val').forEach(v=> v.classList.toggle('is-hidden', hidden));
+  try{ localStorage.setItem(NUNI_REVENUE_PRIVACY_KEY, hidden ? '1' : '0'); }catch(e){ /* pas bloquant */ }
   toast(hidden ? 'Vos revenus sont désormais masqués sur votre profil public.' : 'Vos revenus sont de nouveau visibles.');
+}
+function applySavedRevenuePrivacy(){
+  let hidden = false;
+  try{ hidden = localStorage.getItem(NUNI_REVENUE_PRIVACY_KEY) === '1'; }catch(e){}
+  const btn = document.getElementById('privacy-toggle');
+  if(!btn) return;
+  btn.classList.toggle('is-on', hidden);
+  document.querySelectorAll('.revenue-figure .val').forEach(v=> v.classList.toggle('is-hidden', hidden));
 }
 
 /* ============ IMPORT FICHIERS (musique & photos) ============ */
@@ -3900,16 +3920,28 @@ function toggleImmersion(){
   document.getElementById('full-player').classList.toggle('immersion', immersionOn);
   if(immersionOn && !lyricsOpen) toggleLyrics();
 }
+/* Avant : ce bouton changeait seulement son étiquette (1× → 1.25× → 1.5× → 0.75×) sans
+   jamais toucher à la vraie vitesse de lecture du son — 100% décoratif. Maintenant : appliqué
+   réellement à l'élément audio, et mémorisé comme les autres préférences. */
+const NUNI_SPEED_KEY = 'nuni_playback_speed';
+function applyPlaybackSpeed(){
+  if(usingRealAudio) realAudio.playbackRate = playbackSpeed;
+  const btn = document.getElementById('speed-btn');
+  if(btn) btn.textContent = playbackSpeed + '×';
+}
 function cycleSpeed(){
   const speeds = [1, 1.25, 1.5, 0.75];
   playbackSpeed = speeds[(speeds.indexOf(playbackSpeed)+1) % speeds.length];
-  document.getElementById('speed-btn').textContent = playbackSpeed + '×';
+  applyPlaybackSpeed();
+  try{ localStorage.setItem(NUNI_SPEED_KEY, String(playbackSpeed)); }catch(e){ /* pas bloquant */ }
   toast('Vitesse de lecture : ' + playbackSpeed + '×');
 }
 function cycleQuality(){
-  qualityIndex = (qualityIndex+1) % qualities.length;
-  document.getElementById('quality-btn').textContent = qualities[qualityIndex];
-  toast('Qualité audio : ' + qualities[qualityIndex]);
+  // Avant : ce bouton faisait défiler "Standard / Haute qualité / Sans perte" comme s'il
+  // changeait vraiment la qualité du flux — en réalité un seul fichier existe par morceau
+  // (celui envoyé par l'artiste), aucune vraie bascule de qualité n'existe côté serveur.
+  // Plutôt que de continuer à simuler un changement qui ne fait rien, on le dit clairement.
+  toast("NUNI diffuse toujours le fichier original envoyé par l'artiste — pas de palier de qualité à changer pour l'instant.");
 }
 function toggleLyrics(){
   lyricsOpen = !lyricsOpen;
@@ -4008,6 +4040,7 @@ function renderFanWall(){
 }
 let fpLastTextKey = null;
 function syncFullPlayer(){
+  applyPlaybackSpeed(); // le libellé du bouton doit refléter la vraie vitesse mémorisée, pas juste "1×" par défaut
   const tr = currentTrack;
   const textKey = tr.t + '::' + tr.a;
   const textSwap = document.getElementById('fp-text-swap');
