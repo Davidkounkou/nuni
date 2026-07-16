@@ -1714,7 +1714,7 @@ function updateAdPrice(){
   const selected = document.querySelector('input[name="ad-duration"]:checked').value;
   document.getElementById('ad-submit-price').textContent = adDurationPrices[selected].price.toLocaleString('fr-FR') + ' FCFA';
 }
-function submitAdRequest(){
+async function submitAdRequest(){
   const name = document.getElementById('ad-name').value.trim();
   const desc = document.getElementById('ad-desc').value.trim();
   const link = document.getElementById('ad-link').value.trim();
@@ -1733,23 +1733,33 @@ function submitAdRequest(){
   document.getElementById('ad-preview-link').textContent = link;
 
   status.className = 'ai-screen-status checking';
-  status.innerHTML = '🤖 Assistant IA — vérification de votre demande en cours…';
+  status.innerHTML = 'Envoi de votre demande…';
 
-  setTimeout(()=>{
-    // simulation d'une vérification IA basique (authenticité / contenu autorisé)
-    const suspicious = /(arme|drogue|escroquerie|contrefaçon)/i.test(name + ' ' + desc);
-    if(suspicious){
+  // Avant : ce formulaire simulait un envoi (faux délai "vérification IA" + faux message
+  // de succès) — aucun email n'était jamais réellement transmis, ce qui explique qu'aucune
+  // demande n'arrivait jamais dans la vraie boîte mail NUNI. Ici : vrai appel serveur,
+  // qui envoie un vrai email via le même système que les codes d'accès.
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/ads/request', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name, desc, link, contact, duration: selected })
+    });
+    const data = await res.json();
+    if(!res.ok){
       status.className = 'ai-screen-status flag';
-      status.innerHTML = '🚫 Cette demande ne respecte pas les conditions de NUNI Ads et ne sera pas transmise.';
-      toast('Demande refusée par la vérification automatique.');
+      status.innerHTML = '⚠️ ' + (data.error || "La demande n'a pas pu être envoyée.");
+      toast('❌ ' + (data.error || 'Erreur.'));
       return;
     }
     status.className = 'ai-screen-status ok';
-    status.innerHTML = `✅ Demande conforme — transmise pour validation à <b>nunimisiki@gmail.com</b><br>
+    status.innerHTML = `✅ Demande envoyée — reçue à <b>nunimisiki@gmail.com</b><br>
       <span style="color:var(--text-faint)">Formule : ${duration.label} · ${duration.price.toLocaleString('fr-FR')} FCFA · Contact : ${contact}</span><br>
       <span style="color:var(--text-faint)">Vous recevrez une réponse par WhatsApp/email avant toute mise en ligne.</span>`;
-    toast(`Demande envoyée à nunimisiki@gmail.com pour validation (${duration.label} — ${duration.price} FCFA).`);
-  }, 1400);
+    toast(`Demande envoyée pour validation (${duration.label} — ${duration.price} FCFA).`);
+  }catch(e){
+    status.className = 'ai-screen-status flag';
+    status.innerHTML = '❌ Impossible de contacter le serveur NUNI — réessayez.';
+  }
 }
 function seedAds(){
   const row = document.getElementById('ads-row');
