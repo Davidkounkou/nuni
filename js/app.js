@@ -5932,7 +5932,14 @@ applyAccountType();
 sessionRestorePromise = restoreSession();
 
 /* ============ CONTENU DU MENU PROFIL ============ */
+/* Avant : le choix de langue n'était jamais mémorisé — repartait toujours en français au
+   rechargement, même après l'avoir explicitement changé. */
+const NUNI_LANG_KEY = 'nuni_language';
 let currentLanguage = 'fr';
+try{
+  const savedLang = localStorage.getItem(NUNI_LANG_KEY);
+  if(savedLang) currentLanguage = savedLang;
+}catch(e){ /* pas bloquant */ }
 const languages = [
   { code:'fr', name:'Français', native:'Français' },
   { code:'ln', name:'Lingala', native:'Lingála' },
@@ -5947,6 +5954,7 @@ const homeTranslations = {
 };
 function applyLanguage(code){
   currentLanguage = code;
+  try{ localStorage.setItem(NUNI_LANG_KEY, code); }catch(e){ /* pas bloquant */ }
   const t = homeTranslations[code];
   const eyebrow = document.querySelector('.home-eyebrow');
   const titleEm = document.querySelector('.home-title em');
@@ -5957,6 +5965,7 @@ function applyLanguage(code){
     titleEm.textContent = t.em;
   }
 }
+if(currentLanguage !== 'fr') applyLanguage(currentLanguage); // ré-applique la vraie langue mémorisée dès le chargement
 
 function openProfileInfo(type){
   const icon = document.getElementById('profile-info-icon');
