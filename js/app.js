@@ -5583,10 +5583,26 @@ function ensureCategoryPageStyles(){
     #categorypage-overlay.show{opacity:1;}
     .cp-close{position:fixed; top:calc(18px + env(safe-area-inset-top,0)); right:22px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:#fff; font-size:17px; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;}
     .cp-close:hover{background:rgba(255,255,255,0.16);}
-    .cp-wrap{max-width:1080px; margin:0 auto; padding:60px 24px 80px;}
-    .cp-title{color:#fff; font-size:26px; font-weight:800; margin-bottom:6px;}
-    .cp-sub{color:#8a8a94; font-size:13px; margin-bottom:28px;}
-    .cp-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:20px;}
+    /* Décor "âme de NUNI" — de vraies pochettes d'artistes dérivent lentement en fond,
+       plutôt qu'un simple aplat noir. Halo or/émeraude par-dessus, comme le reste du site. */
+    .cp-hero{position:relative; height:220px; overflow:hidden; margin-bottom:8px;}
+    .cp-hero-covers{position:absolute; inset:-10% -10%; filter:blur(2px) brightness(0.55) saturate(1.15);}
+    .cp-hero-cover{position:absolute; width:120px; height:120px; border-radius:16px; background-size:cover; background-position:center; opacity:.85; animation:cpCoverDrift linear infinite;}
+    @keyframes cpCoverDrift{
+      0%{ transform:translate(0,0) rotate(0deg); }
+      50%{ transform:translate(24px,-16px) rotate(3deg); }
+      100%{ transform:translate(0,0) rotate(0deg); }
+    }
+    .cp-hero-fade{position:absolute; inset:0; background:
+      radial-gradient(60% 70% at 20% 20%, rgba(30,132,73,.28), transparent 60%),
+      radial-gradient(55% 65% at 85% 30%, rgba(212,175,106,.22), transparent 60%),
+      linear-gradient(180deg, rgba(10,10,16,.35) 0%, #0A0A10 92%);
+    }
+    .cp-hero-content{position:absolute; left:0; right:0; bottom:22px; padding:0 24px; max-width:1080px; margin:0 auto;}
+    .cp-wrap{max-width:1080px; margin:0 auto; padding:0 24px 80px;}
+    .cp-title{color:#fff; font-family:var(--font-display,inherit); font-size:34px; font-weight:800; line-height:1.1; margin-bottom:6px; text-shadow:0 4px 20px rgba(0,0,0,.5);}
+    .cp-sub{color:#D8CDB0; font-size:13.5px; text-shadow:0 2px 10px rgba(0,0,0,.5);}
+    .cp-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:20px; padding-top:28px;}
     .cp-empty{color:var(--text-faint,#8a8a94); font-size:13px; text-align:center; padding:40px 0; grid-column:1/-1;}
   `;
   document.head.appendChild(style);
@@ -5606,6 +5622,29 @@ function renderCategoryGrid(getList, shuffle){
     card.classList.add('reveal-in');
     grid.appendChild(card);
   });
+  // De vraies pochettes (parmi celles réellement affichées) dérivent lentement dans le
+  // décor de l'en-tête — jamais d'image inventée, seulement ce qui existe vraiment ici.
+  const coversLayer = document.getElementById('cp-hero-covers');
+  if(coversLayer && !coversLayer.dataset.filled){
+    const withCover = list.filter(t=>t.cover);
+    if(withCover.length){
+      coversLayer.dataset.filled = '1';
+      const positions = [
+        {top:'-4%', left:'4%'}, {top:'8%', left:'42%'}, {top:'-6%', left:'78%'},
+        {top:'40%', left:'18%'}, {top:'35%', left:'62%'}, {top:'44%', left:'90%'},
+      ];
+      for(let i=0; i<Math.min(6, positions.length); i++){
+        const tr = withCover[i % withCover.length];
+        const d = document.createElement('div');
+        d.className = 'cp-hero-cover';
+        d.style.backgroundImage = `url(${tr.cover})`;
+        d.style.top = positions[i].top; d.style.left = positions[i].left;
+        d.style.animationDuration = (14 + i*3) + 's';
+        d.style.animationDelay = (i*-2) + 's';
+        coversLayer.appendChild(d);
+      }
+    }
+  }
 }
 /* getList : fonction qui retourne le tableau de vrais morceaux au moment de l'appel (pas
    un tableau figé) — permet de rester à jour si de nouveaux morceaux arrivent pendant que
@@ -5626,9 +5665,15 @@ function openCategoryPage(title, description, getList, shuffle){
   };
   overlay.innerHTML = `
     <button class="cp-close" title="Fermer">✕</button>
+    <div class="cp-hero">
+      <div class="cp-hero-covers" id="cp-hero-covers"></div>
+      <div class="cp-hero-fade"></div>
+      <div class="cp-hero-content">
+        <div class="cp-title">${title}</div>
+        <div class="cp-sub">${description}</div>
+      </div>
+    </div>
     <div class="cp-wrap">
-      <div class="cp-title">${title}</div>
-      <div class="cp-sub">${description}</div>
       <div class="cp-grid" id="cp-grid"></div>
     </div>`;
   overlay.querySelector('.cp-close').onclick = closeOverlay;
@@ -5641,7 +5686,7 @@ function openCategoryPage(title, description, getList, shuffle){
 function openNewReleasesPage(){
   openCategoryPage(
     'Nouveautés',
-    "Les vrais morceaux publiés récemment par les artistes NUNI — l'ordre change tout seul.",
+    "Ce que le Congo écoute en ce moment — de vrais sons, fraîchement publiés par de vrais artistes NUNI.",
     ()=> tracks.filter(t=> t.isReal),
     true,
   );
