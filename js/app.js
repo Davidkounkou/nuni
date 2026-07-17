@@ -5893,11 +5893,13 @@ function ensurePlaylistViewStyles(){
     #plv-overlay.show{opacity:1;}
     .plv-close{position:fixed; top:calc(18px + env(safe-area-inset-top,0)); right:22px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:#fff; font-size:17px; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;}
     .plv-close:hover{background:rgba(255,255,255,0.16);}
-    .plv-hero{position:relative; padding:56px 24px 32px; overflow:hidden;}
+    .plv-hero{position:relative; min-height:420px; display:flex; align-items:flex-end; padding:56px 24px 40px; overflow:hidden;}
     .plv-hero-bg{position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(38px) saturate(1.3) brightness(0.5); transform:scale(1.15);}
     .plv-hero-fade{position:absolute; inset:0; background:linear-gradient(180deg, rgba(10,10,16,0.15) 0%, #0A0A10 92%);}
     .plv-hero-content{position:relative; max-width:760px; margin:0 auto; display:flex; gap:24px; align-items:flex-end; flex-wrap:wrap;}
-    .plv-cover{width:168px; height:168px; border-radius:18px; background-size:cover; background-position:center; flex-shrink:0; box-shadow:0 18px 40px rgba(0,0,0,0.55); border:1px solid rgba(212,175,106,0.25);}
+    .plv-cover{width:220px; height:220px; border-radius:20px; background-size:cover; background-position:center; flex-shrink:0; box-shadow:0 24px 60px rgba(0,0,0,0.6); border:1px solid rgba(212,175,106,0.3); animation:plvCoverFloat 6s ease-in-out infinite;}
+    @keyframes plvCoverFloat{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-8px);} }
+    @media(max-width:560px){ .plv-cover{ width:150px; height:150px; } }
     .plv-badge{display:inline-flex; align-items:center; gap:6px; background:rgba(212,175,106,0.16); backdrop-filter:blur(6px); color:#E8C77E; border:1px solid rgba(212,175,106,0.45); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; border-radius:20px; margin-bottom:10px;}
     .plv-title{color:#fff; font-size:28px; font-weight:800; line-height:1.15; margin:0 0 8px;}
     .plv-meta{color:#B9C2B4; font-size:13.5px;}
@@ -5906,9 +5908,9 @@ function ensurePlaylistViewStyles(){
     .plv-shuffle-btn{width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); color:#EDEDED; cursor:pointer; display:flex; align-items:center; justify-content:center;}
     .plv-shuffle-btn:hover{background:rgba(212,175,106,0.18); color:#D4AF6A;}
     .plv-list{max-width:760px; margin:26px auto calc(120px + env(safe-area-inset-bottom,0)); padding:0 24px;}
-    .plv-row{display:flex; align-items:center; gap:14px; padding:10px; border-radius:10px; cursor:pointer; transition:background .15s ease; opacity:0; animation:plvRowIn .35s ease forwards;}
+    .plv-row{display:flex; align-items:center; gap:14px; padding:10px; border-radius:10px; cursor:pointer; transition:background .15s ease, transform .15s ease, box-shadow .15s ease; opacity:0; animation:plvRowIn .35s ease forwards;}
     @keyframes plvRowIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
-    .plv-row:hover{background:rgba(212,175,106,0.07);}
+    .plv-row:hover{background:rgba(212,175,106,0.09); transform:translateX(2px); box-shadow:0 4px 20px rgba(212,175,106,0.08);}
     .plv-row-thumb{width:48px; height:48px; border-radius:8px; background-size:cover; background-position:center; flex-shrink:0; background-color:#1a1a22;}
     .plv-row-info{flex:1; min-width:0;}
     .plv-row-title{color:#EDEDED; font-size:14.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -5963,7 +5965,24 @@ async function openPlaylistPage(id){
     if(cover) heroBg.insertAdjacentHTML('afterbegin', `<div class="plv-hero-bg" style="background-image:url(${cover})"></div>`);
     overlay.querySelector('.plv-cover').style.backgroundImage = cover ? `url(${cover})` : 'linear-gradient(135deg,#1E8449,#0E3D2C)';
     overlay.querySelector('.plv-title').textContent = data.playlist.title;
-    overlay.querySelector('.plv-meta').textContent = `${data.playlist.description || 'Sélection curée par l\'équipe NUNI'} · ${mapped.length} titre${mapped.length>1?'s':''}`;
+    const updatedDate = data.playlist.updated_at ? new Date(data.playlist.updated_at).toLocaleDateString('fr-FR', {day:'2-digit', month:'long', year:'numeric'}) : null;
+    overlay.querySelector('.plv-meta').innerHTML = `${data.playlist.description || 'Sélection curée par l\'équipe NUNI'} · ${mapped.length} titre${mapped.length>1?'s':''}<br><span style="font-size:12px; opacity:.8;">👤 Créateur : NUNI${updatedDate ? ` · 📅 Mis à jour le ${updatedDate}` : ''}</span>`;
+    // Teinte de fond biaisée selon le vrai genre dominant réellement présent dans la
+    // playlist (Rumba → or/ivoire, Amapiano → bleu/violet, sinon la couleur réelle de la
+    // pochette prend le dessus) — jamais un genre inventé, toujours calculé depuis les
+    // vrais morceaux qui composent CETTE playlist précise.
+    const genreCounts = mapped.reduce((acc,t)=>{ acc[t.genre]=(acc[t.genre]||0)+1; return acc; },{});
+    const dominantGenre = Object.entries(genreCounts).sort((a,b)=>b[1]-a[1])[0];
+    const genreTintMap = {
+      'Rumba': 'rgba(212,175,106,.28)', 'Amapiano': 'rgba(94,84,196,.28)',
+      'Gospel': 'rgba(232,199,126,.24)', 'Afro': 'rgba(30,132,73,.26)',
+      'Rap': 'rgba(200,60,60,.22)', 'Hip-Hop': 'rgba(200,60,60,.22)',
+    };
+    if(dominantGenre && genreTintMap[dominantGenre[0]]){
+      overlay.querySelector('.plv-hero-fade').style.background = `
+        radial-gradient(70% 80% at 30% 10%, ${genreTintMap[dominantGenre[0]]}, transparent 65%),
+        linear-gradient(180deg, rgba(10,10,16,0.2) 0%, #0A0A10 92%)`;
+    }
 
     const list = overlay.querySelector('.plv-list');
     function refreshPlvRowHighlights(){
