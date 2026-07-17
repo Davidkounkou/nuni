@@ -6473,6 +6473,13 @@ document.addEventListener('click', (e)=>{
   const wrap = document.querySelector('.profile-menu-wrap');
   if(wrap && !wrap.contains(e.target)) closeProfileMenu();
 });
+// Même principe pour "Le P" — se ferme dès qu'on clique n'importe où en dehors du widget,
+// pas seulement via son bouton de fermeture explicite.
+document.addEventListener('click', (e)=>{
+  const mimiWidget = document.getElementById('mimi-widget');
+  if(!mimiWidget || !mimiWidget.classList.contains('open')) return;
+  if(!mimiWidget.contains(e.target)) mimiWidget.classList.remove('open');
+});
 applyAccountType();
 sessionRestorePromise = restoreSession();
 
