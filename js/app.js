@@ -1989,6 +1989,7 @@ function ensureAlbumViewStyles(){
     .av-close{position:fixed; top:calc(18px + env(safe-area-inset-top,0)); right:22px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; font-size:17px; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center;}
     .av-close:hover{background:rgba(255,255,255,0.12);}
     .av-list{max-width:760px; margin:26px auto calc(120px + env(safe-area-inset-bottom,0)); padding:0 24px;}
+    .av-total-duration{font-size:12px; color:#8a8a94; margin-bottom:10px; font-family:var(--font-data, monospace);}
     .av-row{display:flex; align-items:center; gap:16px; padding:12px 10px; border-radius:10px; cursor:pointer; transition:background .15s ease;}
     .av-row:hover{background:rgba(212,175,106,0.07);}
     .av-row-num{width:24px; text-align:center; color:#7D8A79; font-size:13px; font-family:var(--font-data, monospace);}
@@ -2071,6 +2072,30 @@ function handleTrackCardClick(tr){
   if(tr.releaseType && tr.releaseType !== 'Single'){ openAlbumView(tr); }
   else { playTrack(tr); }
 }
+/* Durée totale réelle d'un album — mesurée sur les vrais fichiers audio (métadonnées
+   chargées en arrière-plan, jamais une estimation ou une valeur inventée). Visible pour
+   tout le monde (artiste comme consommateur), contrairement aux écoutes par morceau. */
+async function loadRealAlbumDuration(albumTracks){
+  const el = document.getElementById('av-total-duration');
+  if(!el) return;
+  const withAudio = albumTracks.filter(t=>t.audioUrl);
+  if(!withAudio.length){ el.style.display = 'none'; return; }
+  try{
+    const durations = await Promise.all(withAudio.map(t=> new Promise(resolve=>{
+      const probe = new Audio();
+      probe.preload = 'metadata';
+      probe.src = t.audioUrl;
+      probe.addEventListener('loadedmetadata', ()=> resolve(isFinite(probe.duration) ? probe.duration : 0));
+      probe.addEventListener('error', ()=> resolve(0));
+      setTimeout(()=> resolve(0), 8000); // sécurité : ne bloque jamais indéfiniment sur un fichier lent
+    })));
+    const totalSeconds = durations.reduce((a,b)=>a+b, 0);
+    if(!totalSeconds){ el.style.display = 'none'; return; }
+    const h = Math.floor(totalSeconds/3600);
+    const m = Math.round((totalSeconds%3600)/60);
+    el.textContent = `⏱ Durée totale : ${h > 0 ? h+'h ' : ''}${m}min`;
+  }catch(e){ el.style.display = 'none'; }
+}
 function openAlbumView(tr){
   const albumTracks = tracks.filter(t => t.album === tr.album && t.a === tr.a);
   if(albumTracks.length <= 1){ playTrack(tr); return; } // un seul morceau trouvé : on joue direct par sécurité
@@ -2106,12 +2131,19 @@ function openAlbumView(tr){
       <button class="av-icon-btn av-fav-btn" title="Ajouter aux favoris"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></button>
       <button class="av-icon-btn av-download-btn" title="Télécharger"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg></button>
     </div>
-    <div class="av-list"><div class="av-list-panel"></div></div>
+    <div class="av-list">
+      <div class="av-total-duration" id="av-total-duration">⏱ Calcul de la durée totale…</div>
+      <div class="av-list-panel"></div>
+    </div>
   `;
 
   overlay.querySelector('.av-close').onclick = closeOverlay;
   overlay.querySelector('.av-artist-link').onclick = ()=>{ closeOverlay(); openArtistPage(tr.a, tr.artistId); };
-  overlay.querySelector('.av-play-all').onclick = ()=>{ playTrack(albumTracks[0]); refreshAvRowHighlights(); };
+  overlay.querySelector('.av-play-all').onclick = ()=>{
+    const albumIsPlaying = playing && currentTrack && albumTracks.some(t=> t.t === currentTrack.t);
+    if(albumIsPlaying){ togglePlay(); } else { playTrack(albumTracks[0]); }
+    refreshAvRowHighlights();
+  };
   overlay.querySelector('.av-shuffle-btn').onclick = ()=>{
     const randomTrack = albumTracks[Math.floor(Math.random()*albumTracks.length)];
     playTrack(randomTrack);
@@ -2148,6 +2180,8 @@ function openAlbumView(tr){
   };
 
   const list = overlay.querySelector('.av-list-panel');
+  const PLAY_ICON_PATH = 'M8 5v14l11-7z';
+  const PAUSE_ICON_PATH = 'M6 5h4v14H6zM14 5h4v14h-4z';
   function refreshAvRowHighlights(){
     list.querySelectorAll('.av-row').forEach((row, i)=>{
       const t = albumTracks[i];
@@ -2158,7 +2192,19 @@ function openAlbumView(tr){
       const existingDot = row.querySelector('.av-row-dot');
       if(isPlaying && !existingDot) row.querySelector('.av-row-title').insertAdjacentHTML('afterend', '<span class="av-row-dot"></span>');
       if(!isPlaying && existingDot) existingDot.remove();
+      // Avant : cette icône restait figée sur "lecture" (triangle), jamais mise à jour selon
+      // le vrai état — donnait l'impression que rien ne changeait, même en train de jouer.
+      const rowPlayIcon = row.querySelector('.av-row-play svg path');
+      if(rowPlayIcon) rowPlayIcon.setAttribute('d', isPlaying ? PAUSE_ICON_PATH : PLAY_ICON_PATH);
     });
+    refreshAvPlayAllIcon();
+  }
+  function refreshAvPlayAllIcon(){
+    const btn = overlay.querySelector('.av-play-all');
+    const icon = btn.querySelector('svg path');
+    const albumIsPlaying = playing && currentTrack && albumTracks.some(t=> t.t === currentTrack.t);
+    icon.setAttribute('d', albumIsPlaying ? PAUSE_ICON_PATH : PLAY_ICON_PATH);
+    btn.lastChild.textContent = albumIsPlaying ? ' Mettre en pause' : ' Tout écouter';
   }
   albumTracks.forEach((t, i)=>{
     const row = document.createElement('div');
@@ -2167,7 +2213,11 @@ function openAlbumView(tr){
     row.style.animationDelay = (i * 0.05) + 's';
     // Vraies infos par morceau — vrai nombre d'écoutes déjà en base, vrai indicateur si des
     // paroles ont réellement été renseignées pour ce titre (jamais une fausse mention).
-    const realStreams = t.isReal ? Number(t.streams)||0 : null;
+    // Les écoutes détaillées par morceau ne sont visibles que pour un compte Artiste — un
+    // consommateur qui veut voir la popularité d'un artiste va sur sa page profil publique
+    // (où le vrai total cumulé reste affiché pour tout le monde).
+    const canSeeStreams = currentUser && currentUser.account_type === 'artist';
+    const realStreams = (canSeeStreams && t.isReal) ? Number(t.streams)||0 : null;
     row.innerHTML = `
       <div class="av-row-num">${isPlaying ? '♪' : i+1}</div>
       <div class="av-row-title">${t.t}</div>
@@ -2175,10 +2225,16 @@ function openAlbumView(tr){
       ${t.lyrics ? '<span class="av-row-lyrics" title="Paroles disponibles">🅻</span>' : ''}
       ${realStreams !== null ? `<span class="av-row-streams">🎧 ${realStreams.toLocaleString('fr-FR')}</span>` : ''}
       <div class="av-row-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>`;
-    row.onclick = ()=>{ playTrack(t); refreshAvRowHighlights(); };
+    row.onclick = ()=>{
+      const isThisPlaying = playing && currentTrack && currentTrack.t === t.t;
+      if(isThisPlaying){ togglePlay(); } else { playTrack(t); }
+      refreshAvRowHighlights();
+    };
     list.appendChild(row);
   });
 
+  refreshAvRowHighlights(); // état correct dès l'ouverture, pas seulement après un clic
+  loadRealAlbumDuration(albumTracks);
   renderAlbumLeSuggestion(overlay, tr, albumTracks);
   renderSimilarTracksRow(overlay, tr, albumTracks);
 
@@ -2272,7 +2328,7 @@ function trackCard(tr){
     </div>
     <div class="ttl">${tr.t}</div>
     <div class="art" style="cursor:pointer;">${tr.a}</div>
-    <div class="likes">🎧 <span>${tr.streams||0}</span> · ♥ <span>${formatLikes(tr.likes||0)}</span></div>`;
+    <div class="likes">${currentUser && currentUser.account_type === 'artist' ? `🎧 <span class="streams-count">${tr.streams||0}</span> · ` : ''}♥ <span class="likes-count">${formatLikes(tr.likes||0)}</span></div>`;
   card.querySelector('.cover').onclick = ()=> handleTrackCardClick(tr);
   card.querySelector('.ttl').onclick = ()=> handleTrackCardClick(tr);
   card.querySelector('.art').onclick = (e)=>{ e.stopPropagation(); openArtistPage(tr.a, tr.artistId); };
@@ -2821,8 +2877,8 @@ function playTrack(tr){
         tr.streams = String(data.streams);
         document.querySelectorAll('.track-card').forEach(card=>{
           if(card.dataset.trackId === String(tr.realId)){
-            const streamsSpan = card.querySelector('.likes span');
-            if(streamsSpan) streamsSpan.textContent = data.streams;
+            const streamsSpan = card.querySelector('.streams-count');
+            if(streamsSpan) streamsSpan.textContent = data.streams; // absent pour un compte Consommateur — pas grave, rien à mettre à jour dans ce cas
           }
         });
       }
@@ -3180,8 +3236,8 @@ async function toggleLike(btn, trackOverride){
       if(tr === currentTrack) syncLikeButtons(tr);
       document.querySelectorAll('.track-card').forEach(card=>{
         if(card.dataset.trackId === String(tr.realId)){
-          const likeSpans = card.querySelectorAll('.likes span');
-          if(likeSpans[1]) likeSpans[1].textContent = formatLikes(data.likes);
+          const likeSpan = card.querySelector('.likes-count');
+          if(likeSpan) likeSpan.textContent = formatLikes(data.likes);
         }
       });
       toast(data.liked ? 'Ajouté à votre playlist Favoris — visible dans Bibliothèque.' : 'Retiré de votre playlist Favoris.');
