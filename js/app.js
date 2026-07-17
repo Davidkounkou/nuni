@@ -1023,7 +1023,44 @@ function mimiRealDataAnswer(q){
     if(!currentUser || !realAuthToken) return "Connectez-vous pour que je puisse vous dire quels artistes vous suivez.";
     return "Je vérifie vos vrais abonnements…"; // remplacé juste après par le vrai appel réseau
   }
+  if(/recommande.*artiste|conseill.*artiste|découvrir.*artiste|artiste.*découvrir/i.test(q)){
+    return "Je regarde qui cartonne vraiment en ce moment…"; // remplacé juste après par le vrai appel réseau
+  }
+  if(/(actif|active).*artiste|artiste.*(actif|active)|comment travaille|à quel point.*travaille|comment (il|elle) travaille/i.test(q)){
+    return "Je vérifie sa vraie activité sur NUNI…"; // remplacé juste après par le vrai appel réseau
+  }
   return null;
+}
+async function mimiAnswerRecommendLive(botMsgEl, question){
+  try{
+    const genreMatch = ['Rumba','Rap','Gospel','Afro','Hip-Hop','Amapiano','Traditionnel'].find(g=> question.toLowerCase().includes(g.toLowerCase()));
+    const url = NUNI_API_BASE + '/api/artists/top-streams' + (genreMatch ? '?genre=' + encodeURIComponent(genreMatch) : '');
+    const res = await fetch(url);
+    if(!res.ok) return;
+    const data = await res.json();
+    const pool = (data.artists || []).slice(0, 8); // vrai top 8 par streams réels — pas juste le n°1 à chaque fois
+    if(!pool.length){ botMsgEl.textContent = genreMatch ? `Personne ne publie encore vraiment en ${genreMatch} sur NUNI pour l'instant.` : "Aucun artiste avec un vrai Pass actif pour l'instant."; return; }
+    // Vrai tirage aléatoire parmi les meilleurs, pas toujours le même en tête — donne
+    // une vraie chance à plusieurs vrais artistes qui performent bien, pas seulement au n°1.
+    const shuffled = [...pool].sort(()=> Math.random()-0.5);
+    const picks = shuffled.slice(0, Math.min(3, shuffled.length));
+    const names = picks.map(a=> `🎤 ${a.artist_name || a.first_name}${a.is_verified ? ' ✅' : ''} — ${(a.total_streams||0).toLocaleString('fr-FR')} streams`).join('<br>');
+    botMsgEl.innerHTML = `${genreMatch ? `En ${genreMatch}, ` : ''}voici de vrais artistes qui performent bien en ce moment :<br>${names}<br><span style="opacity:.7; font-size:12px;">Demandez-moi encore et je vous en proposerai d'autres.</span>`;
+  }catch(e){ /* pas grave, le message d'attente reste affiché */ }
+}
+async function mimiAnswerArtistActivityLive(botMsgEl, question){
+  try{
+    // Cherche un vrai nom d'artiste réellement présent dans le catalogue, mentionné dans la question.
+    const realArtistNames = [...new Set(tracks.filter(t=>t.isReal && t.artistId).map(t=>t.a))];
+    const mentioned = realArtistNames.find(name => question.toLowerCase().includes(name.toLowerCase()));
+    if(!mentioned){ botMsgEl.textContent = "Précisez le nom d'un vrai artiste NUNI et je vous dirai où il en est."; return; }
+    const artistTrack = tracks.find(t=> t.a === mentioned && t.artistId);
+    const res = await fetch(NUNI_API_BASE + '/api/artist/' + artistTrack.artistId + '/public-stats');
+    if(!res.ok) return;
+    const data = await res.json();
+    const activityLabel = data.track_count >= 20 ? 'très actif' : data.track_count >= 5 ? 'régulièrement actif' : 'encore en début de parcours';
+    botMsgEl.innerHTML = `${mentioned} est ${activityLabel} sur NUNI — ${data.track_count} morceau${data.track_count>1?'x':''} publié${data.track_count>1?'s':''}, suivi par ${(data.follower_count||0).toLocaleString('fr-FR')} personne${data.follower_count>1?'s':''}.`;
+  }catch(e){ /* pas grave, le message d'attente reste affiché */ }
 }
 async function mimiAnswerFollowingLive(botMsgEl){
   if(!realAuthToken) return;
@@ -1061,6 +1098,8 @@ function mimiAsk(question){
   let found = !!realAnswer;
   const isLiveXpQuery = /mon (niveau|xp)|combien.*(xp|niveau)/.test(q) && currentUser && realAuthToken;
   const isLiveFollowingQuery = /artistes.*(je suis|suivis)|qui.*(je suis|suis-je)/.test(q) && currentUser && realAuthToken;
+  const isLiveRecommendQuery = /recommande.*artiste|conseill.*artiste|découvrir.*artiste|artiste.*découvrir/i.test(q);
+  const isLiveArtistActivityQuery = /(actif|active).*artiste|artiste.*(actif|active)|comment travaille|à quel point.*travaille|comment (il|elle) travaille/i.test(q);
   if(!found){
     for(const entry of mimiConversation){
       if(entry.k.some(word => q.includes(word))){ answer = pickVariant(entry); found = true; break; }
@@ -1083,6 +1122,8 @@ function mimiAsk(question){
     setTimeout(()=>mimiFace('idle'), talkMs);
     if(isLiveXpQuery) mimiAnswerXpLive(botMsg);
     if(isLiveFollowingQuery) mimiAnswerFollowingLive(botMsg);
+    if(isLiveRecommendQuery) mimiAnswerRecommendLive(botMsg, question);
+    if(isLiveArtistActivityQuery) mimiAnswerArtistActivityLive(botMsg, question);
   }, 450);
   box.scrollTop = box.scrollHeight;
 }
