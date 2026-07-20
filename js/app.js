@@ -1904,16 +1904,28 @@ genres.forEach((g,i)=>{
   tile.className = 'genre-tile' + (i===0 ? ' is-active' : '');
   tile.style.setProperty('--gc1', g.c1);
   tile.style.setProperty('--gc2', g.c2);
-  tile.innerHTML = `
-    <div class="genre-tile-texture"></div>
-    <div class="genre-tile-halo"></div>
-    <div class="genre-icon ${g.anim}">${g.icon}</div>
-    <span class="gname">${g.n}</span>
-    <span class="genre-active-line"></span>`;
+  if(g.n === 'Tout'){
+    // Pas d'icône ni de texte pour "Tout" — une vraie sphère audio vivante à la place
+    // (voir buildNuniAudioSphere plus bas). Le nom reste dans un aria-label pour
+    // l'accessibilité, même si rien n'est visible à l'écran.
+    tile.setAttribute('aria-label', 'Tout');
+    tile.innerHTML = `
+      <div class="genre-tile-texture"></div>
+      <canvas class="nuni-sphere-canvas" id="nuni-sphere-canvas"></canvas>
+      <span class="genre-active-line"></span>`;
+  } else {
+    tile.innerHTML = `
+      <div class="genre-tile-texture"></div>
+      <div class="genre-tile-halo"></div>
+      <div class="genre-icon ${g.anim}">${g.icon}</div>
+      <span class="gname">${g.n}</span>
+      <span class="genre-active-line"></span>`;
+  }
   tile.addEventListener('click', (e)=>{
     document.querySelectorAll('.genre-tile').forEach(t=>t.classList.remove('is-active'));
     tile.classList.add('is-active');
-    bounceEl(tile.querySelector('.genre-icon'));
+    if(g.n === 'Tout'){ nuniSphereTouchPulse(); }
+    else { bounceEl(tile.querySelector('.genre-icon')); }
     hapticPing();
     if(g.n === 'Tout'){ filterCatalogByGenre('Tout'); }
     else if(g.n === 'Nouveautés'){ openNewReleasesPage(); }
@@ -1922,6 +1934,163 @@ genres.forEach((g,i)=>{
   });
   genreGrid.appendChild(tile);
 });
+buildNuniAudioSphere();
+
+
+/* ============ SPHÈRE AUDIO "TOUT" — visualiseur vivant (Canvas 2D + Web Audio API) ============
+   Remplace l'icône + texte de la tuile "Tout" par une sphère de particules qui respire et
+   tourne en permanence, et qui réagit en temps réel aux vraies fréquences de la musique en
+   cours de lecture (graves/médiums/aigus) dès qu'un vrai son est lancé.
+   Choix Canvas 2D plutôt que Three.js/WebGL : rendu visuel équivalent pour une tuile de
+   150×96px, sans ajouter ~600 Ko de bibliothèque externe chargée par tout le monde pour un
+   seul élément décoratif parmi 9 filtres de genre. ============ */
+let nuniAudioCtx = null, nuniAnalyser = null, nuniFreqData = null, nuniAnalyserFailed = false;
+// Ce branchement ne peut être fait qu'UNE SEULE FOIS pour toute la session : un élément
+// <audio> ne peut être connecté qu'une fois à un AudioContext (createMediaElementSource),
+// et une fois connecté, son son ne sort PLUS QUE via ce graphe Web Audio — d'où le
+// ".connect(destination)" ci-dessous, sans lequel tout NUNI deviendrait silencieux en
+// permanence, pas seulement l'analyse des fréquences.
+function ensureAudioAnalyser(){
+  if(nuniAnalyser || nuniAnalyserFailed) return nuniAnalyser;
+  try{
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if(!AudioContextClass) throw new Error('Web Audio API non supportée par ce navigateur.');
+    nuniAudioCtx = new AudioContextClass();
+    const sourceNode = nuniAudioCtx.createMediaElementSource(realAudio);
+    nuniAnalyser = nuniAudioCtx.createAnalyser();
+    nuniAnalyser.fftSize = 128; // 64 valeurs de fréquence — largement assez pour moduler une sphère, sans coût CPU inutile
+    nuniAnalyser.smoothingTimeConstant = 0.8; // lisse les à-coups brusques, sinon la sphère tremble au lieu de "battre"
+    sourceNode.connect(nuniAnalyser);
+    nuniAnalyser.connect(nuniAudioCtx.destination); // OBLIGATOIRE — sans cette ligne, plus aucun son ne sort, jamais
+    nuniFreqData = new Uint8Array(nuniAnalyser.frequencyBinCount);
+  }catch(e){
+    console.error('[sphère audio] branchement impossible — la sphère restera en simple respiration, la lecture normale n\'est pas affectée :', e.message);
+    nuniAnalyser = null;
+    nuniAnalyserFailed = true; // on ne retente pas en boucle à chaque clic play
+  }
+  return nuniAnalyser;
+}
+// Appelé depuis togglePlay() (contexte de clic utilisateur, requis par les navigateurs pour
+// activer l'audio) — réveille l'AudioContext s'il a été mis en pause automatiquement.
+function nuniResumeAudioContextIfNeeded(){
+  if(nuniAudioCtx && nuniAudioCtx.state === 'suspended'){ nuniAudioCtx.resume().catch(()=>{}); }
+}
+
+let nuniSphereRAF = null, nuniSphereObserver = null, nuniSphereTouchT = 0;
+function buildNuniAudioSphere(){
+  const canvas = document.getElementById('nuni-sphere-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  // Répartition des points sur une sphère façon "spirale de Fibonacci" — bien plus régulière
+  // visuellement qu'un tirage aléatoire pur.
+  const COUNT = 420;
+  const points = [];
+  const golden = Math.PI * (3 - Math.sqrt(5));
+  for(let i = 0; i < COUNT; i++){
+    const y = 1 - (i / (COUNT - 1)) * 2;
+    const r = Math.sqrt(Math.max(0, 1 - y*y));
+    const theta = golden * i;
+    points.push({
+      x: Math.cos(theta) * r, y, z: Math.sin(theta) * r,
+      jitterPhase: Math.random() * Math.PI * 2,
+      jitterSpeed: 0.6 + Math.random() * 0.8,
+    });
+  }
+
+  let w = 0, h = 0;
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    w = rect.width; h = rect.height;
+    canvas.width = w * DPR; canvas.height = h * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  let rotY = 0, t = 0;
+  function frame(){
+    nuniSphereRAF = requestAnimationFrame(frame);
+    t += 0.016;
+    rotY += 0.0035; // rotation lente permanente
+
+    // Analyse audio réelle si un son est en cours de lecture — sinon, respiration seule.
+    let bass = 0, mid = 0, treble = 0, audioActive = false;
+    if(playing && usingRealAudio && nuniAnalyser){
+      nuniAnalyser.getByteFrequencyData(nuniFreqData);
+      const n = nuniFreqData.length;
+      const bassEnd = Math.floor(n * 0.15), midEnd = Math.floor(n * 0.55);
+      let bSum=0,mSum=0,tSum=0;
+      for(let i=0;i<bassEnd;i++) bSum += nuniFreqData[i];
+      for(let i=bassEnd;i<midEnd;i++) mSum += nuniFreqData[i];
+      for(let i=midEnd;i<n;i++) tSum += nuniFreqData[i];
+      bass = (bSum/bassEnd)/255; mid = (mSum/(midEnd-bassEnd))/255; treble = (tSum/(n-midEnd))/255;
+      audioActive = true;
+    }
+
+    // Respiration lente permanente (toujours active, même sans musique) + gonflement réel sur les graves.
+    const breathe = 1 + Math.sin(t*0.9)*0.045 + (audioActive ? bass*0.28 : 0);
+    // Pulsation résiduelle du toucher (l'onde lumineuse au clic, s'estompe en ~700ms).
+    if(nuniSphereTouchT > 0) nuniSphereTouchT = Math.max(0, nuniSphereTouchT - 0.045);
+    const touchBoost = Math.sin(nuniSphereTouchT * Math.PI) * 0.22;
+
+    ctx.clearRect(0, 0, w, h);
+    const cx = w/2, cy = h/2;
+    const baseR = Math.min(w, h) * 0.34;
+    const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+
+    // Tri par profondeur (peint d'abord ce qui est le plus loin) pour un effet 3D correct.
+    const projected = points.map(p=>{
+      // Vagues sur les médiums : léger décalage sinusoïdal selon la latitude du point.
+      const waveOffset = audioActive ? Math.sin(t*3 + p.y*6)*mid*0.14 : 0;
+      // Vibrations rapides sur les aigus + micro-déformation organique permanente.
+      const jitter = Math.sin(t*p.jitterSpeed*6 + p.jitterPhase) * (0.02 + (audioActive ? treble*0.09 : 0));
+      const rMod = breathe + waveOffset + jitter + touchBoost;
+      const x = p.x * rMod, y = p.y * rMod, z = p.z * rMod;
+      const xr = x*cosY + z*sinY, zr = -x*sinY + z*cosY;
+      const scale = 1 / (1.8 - zr*0.6); // perspective simple
+      return { sx: cx + xr*baseR*scale, sy: cy + y*baseR*scale, z: zr, scale };
+    }).sort((a,b)=> a.z - b.z);
+
+    projected.forEach(p=>{
+      const depth = (p.z + 1) / 2; // 0 = arrière, 1 = avant
+      const size = (1.3 + depth*1.8) * p.scale;
+      const hue = 255 + depth*45; // violet -> bleu électrique -> magenta selon la profondeur
+      const alpha = 0.35 + depth*0.55;
+      ctx.beginPath();
+      ctx.fillStyle = `hsla(${hue}, 85%, ${62 + depth*15}%, ${alpha})`;
+      ctx.arc(p.sx, p.sy, Math.max(0.6, size), 0, Math.PI*2);
+      ctx.fill();
+    });
+
+    // Léger halo lumineux au centre, plus intense pendant la lecture.
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, baseR*1.5);
+    glow.addColorStop(0, `rgba(142, 99, 201, ${audioActive ? 0.16 + bass*0.18 : 0.1})`);
+    glow.addColorStop(1, 'rgba(142, 99, 201, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  // Ne tourne que quand la tuile est réellement visible à l'écran — évite de consommer du
+  // GPU/de la batterie en continu sur une page fermée ou un onglet en arrière-plan.
+  nuniSphereObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        if(!nuniSphereRAF) frame();
+      } else if(nuniSphereRAF){
+        cancelAnimationFrame(nuniSphereRAF); nuniSphereRAF = null;
+      }
+    });
+  }, { threshold: 0.01 });
+  nuniSphereObserver.observe(canvas);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden && nuniSphereRAF){ cancelAnimationFrame(nuniSphereRAF); nuniSphereRAF = null; }
+    else if(!document.hidden && !nuniSphereRAF && canvas.getBoundingClientRect().width > 0) frame();
+  });
+}
+// Déclenche l'onde lumineuse + le léger gonflement au toucher (voir touchBoost dans frame()).
+function nuniSphereTouchPulse(){ nuniSphereTouchT = 1; }
 
 /* ============ BANNIÈRES HERO — gérées uniquement par l'admin ============
    Plusieurs photos possibles par section, tirée au hasard à chaque visite. Repli sur
@@ -2735,6 +2904,11 @@ try{
 }catch(e){ /* pas bloquant */ }
 let usingRealAudio = false;
 const realAudio = new Audio();
+// Nécessaire pour que l'AnalyserNode (sphère audio "Tout") puisse lire les fréquences des
+// fichiers Cloudinary sans être bloqué par la sécurité du navigateur — doit être posé AVANT
+// tout chargement de fichier (voir ensureAudioAnalyser plus bas). Cloudinary autorise déjà
+// les requêtes cross-origin par défaut, donc ceci ne change rien à la lecture normale.
+realAudio.crossOrigin = 'anonymous';
 realAudio.volume = 1;
 realAudio.preload = 'auto';
 realAudio.addEventListener('loadedmetadata', ()=>{
@@ -3077,6 +3251,11 @@ function togglePlay(){
   if(usingRealAudio){
     if(playing){
       setPlayerLoadingState(true);
+      // Branché une seule fois pour toute la session, dans le contexte du clic (requis par
+      // les navigateurs) — voir ensureAudioAnalyser(). N'affecte jamais la lecture normale
+      // même si le branchement échoue (fftSize/CORS) : le son continue de sortir normalement.
+      ensureAudioAnalyser();
+      nuniResumeAudioContextIfNeeded();
       realAudio.play().then(()=> setPlayerLoadingState(false)).catch(err => { setPlayerLoadingState(false); toast('Le navigateur a bloqué la lecture automatique — appuyez sur ▶ pour lancer le son manuellement.'); });
     } else {
       setPlayerLoadingState(false);
