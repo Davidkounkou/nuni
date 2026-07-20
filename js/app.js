@@ -1,4 +1,4 @@
-console.log('🎵 NUNI app.js chargé — version K4 (Vrai système de clips : publication, partage, vues uniques)');
+console.log(' NUNI app.js chargé — version K4 (Vrai système de clips : publication, partage, vues uniques)');
 
 /* ============ POSITIONNEMENT RÉEL DE LA BULLE MIMI ============
    Avant : la distance du bas dépendait d'une classe CSS "no-player" à synchroniser
@@ -59,8 +59,8 @@ function runSplashSequence(){
   if(!el || !status || !bar) return;
   const online = navigator.onLine;
   const steps = online
-    ? [ { t:'Connexion à NUNI…', p:30, ic:'🔗' }, { t:'Chargement de votre bibliothèque…', p:68, ic:'📚' }, { t:'Synchronisation…', p:96, ic:'🔄' } ]
-    : [ { t:'Mode hors ligne', p:45, ic:'📡' }, { t:'Chargement de votre bibliothèque locale…', p:92, ic:'📚' } ];
+    ? [ { t:'Connexion à NUNI…', p:30, ic:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6.5 13 4.5a3.5 3.5 0 0 1 5 5l-2 2M13 17.5l-2 2a3.5 3.5 0 0 1-5-5l2-2"/></svg>' }, { t:'Chargement de votre bibliothèque…', p:68, ic:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="5.5" y="4.5" width="13" height="17" rx="2"/><path d="M9 4.5V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5M8.5 11h7M8.5 15h7"/></svg>' }, { t:'Synchronisation…', p:96, ic:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M4.5 15a8 8 0 0 0 14.5 3M19.5 9A8 8 0 0 0 5 6"/></svg>' } ]
+    : [ { t:'Mode hors ligne', p:45, ic:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>' }, { t:'Chargement de votre bibliothèque locale…', p:92, ic:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="5.5" y="4.5" width="13" height="17" rx="2"/><path d="M9 4.5V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5M8.5 11h7M8.5 15h7"/></svg>' } ];
   let i = 0;
   splashNoteTimer = setInterval(spawnSplashNote, 650);
   const advance = ()=>{
@@ -86,7 +86,7 @@ function runSplashSequence(){
     if(icon) icon.style.opacity = 0;
     setTimeout(()=>{
       status.textContent = steps[i].t;
-      if(icon) icon.textContent = steps[i].ic;
+      if(icon) icon.innerHTML = steps[i].ic;
       bar.style.width = steps[i].p + '%';
       status.style.opacity = 1;
       if(icon) icon.style.opacity = 1;
@@ -98,7 +98,7 @@ function runSplashSequence(){
 }
 runSplashSequence();
 window.addEventListener('offline', ()=> toast('Connexion perdue — mode hors ligne, contenu limité à ce qui est déjà chargé.'));
-window.addEventListener('online', ()=> toast('Connexion rétablie 🕊️'));
+window.addEventListener('online', ()=> toast('Connexion rétablie ️'));
 /* ============ HELPERS ============ */
 function ico(name){
   if(name==='check') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
@@ -244,7 +244,7 @@ async function applyPromoCode(){
 
   feedback.className = 'success';
   feedback.innerHTML = `
-    <span class="promo-badge">🎉 -${data.discount_pct}% appliqué</span>
+    <span class="promo-badge"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg> -${data.discount_pct}% appliqué</span>
     <div class="promo-breakdown">
       Prix initial : 650 FCFA<br>
       Réduction : -${data.discount_pct}%<br>
@@ -304,7 +304,7 @@ async function restoreSession(){
       // clairement plutôt que de renvoyer silencieusement vers l'accueil sans explication.
       const errData = await res.json().catch(()=>({}));
       clearSession();
-      if(res.status === 403 && errData.error){ toast('❌ ' + errData.error); }
+ if(res.status === 403 && errData.error){ toast(' ' + errData.error); }
       return;
     }
     const data = await res.json();
@@ -317,7 +317,7 @@ async function restoreSession(){
     applyAccountType();
     if(currentUser.subscription_status === 'active'){
       enterApp('catalog');
-      toast(`Bon retour, ${currentUser.first_name} 👋`);
+ toast(`Bon retour, ${currentUser.first_name} `);
       if(currentUser.plan === 'discovery') startDiscoveryFromServer();
       handleSharedTrackLink(); // reprend un lien partagé en attente, si la personne y était arrivée avant de se connecter
     } else if(currentUser.plan && currentUser.plan !== 'discovery'){
@@ -382,7 +382,7 @@ function startAccountStatusWatcher(){
       if(res.status === 401 || res.status === 403){
         const errData = await res.json().catch(()=>({}));
         clearInterval(accountStatusCheckTimer);
-        toast('❌ ' + (errData.error || 'Session invalide.'));
+ toast(' ' + (errData.error || 'Session invalide.'));
         logoutUser();
         return;
       }
@@ -399,7 +399,7 @@ function startAccountStatusWatcher(){
         saveSession(realAuthToken, currentUser, true);
         applyAccountType();
         if(!wasActive && nowActive){
-          toast('🎉 Votre Pass est maintenant actif — bienvenue sur NUNI en intégralité !');
+ toast(' Votre Pass est maintenant actif — bienvenue sur NUNI en intégralité !');
         }
       }
     }catch(e){ /* pas de réseau : on ne déconnecte pas sur un simple souci de connexion */ }
@@ -466,7 +466,7 @@ async function submitForgotPassword(){
   const email = document.getElementById('fp-email').value.trim();
   const feedback = document.getElementById('fp-feedback');
   const btn = document.getElementById('fp-request-btn');
-  if(!email){ feedback.style.color = 'var(--rose-braise)'; feedback.textContent = '❌ Entrez votre email.'; return; }
+ if(!email){ feedback.style.color = 'var(--rose-braise)'; feedback.textContent = ' Entrez votre email.'; return; }
   btn.disabled = true;
   feedback.style.color = 'var(--text-faint)';
   feedback.textContent = 'Envoi en cours…';
@@ -477,14 +477,14 @@ async function submitForgotPassword(){
     const data = await res.json();
     btn.disabled = false;
     feedback.style.color = '#7FC79A';
-    feedback.textContent = '✅ ' + data.message;
+ feedback.textContent = ' ' + data.message;
     document.getElementById('fp-step-request').style.display = 'none';
     document.getElementById('fp-step-reset').style.display = '';
     document.getElementById('fp-modal-title').textContent = 'Entrez votre code';
   }catch(e){
     btn.disabled = false;
     feedback.style.color = 'var(--rose-braise)';
-    feedback.textContent = '❌ Impossible de contacter le serveur NUNI.';
+ feedback.textContent = ' Impossible de contacter le serveur NUNI.';
   }
 }
 async function submitResetPassword(){
@@ -493,7 +493,7 @@ async function submitResetPassword(){
   const newPassword = document.getElementById('fp-new-password').value;
   const feedback = document.getElementById('fp-feedback');
   const btn = document.getElementById('fp-reset-btn');
-  if(!code || !newPassword){ feedback.style.color = 'var(--rose-braise)'; feedback.textContent = '❌ Entrez le code et votre nouveau mot de passe.'; return; }
+ if(!code || !newPassword){ feedback.style.color = 'var(--rose-braise)'; feedback.textContent = ' Entrez le code et votre nouveau mot de passe.'; return; }
   btn.disabled = true;
   feedback.style.color = 'var(--text-faint)';
   feedback.textContent = 'Vérification…';
@@ -503,14 +503,14 @@ async function submitResetPassword(){
     });
     const data = await res.json();
     btn.disabled = false;
-    if(!res.ok){ feedback.style.color = 'var(--rose-braise)'; feedback.textContent = '❌ ' + data.error; return; }
+ if(!res.ok){ feedback.style.color = 'var(--rose-braise)'; feedback.textContent = ' ' + data.error; return; }
     feedback.style.color = '#7FC79A';
-    feedback.textContent = '✅ ' + data.message;
+ feedback.textContent = ' ' + data.message;
     setTimeout(()=>{ closeForgotPasswordModal(); openLoginModal(); document.getElementById('login-email').value = email; toast('Mot de passe réinitialisé — connectez-vous.'); }, 1200);
   }catch(e){
     btn.disabled = false;
     feedback.style.color = 'var(--rose-braise)';
-    feedback.textContent = '❌ Impossible de contacter le serveur NUNI.';
+ feedback.textContent = ' Impossible de contacter le serveur NUNI.';
   }
 }
 function openLoginModal(){
@@ -557,7 +557,7 @@ async function submitLogin(){
     const data = await res.json();
     if(!res.ok){
       feedback.style.color = 'var(--rose-braise)';
-      feedback.textContent = '❌ ' + data.error;
+ feedback.textContent = ' ' + data.error;
       btn.disabled = false;
       return;
     }
@@ -571,7 +571,7 @@ async function submitLogin(){
     saveSession(data.token, data.user, !rememberBox || rememberBox.checked);
 
     feedback.style.color = '#7FC79A';
-    feedback.textContent = '✅ Connexion réussie — bon retour ' + currentUser.first_name + ' !';
+ feedback.textContent = ' Connexion réussie — bon retour ' + currentUser.first_name + ' !';
     btn.disabled = false;
     applyAccountType();
     setTimeout(()=>{
@@ -588,7 +588,7 @@ async function submitLogin(){
     }, 600);
   }catch(e){
     feedback.style.color = 'var(--rose-braise)';
-    feedback.textContent = '❌ Impossible de contacter le serveur NUNI.';
+ feedback.textContent = ' Impossible de contacter le serveur NUNI.';
     btn.disabled = false;
   }
 }
@@ -664,7 +664,7 @@ async function submitRealRegistration(){
     const data = await res.json();
     if(!res.ok){
       feedback.style.color = 'var(--rose-braise)';
-      feedback.textContent = '❌ ' + data.error;
+ feedback.textContent = ' ' + data.error;
       btn.disabled = false;
       return;
     }
@@ -680,7 +680,7 @@ async function submitRealRegistration(){
       // Pass Découverte : déjà actif 24h côté serveur dès l'inscription, aucun passage par
       // WhatsApp — accès immédiat, vraie échéance suivie via subscription_expires_at.
       feedback.style.color = '#7FC79A';
-      feedback.textContent = '✅ Compte créé — Pass Découverte activé pour 24h !';
+ feedback.textContent = ' Compte créé — Pass Découverte activé pour 24h !';
       btn.disabled = false;
       setTimeout(()=>{
         closeRealRegister();
@@ -699,7 +699,7 @@ async function submitRealRegistration(){
     await subRes.json();
 
     feedback.style.color = '#7FC79A';
-    feedback.textContent = `✅ Compte créé (id ${realUserId}) — direction WhatsApp pour le paiement.`;
+ feedback.textContent = ` Compte créé (id ${realUserId}) — direction WhatsApp pour le paiement.`;
     btn.disabled = false;
 
     setTimeout(()=>{
@@ -708,7 +708,7 @@ async function submitRealRegistration(){
     }, 900);
   }catch(e){
     feedback.style.color = 'var(--rose-braise)';
-    feedback.textContent = '❌ Impossible de contacter le serveur NUNI. Vérifiez votre connexion internet.';
+ feedback.textContent = ' Impossible de contacter le serveur NUNI. Vérifiez votre connexion internet.';
     btn.disabled = false;
   }
 }
@@ -789,7 +789,7 @@ async function submitRedeem(){
       if(myRequestId !== redeemRequestId) return; // un essai plus récent a pris le relais entre-temps
       if(!loginRes.ok){
         feedback.style.color = 'var(--rose-braise)';
-        feedback.textContent = '❌ ' + loginData.error;
+ feedback.textContent = ' ' + loginData.error;
         btn.disabled = false;
         return;
       }
@@ -811,13 +811,13 @@ async function submitRedeem(){
     if(myRequestId !== redeemRequestId) return; // un essai plus récent a pris le relais entre-temps
     if(!res.ok){
       feedback.style.color = 'var(--rose-braise)';
-      feedback.textContent = '❌ ' + data.error;
+ feedback.textContent = ' ' + data.error;
       btn.disabled = false;
       return;
     }
     feedback.style.color = '#7FC79A';
-    feedback.textContent = '✅ ' + data.message;
-    toast('Accès débloqué — bienvenue sur NUNI en intégralité 🕊️');
+ feedback.textContent = ' ' + data.message;
+ toast('Accès débloqué — bienvenue sur NUNI en intégralité ️');
     currentUser = data.user;
     applyAccountType();
     setTimeout(()=>{
@@ -831,7 +831,7 @@ async function submitRedeem(){
   }catch(e){
     if(myRequestId !== redeemRequestId) return; // un essai plus récent a pris le relais entre-temps
     feedback.style.color = 'var(--rose-braise)';
-    feedback.textContent = '❌ Impossible de contacter le serveur NUNI.';
+ feedback.textContent = ' Impossible de contacter le serveur NUNI.';
     btn.disabled = false;
   }
 }
@@ -901,7 +901,7 @@ function showArtistContract(){
       if(showGoodLuck){
         const gl = document.createElement('div');
         gl.id = 'artist-contract-goodluck';
-        gl.innerHTML = `<div class="ac-gl-emoji">🌟</div><div class="ac-gl-title">Bonne chance, étoile de demain.</div>`;
+        gl.innerHTML = `<div class="ac-gl-emoji"><svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.7-4.9 4.5 1.3 6.5L12 16.9 6.1 20.2l1.3-6.5-4.9-4.5 6.6-.7z"/></svg></div><div class="ac-gl-title">Bonne chance, étoile de demain.</div>`;
         document.body.appendChild(gl);
         requestAnimationFrame(()=> gl.classList.add('show'));
         setTimeout(()=>{
@@ -1028,58 +1028,58 @@ function askLePAboutArtist(){
 }
 const mimiConversation = [
   { k: ['salut', 'bonjour', 'mbote', 'coucou', 'hello', 'bonsoir'],
-    a: "👋 Bonjour ! Comment allez-vous aujourd'hui ? Envie d'écouter quelque chose de précis, ou je vous fais une petite recommandation ?",
+ a: " Bonjour ! Comment allez-vous aujourd'hui ? Envie d'écouter quelque chose de précis, ou je vous fais une petite recommandation ?",
     alt: [
-      "Mbote ! 🕊️ Content de vous revoir sur NUNI. On écoute quoi aujourd'hui ?",
+ "Mbote ! ️ Content de vous revoir sur NUNI. On écoute quoi aujourd'hui ?",
       "Salut à vous ! Je suis là si vous cherchez un morceau précis, un conseil musical, ou juste papoter un peu de musique congolaise.",
-      "Coucou ! 👋 Prêt à découvrir quelque chose de nouveau, ou plutôt envie de retrouver vos classiques ?",
+ "Coucou ! Prêt à découvrir quelque chose de nouveau, ou plutôt envie de retrouver vos classiques ?",
     ] },
   { k: ['je vais bien', 'ça va bien', 'ca va bien', 'je vais super', 'nickel', 'très bien'],
-    a: "Ravie de l'entendre 😊 Voulez-vous découvrir les nouveautés du moment, ou plutôt réécouter vos morceaux favoris ?",
+ a: "Ravie de l'entendre Voulez-vous découvrir les nouveautés du moment, ou plutôt réécouter vos morceaux favoris ?",
     alt: [
-      "Super nouvelle ! 🎶 Journée parfaite pour découvrir un nouvel artiste, non ?",
-      "Content de l'entendre 🕊️ Une bonne ambiance appelle une bonne musique — je vous prépare quoi ?",
+ "Super nouvelle ! Journée parfaite pour découvrir un nouvel artiste, non ?",
+ "Content de l'entendre ️ Une bonne ambiance appelle une bonne musique — je vous prépare quoi ?",
     ] },
   { k: ['je suis triste', 'pas bien', 'fatigué', 'fatiguée', 'déprimé', 'déprimée', 'difficile'],
-    a: "❤️ Je comprends. Je peux vous proposer une sélection plus douce — quelques belles rumba congolaises ou un gospel apaisant — pour vous remonter un peu le moral. Voulez-vous que je lance ça ?",
+ a: " ️ Je comprends. Je peux vous proposer une sélection plus douce — quelques belles rumba congolaises ou un gospel apaisant — pour vous remonter un peu le moral. Voulez-vous que je lance ça ?",
     alt: [
-      "Courage 🕊️ La musique aide parfois plus qu'on ne le croit. Envie de quelque chose de doux et apaisant, ou au contraire d'un titre plus entraînant pour se changer les idées ?",
+ "Courage ️ La musique aide parfois plus qu'on ne le croit. Envie de quelque chose de doux et apaisant, ou au contraire d'un titre plus entraînant pour se changer les idées ?",
     ] },
   { k: ['mets du rap', 'du rap', 'rap congolais', 'écouter du rap'],
-    a: "Très bon choix 🎤 Direction la Radio Rap Congo — je vous lance ça. Ouvrez le tuner NUNI Radio et sélectionnez la station 88.9 MHz pour enchaîner uniquement du rap congolais." },
+ a: "Très bon choix Direction la Radio Rap Congo — je vous lance ça. Ouvrez le tuner NUNI Radio et sélectionnez la station 88.9 MHz pour enchaîner uniquement du rap congolais." },
   { k: ['mets de la rumba', 'de la rumba', 'écouter de la rumba', 'j\'aime la rumba'],
-    a: "Excellent goût 💃 La station 90.3 MHz — NUNI Rumba — est faite pour vous. Ouvrez le tuner NUNI Radio pour en profiter en continu." },
+ a: "Excellent goût La station 90.3 MHz — NUNI Rumba — est faite pour vous. Ouvrez le tuner NUNI Radio pour en profiter en continu." },
   { k: ['mets du gospel', 'du gospel'],
-    a: "🙏 Direction la station 91.7 MHz — NUNI Gospel — dans le tuner NUNI Radio, pour une belle sélection continue." },
+ a: " Direction la station 91.7 MHz — NUNI Gospel — dans le tuner NUNI Radio, pour une belle sélection continue." },
   { k: ['merci', 'merci beaucoup', 'super merci'],
-    a: "Avec plaisir ❤️ Bonne écoute sur NUNI, et n'hésitez pas à revenir si vous avez une autre question.",
+ a: "Avec plaisir ️ Bonne écoute sur NUNI, et n'hésitez pas à revenir si vous avez une autre question.",
     alt: [
-      "C'est moi qui vous remercie de faire vivre la musique congolaise 🕊️ À bientôt !",
-      "Toujours un plaisir, ndeko 🙌 Revenez quand vous voulez.",
+ "C'est moi qui vous remercie de faire vivre la musique congolaise ️ À bientôt !",
+ "Toujours un plaisir, ndeko Revenez quand vous voulez.",
     ] },
   { k: ['ça va', 'ca va', 'comment vas-tu', 'comment vas tu'],
-    a: "Je vais très bien, merci de demander 🕊️ Et vous, quelle est l'ambiance du jour — plutôt calme ou plutôt festive ?",
+ a: "Je vais très bien, merci de demander ️ Et vous, quelle est l'ambiance du jour — plutôt calme ou plutôt festive ?",
     alt: [
-      "Toujours en forme quand il y a de la bonne musique dans les parages 😄 Et vous, comment se passe votre journée ?",
+ "Toujours en forme quand il y a de la bonne musique dans les parages Et vous, comment se passe votre journée ?",
     ] },
   { k: ['recommande', 'recommandation', 'propose moi', 'suggère'],
     a: "Avec plaisir ! Je vous recommande de découvrir <b>Bibi Mwana</b> pour la rumba moderne, ou la playlist Top Congo dans le catalogue si vous voulez un mix des titres les plus populaires du moment.",
     alt: [
-      "Dites-moi « recommande-moi des artistes » et je vous sors de vrais artistes qui cartonnent en ce moment, tirés au sort parmi les meilleurs 🎧",
+ "Dites-moi « recommande-moi des artistes » et je vous sors de vrais artistes qui cartonnent en ce moment, tirés au sort parmi les meilleurs ",
     ] },
   // Avant : "vas y" (et les relances similaires) n'avait AUCUNE vraie réponse dédiée — tombait
   // toujours sur le message générique de secours, donnant une impression très répétitive.
   { k: ['vas y', 'vas-y', 'd\'accord', 'continue', 'je t\'écoute'],
     a: "Alors, dites-moi : plutôt envie de retrouver un classique, de découvrir un nouvel artiste, ou de me parler d'une ambiance précise (romantique, festive, calme) pour que je vous propose quelque chose de collé à votre humeur ?",
     alt: [
-      "Parfait 🎶 Je peux vous parler d'un artiste précis, vous recommander une ambiance, ou vous donner un vrai chiffre sur votre progression (niveau, favoris, artistes suivis). Sur quoi on part ?",
+ "Parfait Je peux vous parler d'un artiste précis, vous recommander une ambiance, ou vous donner un vrai chiffre sur votre progression (niveau, favoris, artistes suivis). Sur quoi on part ?",
       "Top ! Demandez-moi par exemple : « qui est Franco ? », « recommande-moi des artistes », ou « quel est mon niveau ? » — je réponds avec de vraies infos à chaque fois.",
-      "Alors on y va 🕊️ Un style vous tente en particulier — rumba, soukous, gospel, rap congolais ?",
+ "Alors on y va ️ Un style vous tente en particulier — rumba, soukous, gospel, rap congolais ?",
     ] },
 ];
 const mimiKnowledge = [
   { k: ['papa', 'papas', 'légende', 'légendes', 'fondateur', 'fondateurs'],
-    a: "Nos papas de la musique congolaise ! 🕊️ On pense d'abord à <b>Joseph Kabasele</b> dit Grand Kallé, le père de la rumba moderne avec l'African Jazz ; <b>Franco Luambo Makiadi</b>, chef du TP OK Jazz, une légende absolue ; et <b>Tabu Ley Rochereau</b>, immense voix et compositeur du Congo. Voulez-vous en savoir plus sur l'un d'eux ?" },
+ a: "Nos papas de la musique congolaise ! ️ On pense d'abord à <b>Joseph Kabasele</b> dit Grand Kallé, le père de la rumba moderne avec l'African Jazz ; <b>Franco Luambo Makiadi</b>, chef du TP OK Jazz, une légende absolue ; et <b>Tabu Ley Rochereau</b>, immense voix et compositeur du Congo. Voulez-vous en savoir plus sur l'un d'eux ?" },
   { k: ['franco', 'ok jazz', 'luambo'],
     a: "<b>Franco Luambo Makiadi</b> (1938–1989) a fondé le TP OK Jazz et est resté une figure centrale de la rumba congolaise pendant plus de 30 ans, avec une guitare reconnaissable entre mille. On le surnomme parfois 'le sorcier de la guitare'." },
   { k: ['tabu ley', 'rochereau'],
@@ -1093,7 +1093,7 @@ const mimiKnowledge = [
   { k: ['mbilia bel'],
     a: "<b>Mbilia Bel</b> est l'une des plus grandes voix féminines de la rumba congolaise, révélée notamment aux côtés de Tabu Ley Rochereau." },
   { k: ['rumba', "qu'est-ce que la rumba", 'rumba congolaise'],
-    a: "La <b>rumba congolaise</b> est née dans les années 1940-50 à Kinshasa et Brazzaville, mêlant influences afro-cubaines et rythmes locaux. Elle est reconnue depuis 2021 au patrimoine culturel immatériel de l'UNESCO — une immense fierté congolaise 🇨🇩🇨🇬." },
+ a: "La <b>rumba congolaise</b> est née dans les années 1940-50 à Kinshasa et Brazzaville, mêlant influences afro-cubaines et rythmes locaux. Elle est reconnue depuis 2021 au patrimoine culturel immatériel de l'UNESCO — une immense fierté congolaise ." },
   { k: ['soukous'],
     a: "Le <b>soukous</b> est né de l'évolution de la rumba congolaise vers un tempo plus rapide et des guitares plus rythmées, popularisé dans les années 70-80 par des groupes comme Zaïko Langa Langa." },
   { k: ['ndombolo'],
@@ -1108,7 +1108,7 @@ const mimiKnowledge = [
    promesse de "tout comprendre", juste ce qui est honnêtement réalisable sans vraie IA. */
 function mimiRealDataAnswer(q){
   if(/mes favoris|ma playlist favor/.test(q)){
-    if(!favoritesPlaylist.length) return "Vous n'avez pas encore de favoris — appuyez sur ❤️ sur un morceau pour commencer votre playlist Favoris.";
+ if(!favoritesPlaylist.length) return "Vous n'avez pas encore de favoris — appuyez sur ️ sur un morceau pour commencer votre playlist Favoris.";
     const list = favoritesPlaylist.slice(0,5).map(t=>`« ${t.t} » — ${t.a}`).join('<br>');
     return `Voici vos ${favoritesPlaylist.length > 5 ? '5 derniers' : ''} favoris :<br>${list}`;
   }
@@ -1140,12 +1140,12 @@ function mimiRealDataAnswer(q){
   // Vraie échéance d'abonnement — jamais une date inventée, toujours currentUser.subscription_expires_at réel.
   if(/mon abonnement|mon pass|quand.*(expire|expir)|combien.*jours.*(reste|abonnement)|abonnement.*expir/i.test(q)){
     if(!currentUser || !realAuthToken) return "Connectez-vous pour que je puisse vérifier votre vrai abonnement.";
-    if(currentUser.subscription_status !== 'active') return "Vous n'avez pas de Pass actif en ce moment — direction l'écran des Pass pour en choisir un 🎧";
+ if(currentUser.subscription_status !== 'active') return "Vous n'avez pas de Pass actif en ce moment — direction l'écran des Pass pour en choisir un ";
     if(!currentUser.subscription_expires_at) return "Votre Pass est actif, sans date de fin enregistrée pour l'instant.";
     const daysLeft = Math.max(0, Math.ceil((new Date(currentUser.subscription_expires_at) - new Date()) / 86400000));
-    if(daysLeft <= 3) return `⚠️ Votre Pass expire dans ${daysLeft} jour${daysLeft>1?'s':''} seulement — pensez à le renouveler pour ne pas perdre l'accès.`;
+ if(daysLeft <= 3) return ` ️ Votre Pass expire dans ${daysLeft} jour${daysLeft>1?'s':''} seulement — pensez à le renouveler pour ne pas perdre l'accès.`;
     if(daysLeft <= 10) return `Votre Pass expire dans ${daysLeft} jours — vous avez encore un peu de temps, mais n'attendez pas le dernier moment.`;
-    return `Votre Pass est actif pour encore ${daysLeft} jours, tout va bien 🕊️`;
+ return `Votre Pass est actif pour encore ${daysLeft} jours, tout va bien ️`;
   }
   // Encouragement réel pour un artiste qui doute — pas un conseil générique inventé,
   // rattaché à ses vrais chiffres quand ils sont connus côté frontend.
@@ -1155,7 +1155,7 @@ function mimiRealDataAnswer(q){
   // Rappel réel du rôle du consommateur — pas un argument marketing vague, chiffré avec le
   // vrai partage de revenu déjà en place sur la plateforme (75% pour l'artiste).
   if(currentUser && currentUser.account_type === 'consumer' && /pourquoi (payer|m'abonner)|à quoi (ça sert|sert mon)|mon abonnement sert à quoi|utilité de mon pass/i.test(q)){
-    return "Excellente question — 75% de chaque vrai stream que vous générez revient directement à l'artiste. En écoutant sur NUNI plutôt qu'ailleurs, vous soutenez concrètement la musique congolaise, pas juste symboliquement. Continuez à écouter, suivre et partager : ça change vraiment quelque chose 🕊️";
+ return "Excellente question — 75% de chaque vrai stream que vous générez revient directement à l'artiste. En écoutant sur NUNI plutôt qu'ailleurs, vous soutenez concrètement la musique congolaise, pas juste symboliquement. Continuez à écouter, suivre et partager : ça change vraiment quelque chose ️";
   }
   return null;
 }
@@ -1172,7 +1172,7 @@ async function mimiAnswerRecommendLive(botMsgEl, question){
     // une vraie chance à plusieurs vrais artistes qui performent bien, pas seulement au n°1.
     const shuffled = [...pool].sort(()=> Math.random()-0.5);
     const picks = shuffled.slice(0, Math.min(3, shuffled.length));
-    const names = picks.map(a=> `🎤 ${a.artist_name || a.first_name}${a.is_verified ? ' ✅' : ''} — ${(a.total_streams||0).toLocaleString('fr-FR')} streams`).join('<br>');
+ const names = picks.map(a=> ` ${a.artist_name || a.first_name}${a.is_verified ? ' ' : ''} — ${(a.total_streams||0).toLocaleString('fr-FR')} streams`).join('<br>');
     botMsgEl.innerHTML = `${genreMatch ? `En ${genreMatch}, ` : ''}voici de vrais artistes qui performent bien en ce moment :<br>${names}<br><span style="opacity:.7; font-size:12px;">Demandez-moi encore et je vous en proposerai d'autres.</span>`;
   }catch(e){ /* pas grave, le message d'attente reste affiché */ }
 }
@@ -1198,7 +1198,7 @@ async function mimiAnswerFollowingLive(botMsgEl){
     const data = await res.json();
     const list = data.following || [];
     if(!list.length){ botMsgEl.textContent = "Vous ne suivez encore aucun artiste — allez faire un tour sur une page artiste et appuyez sur « Suivre » !"; return; }
-    const names = list.slice(0,8).map(a=> (a.artist_name || a.first_name) + (a.is_verified ? ' ✅' : '')).join('<br>');
+ const names = list.slice(0,8).map(a=> (a.artist_name || a.first_name) + (a.is_verified ? ' ' : '')).join('<br>');
     botMsgEl.innerHTML = `Vous suivez ${list.length} artiste${list.length>1?'s':''} :<br>${names}`;
   }catch(e){ /* pas grave, le message d'attente reste affiché */ }
 }
@@ -1208,7 +1208,7 @@ async function mimiAnswerXpLive(botMsgEl){
     const res = await fetch(NUNI_API_BASE + '/api/me/progress', { headers:{ 'Authorization':'Bearer '+realAuthToken } });
     if(!res.ok) return;
     const data = await res.json();
-    botMsgEl.innerHTML = `Vous êtes niveau ${data.level} — ${data.name}, avec ${data.xp} XP${data.xp_for_next ? ' (encore ' + (data.xp_for_next - data.xp) + ' XP avant le niveau suivant)' : ' (niveau max atteint !)'} 🎉`;
+ botMsgEl.innerHTML = `Vous êtes niveau ${data.level} — ${data.name}, avec ${data.xp} XP${data.xp_for_next ? ' (encore ' + (data.xp_for_next - data.xp) + ' XP avant le niveau suivant)' : ' (niveau max atteint !)'} `;
   }catch(e){ /* pas grave, le message d'attente reste affiché */ }
 }
 
@@ -1264,11 +1264,11 @@ function pickVariant(entry){
   return entry.a;
 }
 const mimiFallbacks = [
-  "Pour un début, je peux discuter simplement avec vous, vous recommander de la musique selon votre humeur, ou vous parler de nos grandes figures historiques (Grand Kallé, Franco, Tabu Ley, Papa Wemba...) et des styles comme la rumba ou le soukous 🕊️",
+ "Pour un début, je peux discuter simplement avec vous, vous recommander de la musique selon votre humeur, ou vous parler de nos grandes figures historiques (Grand Kallé, Franco, Tabu Ley, Papa Wemba...) et des styles comme la rumba ou le soukous ️",
   "Je ne suis pas sûre d'avoir compris — mais je peux vous parler de la musique congolaise, vous recommander un style selon votre humeur, ou vous dire vos favoris/dernier morceau écouté si vous êtes connecté(e).",
-  "Essayez de me demander « mes favoris », « mon niveau », ou parlez-moi de la rumba, du soukous, ou d'un artiste comme Franco ou Papa Wemba 🎶",
+ "Essayez de me demander « mes favoris », « mon niveau », ou parlez-moi de la rumba, du soukous, ou d'un artiste comme Franco ou Papa Wemba ",
   "Hmm, reformulez peut-être ? Je suis plus à l'aise avec la musique congolaise, vos vraies stats (niveau, favoris, artistes suivis), ou une vraie recommandation d'artiste.",
-  "Je n'ai pas tout saisi, mais dites-moi « recommande-moi des artistes » ou posez-moi une question sur un artiste précis — je vous réponds avec de vraies infos 🕊️",
+ "Je n'ai pas tout saisi, mais dites-moi « recommande-moi des artistes » ou posez-moi une question sur un artiste précis — je vous réponds avec de vraies infos ️",
 ];
 function pickVariedFallback(){ return mimiFallbacks[Math.floor(Math.random()*mimiFallbacks.length)]; }
 function mimiSend(){
@@ -1342,7 +1342,7 @@ function aiChoosePlan(type){
   closeAiModal();
   goTo('plans'); // affiche d'abord l'écran des Pass en arrière-plan (cohérent visuellement)
   choosePlan(type); // puis ouvre directement le vrai formulaire d'inscription, sans clic supplémentaire
-  toast(type==='artist' ? "L'assistant NUNI vous a dirigé vers le Pass Artiste 🎤" : "L'assistant NUNI vous a dirigé vers le Pass Consommateur 🎧");
+ toast(type==='artist' ? "L'assistant NUNI vous a dirigé vers le Pass Artiste " : "L'assistant NUNI vous a dirigé vers le Pass Consommateur ");
 }
 
 function updateGreeting(){
@@ -1353,19 +1353,19 @@ function updateGreeting(){
   const h = parseInt(congoHour, 10);
   let title, subs;
   if(h >= 5 && h < 12){
-    title = 'Mbote, bonjour ☀️';
+    title = 'Mbote, bonjour <svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>';
     subs = ["Un nouveau jour, une nouvelle playlist rien que pour vous.", "Le Congo se réveille en musique — voici de quoi bien commencer.", "Café, soleil et rumba : voici votre matinée idéale."];
   } else if(h >= 12 && h < 17){
-    title = 'Bon après-midi 🎶';
+    title = 'Bon après-midi <svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><circle cx="7.5" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/><path d="M10 18V5l9.5-2v13"/></svg>';
     subs = ["Une pause musicale bien méritée vous attend.", "Ça bouge au Congo cet après-midi — venez écouter.", "De quoi accompagner le reste de votre journée en beauté."];
   } else if(h >= 17 && h < 21){
-    title = 'Bonsoir 👋';
+    title = 'Bonsoir <svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg>';
     subs = ["Voici ce qui fait vibrer le Congo cette semaine.", "La soirée commence bien avec la bonne musique.", "Installez-vous, on s'occupe de l'ambiance."];
   } else {
-    title = 'Bonne nuit, mélomane 🌙';
+    title = 'Bonne nuit, mélomane <svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><path d="M20.8 14.5A8.5 8.5 0 1 1 9.5 3.2a7 7 0 0 0 11.3 11.3z"/></svg>';
     subs = ["Une sélection douce pour finir la journée en beauté.", "Encore quelques titres avant de dormir ?", "La nuit congolaise a aussi sa propre musique."];
   }
-  titleEl.textContent = title;
+  titleEl.innerHTML = title;
   subEl.textContent = subs[Math.floor(Math.random()*subs.length)];
   [titleEl, subEl].forEach(el=>{
     el.classList.remove('greeting-anim'); void el.offsetWidth; el.classList.add('greeting-anim');
@@ -1629,7 +1629,7 @@ function openArtistPage(name, artistId){
         fetch(NUNI_API_BASE + '/api/follow/' + currentArtistPageRealId + '/status', {
           headers:{ 'Authorization':'Bearer ' + realAuthToken }
         }).then(r=>r.json()).then(data=>{
-          followBtn.textContent = data.following ? 'Suivi ✓' : 'Suivre';
+ followBtn.textContent = data.following ? 'Suivi ' : 'Suivre';
         }).catch(()=>{});
       }
     }
@@ -1659,7 +1659,7 @@ function openArtistPage(name, artistId){
       const delBtn = document.createElement('button');
       delBtn.className = 'track-delete-btn';
       delBtn.title = 'Supprimer ce morceau';
-      delBtn.textContent = '🗑️';
+ delBtn.textContent = ' ️';
       delBtn.style.cssText = 'position:absolute; top:6px; right:42px; z-index:4; width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,.65); color:#fff; border:none; cursor:pointer; font-size:13px;';
       delBtn.onclick = (e)=>{ e.stopPropagation(); deleteMyTrack(card.dataset.trackId); };
       cover.appendChild(delBtn);
@@ -1729,13 +1729,13 @@ function renderCertificationButton(isOwnArtistPage, reallyVerified){
     btn.style.color = '#999';
     btn.style.cursor = 'default';
   } else if(!eligible){
-    btn.textContent = '🔒 Conditions non remplies';
+ btn.textContent = ' Conditions non remplies';
     btn.disabled = true;
     btn.style.background = 'rgba(255,255,255,0.06)';
     btn.style.color = '#888';
     btn.style.cursor = 'not-allowed';
   } else {
-    btn.textContent = status === 'rejected' ? '🏅 Redemander la certification' : '🏅 Demander la certification';
+ btn.textContent = status === 'rejected' ? ' Redemander la certification' : ' Demander la certification';
     btn.style.background = 'linear-gradient(135deg,#D4AF6A,#8E63C9)';
     btn.style.color = '#141220';
     btn.onclick = requestVerification;
@@ -1746,8 +1746,8 @@ function renderCertificationButton(isOwnArtistPage, reallyVerified){
     const conditions = document.createElement('div');
     conditions.style.cssText = 'font-size:11px; color:#888; line-height:1.5;';
     conditions.innerHTML = `
-      📋 Conditions : ${trackCount}/${NUNI_CERT_MIN_TRACKS} sons publiés · ${followerCount}/${NUNI_CERT_MIN_FOLLOWERS} abonnés<br>
-      🎁 Avantages : badge vérifié, codes promo exclusifs, mise en avant, stats avancées`;
+      <svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="5.5" y="4.5" width="13" height="17" rx="2"/><path d="M9 4.5V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1.5M8.5 11h7M8.5 15h7"/></svg> Conditions : ${trackCount}/${NUNI_CERT_MIN_TRACKS} sons publiés · ${followerCount}/${NUNI_CERT_MIN_FOLLOWERS} abonnés<br>
+      <svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 12h18M12 8v13"/><path d="M12 8c-1.8 0-4-1-4-3a2.5 2.5 0 0 1 4-2c1.5 0 2.3 1.5 2.3 3M12 8c1.8 0 4-1 4-3a2.5 2.5 0 0 0-4-2c-1.5 0-2.3 1.5-2.3 3"/></svg> Avantages : badge vérifié, codes promo exclusifs, mise en avant, stats avancées`;
     wrap.appendChild(conditions);
   }
 
@@ -1804,10 +1804,10 @@ async function saveMomoNumber(){
       body: JSON.stringify({ momoNumber: input.value.trim() })
     });
     const data = await res.json();
-    if(!res.ok){ msg.innerHTML = '<span style="color:var(--rose-braise)">❌ ' + data.error + '</span>'; return; }
-    msg.innerHTML = '<span style="color:#7FC79A">✅ ' + data.message + '</span>';
+    if(!res.ok){ msg.innerHTML = '<span style="color:var(--rose-braise)"><svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg> ' + data.error + '</span>'; return; }
+    msg.innerHTML = '<span style="color:#7FC79A"><svg class="nuni-ic nuni-ic-ok" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> ' + data.message + '</span>';
     toast(data.message);
-  }catch(e){ msg.innerHTML = '<span style="color:var(--rose-braise)">❌ Impossible de contacter le serveur NUNI.</span>'; }
+  }catch(e){ msg.innerHTML = '<span style="color:var(--rose-braise)"><svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg> Impossible de contacter le serveur NUNI.</span>'; }
 }
 
 // Avant : la bio venait d'un dictionnaire codé en dur, jamais modifiable par le vrai artiste.
@@ -1824,12 +1824,12 @@ async function saveArtistBio(){
       body: JSON.stringify({ bio: input.value.trim() })
     });
     const data = await res.json();
-    if(!res.ok){ msg.innerHTML = '<span style="color:var(--rose-braise)">❌ ' + data.error + '</span>'; return; }
-    msg.innerHTML = '<span style="color:#7FC79A">✅ ' + data.message + '</span>';
+    if(!res.ok){ msg.innerHTML = '<span style="color:var(--rose-braise)"><svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg> ' + data.error + '</span>'; return; }
+    msg.innerHTML = '<span style="color:#7FC79A"><svg class="nuni-ic nuni-ic-ok" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> ' + data.message + '</span>';
     toast(data.message);
     if(currentUser){ currentUser.bio = data.bio; }
     artistPublicInfoCache = {}; // vide le cache : la nouvelle bio doit apparaître immédiatement partout
-  }catch(e){ msg.innerHTML = '<span style="color:var(--rose-braise)">❌ Impossible de contacter le serveur NUNI.</span>'; }
+  }catch(e){ msg.innerHTML = '<span style="color:var(--rose-braise)"><svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg> Impossible de contacter le serveur NUNI.</span>'; }
 }
 
 /* ============ HISTORIQUE RÉEL DES PAIEMENTS (dashboard) ============
@@ -1863,11 +1863,11 @@ async function requestVerification(){
       method:'POST', headers:{'Authorization':'Bearer ' + realAuthToken}
     });
     const data = await res.json();
-    if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
     currentUser.verification_status = 'pending';
-    toast('✅ ' + data.message);
+ toast(' ' + data.message);
     openArtistPage(currentUser.artist_name, currentUser.id);
-  }catch(e){ toast('❌ Impossible de contacter le serveur NUNI.'); }
+ }catch(e){ toast(' Impossible de contacter le serveur NUNI.'); }
 }
 
 /* ============================================================
@@ -2182,10 +2182,10 @@ function filterCatalogByGenre(genreName){
       heroEl.innerHTML = `
         <div class="premium-hero-overlay"></div>
         <div class="premium-hero-content">
-          <span class="premium-hero-badge">👑 CLASSEMENT OFFICIEL</span>
+          <span class="premium-hero-badge"><svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><path d="M3 8l4 3 5-6 5 6 4-3-2 10H5L3 8z"/><path d="M5 21h14"/></svg> CLASSEMENT OFFICIEL</span>
           <h2 class="premium-hero-title">Top Congo</h2>
           <p class="premium-hero-sub">${formatLikes(totalListeners)} écoutes cumulées cette semaine sur les titres classés.</p>
-          <div class="premium-hero-tags"><span style="cursor:default;">🥇 En tête : ${leader.a} — « ${leader.t} »</span></div>
+          <div class="premium-hero-tags"><span style="cursor:default;"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M8 3h8l-2.5 6h-3L8 3z"/><path d="M11 17.5v-5l-1.3.7"/></svg> En tête : ${leader.a} — « ${leader.t} »</span></div>
           <div class="premium-hero-actions">
             <button class="btn btn-primary" id="top-congo-hero-play-btn">▶ Écouter le classement</button>
           </div>
@@ -2252,7 +2252,7 @@ async function submitAdRequest(){
 
   if(!name || !link || !contact){
     status.className = 'ai-screen-status flag';
-    status.textContent = '⚠️ Merci de renseigner au minimum le nom du produit, un lien et un contact.';
+ status.textContent = ' ️ Merci de renseigner au minimum le nom du produit, un lien et un contact.';
     return;
   }
 
@@ -2274,18 +2274,18 @@ async function submitAdRequest(){
     const data = await res.json();
     if(!res.ok){
       status.className = 'ai-screen-status flag';
-      status.innerHTML = '⚠️ ' + (data.error || "La demande n'a pas pu être envoyée.");
-      toast('❌ ' + (data.error || 'Erreur.'));
+      status.innerHTML = '<svg class="nuni-ic filled nuni-ic-warn" viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17.5v.1"/></svg> ' + (data.error || "La demande n'a pas pu être envoyée.");
+ toast(' ' + (data.error || 'Erreur.'));
       return;
     }
     status.className = 'ai-screen-status ok';
-    status.innerHTML = `✅ Demande envoyée — reçue à <b>nunimisiki@gmail.com</b><br>
+    status.innerHTML = `<svg class="nuni-ic nuni-ic-ok" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> Demande envoyée — reçue à <b>nunimisiki@gmail.com</b><br>
       <span style="color:var(--text-faint)">Formule : ${duration.label} · ${duration.price.toLocaleString('fr-FR')} FCFA · Contact : ${contact}</span><br>
       <span style="color:var(--text-faint)">Vous recevrez une réponse par WhatsApp/email avant toute mise en ligne.</span>`;
     toast(`Demande envoyée pour validation (${duration.label} — ${duration.price} FCFA).`);
   }catch(e){
     status.className = 'ai-screen-status flag';
-    status.innerHTML = '❌ Impossible de contacter le serveur NUNI — réessayez.';
+    status.innerHTML = '<svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg> Impossible de contacter le serveur NUNI — réessayez.';
   }
 }
 function seedAds(){
@@ -2465,14 +2465,14 @@ function openAlbumView(tr){
   const closeOverlay = ()=>{ overlay.classList.remove('show'); document.body.style.overflow = ''; setTimeout(()=> overlay.remove(), 200); };
 
   overlay.innerHTML = `
-    <button class="av-close" title="Fermer">✕</button>
+    <button class="av-close" title="Fermer"><svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div class="av-hero">
       <div class="av-hero-bg" style="${coverStyle}"></div>
       <div class="av-hero-fade"></div>
       <div class="av-hero-content">
         <div class="av-cover" style="${coverStyle}"></div>
         <div>
-          <div class="av-badge">🎵 ${tr.releaseType || 'Album'}</div>
+          <div class="av-badge"><svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><circle cx="7.5" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/><path d="M10 18V5l9.5-2v13"/></svg> ${tr.releaseType || 'Album'}</div>
           <div class="av-title">${tr.album}</div>
           <div class="av-meta"><b class="av-artist-link">${tr.a}</b> · ${albumTracks.length} titre${albumTracks.length>1?'s':''} · Sorti ${tr.release ? 'le ' + tr.release : "aujourd'hui"}</div>
         </div>
@@ -2541,7 +2541,7 @@ function openAlbumView(tr){
       const isPlaying = playing && currentTrack && currentTrack.t === t.t;
       row.classList.toggle('is-playing', isPlaying);
       const numEl = row.querySelector('.av-row-num');
-      if(numEl) numEl.textContent = isPlaying ? '♪' : i+1;
+ if(numEl) numEl.textContent = isPlaying ? ' ' : i+1;
       const existingDot = row.querySelector('.av-row-dot');
       if(isPlaying && !existingDot) row.querySelector('.av-row-title').insertAdjacentHTML('afterend', '<span class="av-row-dot"></span>');
       if(!isPlaying && existingDot) existingDot.remove();
@@ -2576,7 +2576,7 @@ function openAlbumView(tr){
       <div class="av-row-title">${t.t}</div>
       ${isPlaying ? '<span class="av-row-dot"></span>' : ''}
       ${t.lyrics ? '<span class="av-row-lyrics" title="Paroles disponibles">🅻</span>' : ''}
-      ${realStreams !== null ? `<span class="av-row-streams">🎧 ${realStreams.toLocaleString('fr-FR')}</span>` : ''}
+      ${realStreams !== null ? `<span class="av-row-streams"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.6" y="14" width="4.4" height="6" rx="2"/><rect x="17" y="14" width="4.4" height="6" rx="2"/></svg> ${realStreams.toLocaleString('fr-FR')}</span>` : ''}
       <div class="av-row-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>`;
     row.onclick = ()=>{
       const isThisPlaying = playing && currentTrack && currentTrack.t === t.t;
@@ -2672,7 +2672,7 @@ function trackCard(tr){
   card.innerHTML = `
     ${coverInner}
       ${tr.audioUrl ? '<span class="imported-badge" title="Votre import">Vous</span>' : ''}
-      ${isMultiTrack ? `<span class="nuni-type-badge" title="${tr.releaseType}">💿 ${tr.releaseType}</span>` : ''}
+      ${isMultiTrack ? `<span class="nuni-type-badge" title="${tr.releaseType}"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.3"/></svg> ${tr.releaseType}</span>` : ''}
       <button class="track-card-menu-btn" aria-label="Options">⋮</button>
       <div class="play-fab">
         <svg viewBox="0 0 24 24" class="play-fab-icon"><path d="M8 5v14l11-7z"/></svg>
@@ -2681,7 +2681,7 @@ function trackCard(tr){
     </div>
     <div class="ttl">${tr.t}</div>
     <div class="art" style="cursor:pointer;">${tr.a}</div>
-    <div class="likes">${currentUser && currentUser.account_type === 'artist' ? `🎧 <span class="streams-count">${tr.streams||0}</span> · ` : ''}♥ <span class="likes-count">${formatLikes(tr.likes||0)}</span></div>`;
+    <div class="likes">${currentUser && currentUser.account_type === 'artist' ? `<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.6" y="14" width="4.4" height="6" rx="2"/><rect x="17" y="14" width="4.4" height="6" rx="2"/></svg> <span class="streams-count">${tr.streams||0}</span> · ` : ''}<svg class="nuni-ic filled nuni-ic-err" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg> <span class="likes-count">${formatLikes(tr.likes||0)}</span></div>`;
   card.querySelector('.cover').onclick = ()=> handleTrackCardClick(tr);
   card.querySelector('.ttl').onclick = ()=> handleTrackCardClick(tr);
   card.querySelector('.art').onclick = (e)=>{ e.stopPropagation(); openArtistPage(tr.a, tr.artistId); };
@@ -2725,9 +2725,9 @@ function openTrackCardMenu(tr){
   sheet.innerHTML = `
     <div class="tcm-handle"></div>
     <div class="tcm-title">${tr.t} — ${tr.a}</div>
-    <button id="tcm-queue">➕ <span>Ajouter à la file d'attente</span></button>
-    <button id="tcm-fav" class="${isLiked ? 'liked' : ''}">${isLiked ? '💔 <span>Retirer des favoris</span>' : '❤️ <span>Ajouter aux favoris</span>'}</button>
-    <button id="tcm-artist">👤 <span>Voir l'artiste</span></button>
+    <button id="tcm-queue"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> <span>Ajouter à la file d'attente</span></button>
+    <button id="tcm-fav" class="${isLiked ? 'liked' : ''}">${isLiked ? '<svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg> <span>Retirer des favoris</span>' : '<svg class="nuni-ic filled nuni-ic-err" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg> <span>Ajouter aux favoris</span>'}</button>
+    <button id="tcm-artist"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg> <span>Voir l'artiste</span></button>
   `;
   document.body.appendChild(overlay);
   document.body.appendChild(sheet);
@@ -3353,11 +3353,11 @@ document.addEventListener('click', (e)=>{
 function bounceEl(el){ el.classList.remove('is-bouncing'); void el.offsetWidth; el.classList.add('is-bouncing'); setTimeout(()=> el.classList.remove('is-bouncing'), 520); }
 function pulseEl(el){ el.classList.remove('is-pulsing'); void el.offsetWidth; el.classList.add('is-pulsing'); setTimeout(()=> el.classList.remove('is-pulsing'), 440); }
 function hapticPing(){ if(navigator.vibrate){ try{ navigator.vibrate(12); }catch(e){} } }
-function spawnFlyPing(fromEl, emoji){
+function spawnFlyPing(fromEl, iconHtml){
   const rect = fromEl.getBoundingClientRect();
   const span = document.createElement('span');
   span.className = 'fp-fly-ping';
-  span.textContent = emoji;
+  span.innerHTML = iconHtml;
   span.style.left = (rect.left + rect.width/2) + 'px';
   span.style.top = (rect.top + rect.height/2) + 'px';
   document.body.appendChild(span);
@@ -3608,11 +3608,11 @@ async function toggleLike(btn, trackOverride){
       });
       const data = await res.json();
       btn.disabled = false;
-      if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
       tr.likes = data.likes;
       if(data.liked){
         if(!favoritesPlaylist.find(t=>t.t===tr.t)) favoritesPlaylist.unshift(tr);
-        spawnFlyPing(btn, '❤️');
+        spawnFlyPing(btn, '<svg class="nuni-ic filled nuni-ic-err" viewBox="0 0 24 24" style="width:28px;height:28px;"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>');
       } else {
         favoritesPlaylist = favoritesPlaylist.filter(t=>t.t!==tr.t);
       }
@@ -3626,7 +3626,7 @@ async function toggleLike(btn, trackOverride){
       toast(data.liked ? 'Ajouté à votre playlist Favoris — visible dans Bibliothèque.' : 'Retiré de votre playlist Favoris.');
     }catch(e){
       btn.disabled = false;
-      toast('❌ Impossible de contacter le serveur NUNI.');
+ toast(' Impossible de contacter le serveur NUNI.');
     }
     return;
   }
@@ -3636,7 +3636,7 @@ async function toggleLike(btn, trackOverride){
   const willLike = !btn.classList.contains('liked');
   if(willLike){
     if(!favoritesPlaylist.find(t=>t.t===tr.t)) favoritesPlaylist.unshift(tr);
-    spawnFlyPing(btn, '❤️');
+    spawnFlyPing(btn, '<svg class="nuni-ic filled nuni-ic-err" viewBox="0 0 24 24" style="width:28px;height:28px;"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>');
   } else {
     favoritesPlaylist = favoritesPlaylist.filter(t=>t.t!==tr.t);
   }
@@ -3666,7 +3666,7 @@ function repeatToggle(btn){
   else{ toast('Répéter désactivé.'); }
 }
 function toggleFollow(btn){
-  const following = btn.textContent.trim() === 'Suivi ✓';
+ const following = btn.textContent.trim() === 'Suivi ';
   bounceEl(btn);
   if(currentArtistPageRealId && realAuthToken){
     btn.disabled = true;
@@ -3675,18 +3675,18 @@ function toggleFollow(btn){
       body: JSON.stringify({ artistId: currentArtistPageRealId })
     }).then(r=>r.json()).then(data=>{
       btn.disabled = false;
-      if(data.error){ toast('❌ ' + data.error); return; }
-      btn.textContent = data.following ? 'Suivi ✓' : 'Suivre';
+ if(data.error){ toast(' ' + data.error); return; }
+ btn.textContent = data.following ? 'Suivi ' : 'Suivre';
       if(data.following) hapticPing();
       // Le compteur de followers affiché sur le profil se met à jour tout de suite, sans
       // attendre un rechargement — avant, ce chiffre renvoyé par le serveur était ignoré.
       const statFollowersEl = document.getElementById('artist-stat-followers');
       if(statFollowersEl && typeof data.followersCount === 'number') statFollowersEl.textContent = data.followersCount.toLocaleString('fr-FR');
       toast(data.following ? 'Vous suivez maintenant cet artiste.' : 'Vous ne suivez plus cet artiste.');
-    }).catch(()=>{ btn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); });
+ }).catch(()=>{ btn.disabled = false; toast(' Impossible de contacter le serveur NUNI.'); });
     return;
   }
-  btn.textContent = following ? 'Suivre' : 'Suivi ✓';
+ btn.textContent = following ? 'Suivre' : 'Suivi ';
   toast(following ? 'Vous ne suivez plus Bibi Mwana.' : 'Vous suivez maintenant Bibi Mwana.');
 }
 /* Avant : ce réglage n'était jamais mémorisé — un artiste qui masquait ses revenus pour la
@@ -3854,10 +3854,10 @@ async function publishClip(){
       loadRealClips();
     } else {
       const err = await res.json().catch(()=>({}));
-      toast(`❌ Le clip n'a pas pu être envoyé au serveur : ${err.error || 'erreur inconnue'}. Il reste visible uniquement dans votre navigateur.`);
+ toast(` Le clip n'a pas pu être envoyé au serveur : ${err.error || 'erreur inconnue'}. Il reste visible uniquement dans votre navigateur.`);
     }
   }catch(e){
-    toast('❌ Impossible de contacter le serveur — le clip reste visible uniquement dans votre navigateur (vidéo peut-être trop lourde).');
+ toast(' Impossible de contacter le serveur — le clip reste visible uniquement dans votre navigateur (vidéo peut-être trop lourde).');
   }
 }
 function ensureClipWatchStyles(){
@@ -3911,7 +3911,7 @@ function openClipWatchPage(clip){
         document.querySelectorAll('.clip-card').forEach(card=>{
           if(card.dataset.clipId === String(clip.id)){
             const viewsSpan = card.querySelector('.meta span');
-            if(viewsSpan) viewsSpan.textContent = `👁️ ${formatLikes(clip.views)} vues`;
+ if(viewsSpan) viewsSpan.textContent = ` ️ ${formatLikes(clip.views)} vues`;
           }
         });
       }
@@ -3939,10 +3939,10 @@ function openClipWatchPage(clip){
     : '';
   const videoInner = clip.videoUrl
     ? `<video src="${clip.videoUrl}" controls autoplay playsinline></video>`
-    : `<div class="cw-video-placeholder">🎬 Aperçu vidéo non fourni pour ce clip de démonstration.</div>`;
+    : `<div class="cw-video-placeholder"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg> Aperçu vidéo non fourni pour ce clip de démonstration.</div>`;
 
   overlay.innerHTML = `
-    <button class="cw-close" title="Fermer">✕</button>
+    <button class="cw-close" title="Fermer"><svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div class="cw-wrap">
       <div class="cw-main">
         <div class="cw-video-wrap">${videoInner}</div>
@@ -3987,7 +3987,7 @@ function openClipWatchPage(clip){
   // en base. Corrigé pour de vrai, même comportement que partout ailleurs sur NUNI.
   if(realAuthToken && clip.artistId){
     fetch(NUNI_API_BASE + '/api/follow/' + clip.artistId + '/status', { headers:{ 'Authorization':'Bearer ' + realAuthToken } })
-      .then(r=>r.json()).then(d=>{ followBtn.textContent = d.following ? 'Suivi ✓' : 'Suivre'; followBtn.classList.toggle('is-following', d.following); })
+ .then(r=>r.json()).then(d=>{ followBtn.textContent = d.following ? 'Suivi ' : 'Suivre'; followBtn.classList.toggle('is-following', d.following); })
       .catch(()=>{});
   }
   followBtn.onclick = async (e)=>{
@@ -4001,11 +4001,11 @@ function openClipWatchPage(clip){
       });
       const data = await res.json();
       followBtn.disabled = false;
-      if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
       followBtn.classList.toggle('is-following', data.following);
-      followBtn.textContent = data.following ? 'Suivi ✓' : 'Suivre';
+ followBtn.textContent = data.following ? 'Suivi ' : 'Suivre';
       toast(data.following ? `Vous suivez maintenant ${clip.artist}.` : `Vous ne suivez plus ${clip.artist}.`);
-    }catch(e){ followBtn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
+ }catch(e){ followBtn.disabled = false; toast(' Impossible de contacter le serveur NUNI.'); }
   };
   const likeBtn = overlay.querySelector('.cw-like-btn');
   const dislikeBtn = overlay.querySelector('.cw-dislike-btn');
@@ -4032,13 +4032,13 @@ function openClipWatchPage(clip){
         });
         const data = await res.json();
         likeBtn.disabled = false; dislikeBtn.disabled = false;
-        if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
         clip.likes = data.likes; clip.dislikes = data.dislikes;
         likeBtn.classList.toggle('is-active', data.liked);
         dislikeBtn.classList.remove('is-active'); // exclusion mutuelle
         likeBtn.querySelector('.cw-reaction-count').textContent = clip.likes ? formatLikes(clip.likes) : '';
         dislikeBtn.querySelector('.cw-reaction-count').textContent = clip.dislikes ? formatLikes(clip.dislikes) : '';
-      }catch(e){ likeBtn.disabled = false; dislikeBtn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
+ }catch(e){ likeBtn.disabled = false; dislikeBtn.disabled = false; toast(' Impossible de contacter le serveur NUNI.'); }
       return;
     }
     // Clip de démonstration, ou visiteur non connecté : comportement local uniquement
@@ -4058,13 +4058,13 @@ function openClipWatchPage(clip){
         });
         const data = await res.json();
         likeBtn.disabled = false; dislikeBtn.disabled = false;
-        if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
         clip.likes = data.likes; clip.dislikes = data.dislikes;
         dislikeBtn.classList.toggle('is-active', data.disliked);
         likeBtn.classList.remove('is-active'); // exclusion mutuelle
         likeBtn.querySelector('.cw-reaction-count').textContent = clip.likes ? formatLikes(clip.likes) : '';
         dislikeBtn.querySelector('.cw-reaction-count').textContent = clip.dislikes ? formatLikes(clip.dislikes) : '';
-      }catch(e){ likeBtn.disabled = false; dislikeBtn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
+ }catch(e){ likeBtn.disabled = false; dislikeBtn.disabled = false; toast(' Impossible de contacter le serveur NUNI.'); }
       return;
     }
     const disliked = dislikeBtn.classList.toggle('is-active');
@@ -4072,7 +4072,7 @@ function openClipWatchPage(clip){
     if(disliked) likeBtn.classList.remove('is-active');
   };
   overlay.querySelector('.cw-share-btn').onclick = ()=>{
-    toast('Lien du clip copié — partagez-le où vous voulez 🕊️');
+ toast('Lien du clip copié — partagez-le où vous voulez ️');
   };
 
   const related = clips.filter(c=>c!==clip).sort((a,b)=>{
@@ -4114,7 +4114,7 @@ function clipCard(clip){
     <div class="clip-info">
       <div class="t">${clip.title}</div>
       <div class="a">${clip.artist}</div>
-      <div class="meta"><span>👁️ ${formatLikes(clip.views)} vues</span><span>❤️ ${formatLikes(clip.likes)}</span></div>
+      <div class="meta"><span><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg> ${formatLikes(clip.views)} vues</span><span><svg class="nuni-ic filled nuni-ic-err" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg> ${formatLikes(clip.likes)}</span></div>
     </div>`;
   card.querySelector('.clip-artist-avatar').onclick = (e)=>{ e.stopPropagation(); openArtistPage(clip.artist, clip.artistId); };
   card.onclick = ()=> openClipWatchPage(clip);
@@ -4208,11 +4208,11 @@ async function toggleClipLike(btn){
       });
       const data = await res.json();
       btn.disabled = false;
-      if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
       currentClip.likes = data.likes;
       btn.classList.toggle('liked', data.liked);
       document.getElementById('clip-player-likes').textContent = formatLikes(currentClip.likes);
-    }catch(e){ btn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
+ }catch(e){ btn.disabled = false; toast(' Impossible de contacter le serveur NUNI.'); }
     return;
   }
   const liked = btn.classList.toggle('liked');
@@ -4320,7 +4320,7 @@ async function publishRelease(){
       try{
         cloudCoverUrl = await uploadFileToCloudinary(coverFile, 'image');
       }catch(e){
-        toast(`❌ Envoi de la pochette impossible : ${e.message}. ${isScheduledForFuture ? 'La programmation a échoué.' : 'Les morceaux restent visibles uniquement dans votre navigateur.'}`);
+ toast(` Envoi de la pochette impossible : ${e.message}. ${isScheduledForFuture ? 'La programmation a échoué.' : 'Les morceaux restent visibles uniquement dans votre navigateur.'}`);
         currentUser.track_count = (currentUser.track_count || 0);
         return;
       }
@@ -4354,9 +4354,9 @@ async function publishRelease(){
           ? 'Programmation confirmée sur le serveur NUNI.'
           : 'Vos morceaux ont bien été envoyés sur le serveur NUNI — visibles par tous les auditeurs.');
       } else if(successCount > 0){
-        toast(`⚠️ ${successCount} morceau(x) envoyé(s), ${failCount} échec(s) : ${lastError}`);
+ toast(` ️ ${successCount} morceau(x) envoyé(s), ${failCount} échec(s) : ${lastError}`);
       } else {
-        toast(`❌ Aucun morceau envoyé au serveur : ${lastError}.`);
+ toast(` Aucun morceau envoyé au serveur : ${lastError}.`);
       }
       currentUser.track_count = (currentUser.track_count || 0) + (isScheduledForFuture ? 0 : successCount);
       // Retire les morceaux "temporaires" (aperçu local immédiat à la publication) une fois
@@ -4478,12 +4478,12 @@ async function handlePhotoUpload(e, kind){
         body: JSON.stringify({ bannerUrl: cloudUrl })
       });
       const data = await res.json();
-      if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
       currentUser.banner_url = cloudUrl;
       applyBannerEverywhere(cloudUrl);
-      toast('✅ Photo de couverture enregistrée — visible sur votre page artiste.');
+ toast(' Photo de couverture enregistrée — visible sur votre page artiste.');
     }catch(e){
-      toast('❌ Impossible d\'envoyer la photo : ' + (e.message || 'erreur inconnue'));
+ toast(' Impossible d\'envoyer la photo : ' + (e.message || 'erreur inconnue'));
     }
     return;
   }
@@ -4499,12 +4499,12 @@ async function handlePhotoUpload(e, kind){
       body: JSON.stringify({ avatarUrl: cloudUrl })
     });
     const data = await res.json();
-    if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
     currentUser.avatar_url = cloudUrl;
     applyAvatarEverywhere(cloudUrl);
-    toast('✅ Photo de profil enregistrée — visible partout sur NUNI.');
+ toast(' Photo de profil enregistrée — visible partout sur NUNI.');
   }catch(e){
-    toast('❌ Impossible d\'envoyer la photo : ' + (e.message || 'erreur inconnue'));
+ toast(' Impossible d\'envoyer la photo : ' + (e.message || 'erreur inconnue'));
   }
 }
 function applyAvatarEverywhere(url){
@@ -4574,10 +4574,10 @@ async function saveFeaturedTracks(){
       body: JSON.stringify({ trackIds: featuredTrackIds })
     });
     const data = await res.json();
-    if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
-    toast('✅ Sélection enregistrée — visible sur votre page artiste.');
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
+ toast(' Sélection enregistrée — visible sur votre page artiste.');
   }catch(e){
-    toast('❌ Impossible d\'enregistrer la sélection : ' + (e.message || 'erreur inconnue'));
+ toast(' Impossible d\'enregistrer la sélection : ' + (e.message || 'erreur inconnue'));
   }
 }
 // Suppression d'un morceau — notamment utile pour corriger une publication en double.
@@ -4589,13 +4589,13 @@ async function deleteMyTrack(trackId){
       method:'DELETE', headers:{ 'Authorization':'Bearer ' + realAuthToken }
     });
     const data = await res.json();
-    if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
-    toast('✅ Morceau supprimé.');
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
+ toast(' Morceau supprimé.');
     await loadRealTracks();
     refreshMainShelves();
     if(currentUser && currentUser.account_type === 'artist') openArtistPage(currentUser.artist_name, currentUser.id);
   }catch(e){
-    toast('❌ Suppression impossible : ' + (e.message || 'erreur inconnue'));
+ toast(' Suppression impossible : ' + (e.message || 'erreur inconnue'));
   }
 }
 
@@ -4631,12 +4631,12 @@ async function handleProfileAvatarUpload(e){
       body: JSON.stringify({ avatarUrl: cloudUrl })
     });
     const data = await res.json();
-    if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
     currentUser.avatar_url = cloudUrl;
     applyAvatarEverywhere(cloudUrl); // remplace l'aperçu local par la vraie URL définitive
-    toast('✅ Photo de profil enregistrée — visible partout sur NUNI.');
+ toast(' Photo de profil enregistrée — visible partout sur NUNI.');
   }catch(e){
-    toast('❌ Impossible d\'envoyer la photo : ' + (e.message || 'erreur inconnue'));
+ toast(' Impossible d\'envoyer la photo : ' + (e.message || 'erreur inconnue'));
   }
 }
 
@@ -4930,7 +4930,7 @@ function shareCurrentTrack(){
   }
   const url = `${location.origin}${location.pathname}?track=${tr.realId}`;
   if(navigator.share){
-    navigator.share({ title: tr.t + ' — ' + tr.a, text: `Écoutez "${tr.t}" de ${tr.a} sur NUNI 🕊️`, url }).catch(()=>{});
+    navigator.share({ title: tr.t + ' — ' + tr.a, text: `Écoutez "${tr.t}" de ${tr.a} sur NUNI <svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M4 13c1-4 4.5-7 9-7 4 0 7 2.7 7.5 6.3.3 2-.3 3.7-1.5 3.7-1.5 0-1.5-2-3-2-1 0-1.3 1-2.7 1-1.7 0-2.3-1.5-4-1.5-2.3 0-3.5 2-5.3 1.5-1-.3-.7-1.3 0-2z"/><circle cx="16.3" cy="9.3" r=".6" fill="currentColor" stroke="none"/></svg>`, url }).catch(()=>{});
     return;
   }
   if(navigator.clipboard && navigator.clipboard.writeText){
@@ -4991,9 +4991,9 @@ async function reportCurrentTrack(){
       body: JSON.stringify({ reason: reason || null })
     });
     const data = await res.json();
-    if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); return; }
-    toast('✅ ' + data.message);
-  }catch(e){ toast('❌ Impossible de contacter le serveur NUNI.'); }
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); return; }
+ toast(' ' + data.message);
+ }catch(e){ toast(' Impossible de contacter le serveur NUNI.'); }
 }
 
 /* Ouverture directe d'un morceau partagé (?track=ID dans l'URL) — dès que le vrai catalogue
@@ -5128,7 +5128,7 @@ function renderQueuePanel(){
   // en premier, clairement distincte des suggestions automatiques du pool en cours.
   const userQueueHtml = userQueue.length
     ? `<div class="fp-queue-section-lbl">Votre file d'attente</div>` +
-      userQueue.map((tr, idx)=> `<div class="fp-queue-item" data-queue-kind="user" data-queue-idx="${idx}">${queueRowHtml(tr, '<button class="fp-queue-remove" data-remove-idx="'+idx+'" title="Retirer">✕</button>')}</div>`).join('')
+      userQueue.map((tr, idx)=> `<div class="fp-queue-item" data-queue-kind="user" data-queue-idx="${idx}">${queueRowHtml(tr, '<button class="fp-queue-remove" data-remove-idx="'+idx+'" title="Retirer"><svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>')}</div>`).join('')
     : '';
 
   fpQueueUpcoming = [];
@@ -5357,13 +5357,13 @@ async function openTalentModal(){
       const alreadyVotedThis = talentMyVoteArtistId === a.id;
       const votedElsewhere = talentMyVoteArtistId && talentMyVoteArtistId !== a.id;
       item.innerHTML = `
-        <div class="talent-rank-num">${a.rank<=3 ? ['🥇','🥈','🥉'][a.rank-1] : '#'+a.rank}</div>
+        <div class="talent-rank-num">${a.rank<=3 ? ['<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M8 3h8l-2.5 6h-3L8 3z"/><path d="M11 17.5v-5l-1.3.7"/></svg>','<svg class="nuni-ic nuni-ic-ivory" viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M8 3h8l-2.5 6h-3L8 3z"/><path d="M10 16.5c0-1.3 3-1.3 3-3 0-.8-.7-1.2-1.5-1.2-.7 0-1.2.3-1.4.9M10 17.5h3.2"/></svg>','<svg class="nuni-ic nuni-ic-copper" viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M8 3h8l-2.5 6h-3L8 3z"/><path d="M10.3 12.5c.3-.6.9-.8 1.5-.8.9 0 1.5.5 1.5 1.1 0 .5-.5.9-1 1 .6.1 1.1.5 1.1 1.1 0 .7-.7 1.2-1.6 1.2-.7 0-1.3-.3-1.6-.8"/></svg>'][a.rank-1] : '#'+a.rank}</div>
         <div class="talent-rank-av" style="${avatarStyle}">${a.avatar_url ? '' : initials}</div>
         <div class="talent-rank-info">
           <div class="talent-rank-name">${name}</div>
           <div class="talent-rank-meta">${a.genre || 'Artiste NUNI'} · ${formatLikes(a.total_streams)} écoutes${a.votes_this_week ? ' · ' + a.votes_this_week + ' vote(s) cette semaine' : ''}</div>
         </div>
-        <button class="talent-vote-btn ${alreadyVotedThis?'voted':''}" ${votedElsewhere ? 'disabled' : ''} onclick="voteForArtist(${a.id}, this)">${alreadyVotedThis ? '✓ Voté' : 'Voter'}</button>`;
+        <button class="talent-vote-btn ${alreadyVotedThis?'voted':''}" ${votedElsewhere ? 'disabled' : ''} onclick="voteForArtist(${a.id}, this)">${alreadyVotedThis ? '<svg class="nuni-ic nuni-ic-ok" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> Voté' : 'Voter'}</button>`;
       wrap.appendChild(item);
     });
     renderWeeklyWinner(data.weekly_winner);
@@ -5384,7 +5384,7 @@ function renderWeeklyWinner(winner){
   card.innerHTML = `
     <div class="av" style="${avatarStyle}">${winner.avatar_url ? '' : initials}</div>
     <div>
-      <span class="badge">🏆 Artiste le plus aimé &amp; voté cette semaine</span>
+      <span class="badge"><svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4"/><path d="M12 13v3M9 20h6M10 20v-2.5h4V20"/></svg> Artiste le plus aimé &amp; voté cette semaine</span>
       <div class="name">${name}</div>
       <div class="meta">${winner.votes_this_week || 0} vote(s) cette semaine</div>
     </div>`;
@@ -5398,14 +5398,14 @@ async function voteForArtist(artistId, btn){
       body: JSON.stringify({ artistId })
     });
     const data = await res.json();
-    if(!res.ok){ toast('❌ ' + (data.error || 'Erreur.')); if(btn) btn.disabled = false; return; }
+ if(!res.ok){ toast(' ' + (data.error || 'Erreur.')); if(btn) btn.disabled = false; return; }
     if(btn){
       const rect = btn.getBoundingClientRect();
       spawnVoteBubble(rect.left + rect.width/2, rect.top + rect.height/2);
     }
     toast(data.message || 'Vote enregistré !');
     openTalentModal(); // recharge le vrai classement à jour
-  }catch(e){ if(btn) btn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
+ }catch(e){ if(btn) btn.disabled = false; toast(' Impossible de contacter le serveur NUNI.'); }
 }
 function spawnVoteBubble(x, y){
   for(let i=0;i<5;i++){
@@ -5517,7 +5517,7 @@ async function startTunerPlayback(){
   applyCoverTo(document.getElementById('player-cover'), currentTrack);
   syncFullPlayer();
   realAudio.play().then(()=>{
-    toast(`🔊 Son en direct — ${station.name}`);
+ toast(` Son en direct — ${station.name}`);
   }).catch(()=>{
     toast('Lecture bloquée par le navigateur — appuyez sur ▶ dans le lecteur pour démarrer le son manuellement.');
   });
@@ -5938,7 +5938,7 @@ async function loadProgress(){
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
           ${data.next_level_name ? `<p style="font-size:11px; color:var(--text-faint); margin:0;">Prochain niveau : ${data.next_level_name}</p>` : '<span></span>'}
-          <span style="font-size:12px; font-weight:700; color:var(--accent,#D4AF6A);">💎 ${data.nuni_points || 0} NUNI Points</span>
+          <span style="font-size:12px; font-weight:700; color:var(--accent,#D4AF6A);"><svg class="nuni-ic filled nuni-ic-emerald" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l-2.5 6L12 21l5.5-12L15 3"/></svg> ${data.nuni_points || 0} NUNI Points</span>
         </div>`;
     }
     // Vrai passage de niveau détecté (pas juste au tout premier chargement) — célébration visuelle.
@@ -5977,7 +5977,7 @@ function celebrateLevelUp(level, name){
     overlay.appendChild(c);
   }
   overlay.classList.add('show');
-  toast(`🎉 Niveau ${level} atteint — ${name} !`);
+ toast(` Niveau ${level} atteint — ${name} !`);
   hapticPing();
   setTimeout(()=>{ overlay.classList.remove('show'); setTimeout(()=>{ overlay.innerHTML = ''; }, 350); }, 2600);
 }
@@ -5998,7 +5998,7 @@ async function loadLeaderboard(){
     const data = await res.json();
     if(!data.top || !data.top.length){ wrap.style.display = 'none'; return; }
     wrap.style.display = '';
-    const medals = { 1:'🥇', 2:'🥈', 3:'🥉' };
+    const medals = { 1:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M8 3h8l-2.5 6h-3L8 3z"/><path d="M11 17.5v-5l-1.3.7"/></svg>', 2:'<svg class="nuni-ic nuni-ic-ivory" viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M8 3h8l-2.5 6h-3L8 3z"/><path d="M10 16.5c0-1.3 3-1.3 3-3 0-.8-.7-1.2-1.5-1.2-.7 0-1.2.3-1.4.9M10 17.5h3.2"/></svg>', 3:'<svg class="nuni-ic nuni-ic-copper" viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M8 3h8l-2.5 6h-3L8 3z"/><path d="M10.3 12.5c.3-.6.9-.8 1.5-.8.9 0 1.5.5 1.5 1.1 0 .5-.5.9-1 1 .6.1 1.1.5 1.1 1.1 0 .7-.7 1.2-1.6 1.2-.7 0-1.3-.3-1.6-.8"/></svg>' };
     list.innerHTML = data.top.slice(0, 5).map(r=>{
       const initial = (r.name || '?').charAt(0).toUpperCase();
       const avatar = r.avatar_url
@@ -6048,7 +6048,7 @@ async function loadShop(){
       card.innerHTML = `
         <div class="sc-ic">${icon}</div>
         <div class="sc-n">${label}</div>
-        <div class="sc-cost">${it.owned ? 'Possédé' : '💎 ' + it.cost}</div>
+        <div class="sc-cost">${it.owned ? 'Possédé' : '<svg class="nuni-ic filled nuni-ic-emerald" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l-2.5 6L12 21l5.5-12L15 3"/></svg> ' + it.cost}</div>
         ${it.owned ? '' : `<button class="sc-buy" ${canAfford ? '' : 'disabled'} onclick="buyShopItem('${it.key}', this)">Acheter</button>`}`;
       row.appendChild(card);
     });
@@ -6099,7 +6099,7 @@ async function loadChallenges(){
         <div class="cc-foot">
           <span>${c.progress}/${c.target}</span>
           ${c.claimed
-            ? '<span>✓ Récupéré</span>'
+            ? '<span><svg class="nuni-ic nuni-ic-ok" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> Récupéré</span>'
             : c.completed
               ? `<button class="cc-claim" onclick="claimChallenge('${c.key}', this)">Récupérer</button>`
               : '<span>En cours</span>'}
@@ -6161,7 +6161,7 @@ async function openTop100ArtistsPage(){
   const closeOverlay = ()=>{ overlay.classList.remove('show'); document.body.style.overflow = ''; setTimeout(()=> overlay.remove(), 200); };
 
   overlay.innerHTML = `
-    <button class="t100-close" title="Fermer">✕</button>
+    <button class="t100-close" title="Fermer"><svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div class="t100-wrap">
       <div class="t100-title">Top 100 artistes NUNI</div>
       <div class="t100-sub">Classement réel par nombre d'abonnés — uniquement les comptes avec un Pass Artiste actif.</div>
@@ -6192,7 +6192,7 @@ async function openTop100ArtistsPage(){
         <div class="t100-rank">#${a.rnk}</div>
         <div class="t100-av" style="${avatarStyle}">${a.avatar_url ? '' : initials}</div>
         <div class="t100-info">
-          <div class="t100-name">${name}${a.is_verified ? ' ✅' : ''}</div>
+          <div class="t100-name">${name}${a.is_verified ? ' <svg class="nuni-ic nuni-ic-ok" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>' : ''}</div>
           <div class="t100-meta">${a.top_genre || 'Artiste NUNI'}</div>
         </div>
         <div class="t100-followers">${(a.follower_count||0).toLocaleString('fr-FR')} abonnés</div>
@@ -6203,7 +6203,7 @@ async function openTop100ArtistsPage(){
       const followBtn = row.querySelector('.t100-follow-btn');
       if(realAuthToken){
         fetch(NUNI_API_BASE + '/api/follow/' + a.id + '/status', { headers:{ 'Authorization':'Bearer ' + realAuthToken } })
-          .then(r=>r.json()).then(d=>{ followBtn.textContent = d.following ? 'Suivi ✓' : 'Suivre'; followBtn.classList.toggle('is-following', d.following); })
+ .then(r=>r.json()).then(d=>{ followBtn.textContent = d.following ? 'Suivi ' : 'Suivre'; followBtn.classList.toggle('is-following', d.following); })
           .catch(()=>{});
       }
       followBtn.onclick = async ()=>{
@@ -6216,10 +6216,10 @@ async function openTop100ArtistsPage(){
           });
           const data2 = await res2.json();
           followBtn.disabled = false;
-          if(!res2.ok){ toast('❌ ' + (data2.error || 'Erreur.')); return; }
-          followBtn.textContent = data2.following ? 'Suivi ✓' : 'Suivre';
+ if(!res2.ok){ toast(' ' + (data2.error || 'Erreur.')); return; }
+ followBtn.textContent = data2.following ? 'Suivi ' : 'Suivre';
           followBtn.classList.toggle('is-following', data2.following);
-        }catch(e){ followBtn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
+ }catch(e){ followBtn.disabled = false; toast(' Impossible de contacter le serveur NUNI.'); }
       };
       list.appendChild(row);
     });
@@ -6249,7 +6249,7 @@ async function loadFeaturedArtists(){
       card.className = 'artist-suggest-card';
       card.innerHTML = `
         <div class="av" style="${avatarStyle}">${a.avatar_url ? '' : initials}</div>
-        <div class="n">${name}${a.is_verified ? ' ✅' : ''}</div>
+        <div class="n">${name}${a.is_verified ? ' <svg class="nuni-ic nuni-ic-ok" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>' : ''}</div>
         <div class="g">${a.top_genre || 'Artiste NUNI'}</div>
         <button>Suivre</button>`;
       card.querySelector('.av').onclick = ()=> openArtistPage(name, a.id);
@@ -6262,7 +6262,7 @@ async function loadFeaturedArtists(){
       // bug déjà corrigé ailleurs pour le Top 100 et la page artiste, oublié ici).
       if(realAuthToken){
         fetch(NUNI_API_BASE + '/api/follow/' + a.id + '/status', { headers:{ 'Authorization':'Bearer ' + realAuthToken } })
-          .then(r=>r.json()).then(d=>{ followBtn.textContent = d.following ? 'Suivi ✓' : 'Suivre'; followBtn.classList.toggle('is-following', d.following); })
+ .then(r=>r.json()).then(d=>{ followBtn.textContent = d.following ? 'Suivi ' : 'Suivre'; followBtn.classList.toggle('is-following', d.following); })
           .catch(()=>{});
       }
       // Vrai suivi, envoyé au serveur — avant, ce bouton ne faisait que basculer un texte
@@ -6277,11 +6277,11 @@ async function loadFeaturedArtists(){
           });
           const data2 = await res2.json();
           followBtn.disabled = false;
-          if(!res2.ok){ toast('❌ ' + (data2.error || 'Erreur.')); return; }
+ if(!res2.ok){ toast(' ' + (data2.error || 'Erreur.')); return; }
           followBtn.classList.toggle('is-following', data2.following);
-          followBtn.textContent = data2.following ? 'Suivi ✓' : 'Suivre';
+ followBtn.textContent = data2.following ? 'Suivi ' : 'Suivre';
           toast(data2.following ? `Vous suivez maintenant ${name}.` : `Vous ne suivez plus ${name}.`);
-        }catch(e){ followBtn.disabled = false; toast('❌ Impossible de contacter le serveur NUNI.'); }
+ }catch(e){ followBtn.disabled = false; toast(' Impossible de contacter le serveur NUNI.'); }
       };
       row.appendChild(card);
     });
@@ -6390,7 +6390,7 @@ function openCategoryPage(title, description, getList, shuffle){
     setTimeout(()=> overlay.remove(), 200);
   };
   overlay.innerHTML = `
-    <button class="cp-close" title="Fermer">✕</button>
+    <button class="cp-close" title="Fermer"><svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div class="cp-hero">
       <div class="cp-hero-covers" id="cp-hero-covers"></div>
       <div class="cp-hero-fade"></div>
@@ -6456,7 +6456,7 @@ function playlistCard(p){
     </div>
     <div class="ttl">${p.title}</div>
     <div class="art">NUNI</div>
-    <div class="likes">🎵 <span>${p.track_count}</span> titre${p.track_count>1?'s':''}</div>`;
+    <div class="likes"><svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><circle cx="7.5" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/><path d="M10 18V5l9.5-2v13"/></svg> <span>${p.track_count}</span> titre${p.track_count>1?'s':''}</div>`;
   card.onclick = ()=> openPlaylistPage(p.id);
   return card;
 }
@@ -6544,7 +6544,7 @@ async function openPlaylistPage(id){
   document.body.appendChild(overlay);
   document.body.style.overflow = 'hidden';
   const closeOverlay = ()=>{ overlay.classList.remove('show'); document.body.style.overflow = ''; setTimeout(()=> overlay.remove(), 200); };
-  overlay.innerHTML = `<button class="plv-close" title="Fermer">✕</button><div class="plv-hero"><div class="plv-hero-fade"></div><div class="plv-hero-content"><div class="plv-cover"></div><div><span class="plv-badge">🎧 Playlist NUNI</span><h2 class="plv-title">Chargement…</h2><div class="plv-meta"></div></div></div></div><div class="plv-actions"><button class="plv-play-all"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Tout écouter</button><button class="plv-shuffle-btn" title="Aléatoire"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h3.5a3 3 0 0 1 2.4 1.2L15 15a3 3 0 0 0 2.4 1.2H20M4 18h3.5a3 3 0 0 0 2.4-1.2l1-1.3M16.5 6H20M16.5 18H20"/><path d="M18 3l3 3-3 3M18 15l3 3-3 3"/></svg></button></div><div class="plv-list"></div>`;
+  overlay.innerHTML = `<button class="plv-close" title="Fermer"><svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button><div class="plv-hero"><div class="plv-hero-fade"></div><div class="plv-hero-content"><div class="plv-cover"></div><div><span class="plv-badge"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.6" y="14" width="4.4" height="6" rx="2"/><rect x="17" y="14" width="4.4" height="6" rx="2"/></svg> Playlist NUNI</span><h2 class="plv-title">Chargement…</h2><div class="plv-meta"></div></div></div></div><div class="plv-actions"><button class="plv-play-all"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Tout écouter</button><button class="plv-shuffle-btn" title="Aléatoire"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h3.5a3 3 0 0 1 2.4 1.2L15 15a3 3 0 0 0 2.4 1.2H20M4 18h3.5a3 3 0 0 0 2.4-1.2l1-1.3M16.5 6H20M16.5 18H20"/><path d="M18 3l3 3-3 3M18 15l3 3-3 3"/></svg></button></div><div class="plv-list"></div>`;
   overlay.querySelector('.plv-close').onclick = closeOverlay;
   requestAnimationFrame(()=> overlay.classList.add('show'));
   attachSwipeDownToClose(overlay, closeOverlay);
@@ -6552,7 +6552,7 @@ async function openPlaylistPage(id){
   try{
     const res = await fetch(NUNI_API_BASE + '/api/playlists/' + id);
     const data = await res.json();
-    if(!res.ok){ toast('❌ ' + (data.error || 'Playlist introuvable.')); closeOverlay(); return; }
+ if(!res.ok){ toast(' ' + (data.error || 'Playlist introuvable.')); closeOverlay(); return; }
     const mapped = (data.tracks || []).map(mapPlaylistTrack);
     const cover = mapped.find(t=>t.cover) ? mapped.find(t=>t.cover).cover : null;
 
@@ -6561,7 +6561,7 @@ async function openPlaylistPage(id){
     overlay.querySelector('.plv-cover').style.backgroundImage = cover ? `url(${cover})` : 'linear-gradient(135deg,#1E8449,#0E3D2C)';
     overlay.querySelector('.plv-title').textContent = data.playlist.title;
     const updatedDate = data.playlist.updated_at ? new Date(data.playlist.updated_at).toLocaleDateString('fr-FR', {day:'2-digit', month:'long', year:'numeric'}) : null;
-    overlay.querySelector('.plv-meta').innerHTML = `${data.playlist.description || 'Sélection curée par l\'équipe NUNI'} · ${mapped.length} titre${mapped.length>1?'s':''}<br><span style="font-size:12px; opacity:.8;">👤 Créateur : NUNI${updatedDate ? ` · 📅 Mis à jour le ${updatedDate}` : ''}</span>`;
+    overlay.querySelector('.plv-meta').innerHTML = `${data.playlist.description || 'Sélection curée par l\'équipe NUNI'} · ${mapped.length} titre${mapped.length>1?'s':''}<br><span style="font-size:12px; opacity:.8;"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg> Créateur : NUNI${updatedDate ? ` · <svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg> Mis à jour le ${updatedDate}` : ''}</span>`;
     // Teinte de fond biaisée selon le vrai genre dominant réellement présent dans la
     // playlist (Rumba → or/ivoire, Amapiano → bleu/violet, sinon la couleur réelle de la
     // pochette prend le dessus) — jamais un genre inventé, toujours calculé depuis les
@@ -6616,7 +6616,7 @@ async function openPlaylistPage(id){
     };
     renderLeSuggestionCard(overlay, data.playlist, mapped);
     renderSimilarPlaylistsRow(overlay, id, mapped);
-  }catch(e){ toast('❌ Impossible de contacter le serveur NUNI.'); closeOverlay(); }
+ }catch(e){ toast(' Impossible de contacter le serveur NUNI.'); closeOverlay(); }
 }
 
 /* Vraie suggestion contextuelle "Le P" — pas un message inventé et figé : s'appuie sur les
@@ -6632,7 +6632,7 @@ function renderLeSuggestionCard(overlay, playlistData, mapped){
     <div class="plv-lep-avatar"><img src="assets/mimi-avatar.png" alt="Le P"></div>
     <div class="plv-lep-body">
       <div class="plv-lep-name">Le P</div>
-      <div class="plv-lep-msg">Mbote moninga 👋 « ${playlistData.title} »${topGenre ? `, plutôt dans l'ambiance ${topGenre}` : ''} — envie de découvrir des artistes dans le même esprit ?</div>
+      <div class="plv-lep-msg">Mbote moninga <svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg> « ${playlistData.title} »${topGenre ? `, plutôt dans l'ambiance ${topGenre}` : ''} — envie de découvrir des artistes dans le même esprit ?</div>
       <button class="plv-lep-btn">Me suggérer des artistes</button>
     </div>`;
   overlay.querySelector('.plv-list').insertAdjacentElement('afterend', card);
@@ -6699,7 +6699,7 @@ async function openAllPlaylistsPage(){
   document.body.style.overflow = 'hidden';
   const closeOverlay = ()=>{ overlay.classList.remove('show'); document.body.style.overflow = ''; setTimeout(()=> overlay.remove(), 200); };
   overlay.innerHTML = `
-    <button class="apl-close" title="Fermer">✕</button>
+    <button class="apl-close" title="Fermer"><svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div class="apl-wrap">
       <div class="apl-title">Playlists NUNI</div>
       <div class="apl-sub">Nos sélections, curées à la main pour partager nos goûts avec vous.</div>
@@ -6800,7 +6800,7 @@ function runSearch(q){
     const item = document.createElement('div');
     item.className = 'sr-item';
     const coverStyle = c.thumb ? `background-image:url(${c.thumb}); background-size:cover; background-position:center;` : '';
-    const clipBadge = `<span style="display:inline-block; margin-left:6px; padding:1px 7px; border-radius:10px; background:rgba(212,175,106,0.15); color:var(--accent, #D4AF6A); font-size:10px; font-weight:700; letter-spacing:0.5px; vertical-align:middle;">🎬 Clip</span>`;
+    const clipBadge = `<span style="display:inline-block; margin-left:6px; padding:1px 7px; border-radius:10px; background:rgba(212,175,106,0.15); color:var(--accent, #D4AF6A); font-size:10px; font-weight:700; letter-spacing:0.5px; vertical-align:middle;"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg> Clip</span>`;
     item.innerHTML = `<div class="sr-cover ${c.thumb ? '' : (c.pal||'pal-1')}" style="${coverStyle}"></div>
       <div><div class="sr-t">${c.title}${clipBadge}</div><div class="sr-a">${c.artist}</div></div>`;
     item.onclick = ()=>{ enterApp('clips'); openClipWatchPage(c); box.classList.remove('open'); document.getElementById('app-search-input').value=''; };
@@ -6829,7 +6829,7 @@ function applyAccountType(){
   const artistMenuItem = document.getElementById('profile-menu-artist-space');
   if(artistMenuItem) artistMenuItem.style.display = isArtist ? '' : 'none';
   const switchBtn = document.getElementById('account-switch-btn');
-  if(switchBtn) switchBtn.textContent = isArtist ? '🎧 Passer en vue Consommateur' : '🎤 Passer en vue Artiste';
+ if(switchBtn) switchBtn.textContent = isArtist ? ' Passer en vue Consommateur' : ' Passer en vue Artiste';
   // si l'écran courant n'existe pas côté consommateur, on revient au catalogue
   if(!isArtist){
     const activeLink = document.querySelector('.app-nav-link.is-active');
@@ -6928,7 +6928,7 @@ async function renderLibraryArtists(listEl){
     const name = ar.artist_name || ar.first_name;
     const item = document.createElement('div'); item.className = 'pi-item';
     const covStyle = ar.avatar_url ? `background-image:url(${ar.avatar_url})` : '';
-    item.innerHTML = `<div class="cov pal-1" style="${covStyle}; border-radius:50%;"></div><div><div class="t">${name}${ar.is_verified?' ✅':''}</div><div class="s">Artiste NUNI</div></div>`;
+    item.innerHTML = `<div class="cov pal-1" style="${covStyle}; border-radius:50%;"></div><div><div class="t">${name}${ar.is_verified?' <svg class="nuni-ic nuni-ic-ok" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>':''}</div><div class="s">Artiste NUNI</div></div>`;
     item.onclick = ()=> openArtistPage(name, ar.id);
     listEl.appendChild(item);
   });
@@ -6943,7 +6943,7 @@ function renderLibrary(){
   if(libraryActiveCategory === 'liked'){
     titleEl.textContent = 'Titres aimés';
     if(!favoritesPlaylist.length){
-      listEl.innerHTML = `<div class="pi-empty">Aucun titre aimé pour l'instant.<br>Appuyez sur ❤️ sur un morceau pour le retrouver ici.</div>`;
+      listEl.innerHTML = `<div class="pi-empty">Aucun titre aimé pour l'instant.<br>Appuyez sur <svg class="nuni-ic filled nuni-ic-err" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg> sur un morceau pour le retrouver ici.</div>`;
       return;
     }
     sortTrackList(favoritesPlaylist).forEach(tr=> listEl.appendChild(buildLibraryTrackRow(tr)));
@@ -7063,9 +7063,9 @@ function openProfileInfo(type){
   body.innerHTML = '';
 
   if(type === 'playlists'){
-    icon.textContent = '🎵'; title.textContent = 'Mes playlists';
+ icon.textContent = ' '; title.textContent = 'Mes playlists';
     if(!favoritesPlaylist.length){
-      body.innerHTML = `<div class="pi-empty">Aucune playlist pour l'instant.<br>Appuyez sur ❤️ sur un titre pour créer votre playlist <b>Favoris</b>.</div>`;
+      body.innerHTML = `<div class="pi-empty">Aucune playlist pour l'instant.<br>Appuyez sur <svg class="nuni-ic filled nuni-ic-err" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg> sur un titre pour créer votre playlist <b>Favoris</b>.</div>`;
     } else {
       const list = document.createElement('div'); list.className = 'pi-list';
       list.innerHTML = `<div style="font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Favoris — ${favoritesPlaylist.length} titre(s)</div>`;
@@ -7081,7 +7081,7 @@ function openProfileInfo(type){
   }
 
   else if(type === 'history'){
-    icon.textContent = '🕘'; title.textContent = 'Historique';
+ icon.textContent = ' '; title.textContent = 'Historique';
     const cutoff = Date.now() - 30*60*1000;
     const recent = listeningHistory.filter(h => h.at >= cutoff);
     if(!recent.length){
@@ -7103,7 +7103,7 @@ function openProfileInfo(type){
   }
 
   else if(type === 'subscription'){
-    icon.textContent = '💳'; title.textContent = 'Mon abonnement';
+ icon.textContent = ' '; title.textContent = 'Mon abonnement';
     if(!currentUser){
       body.innerHTML = `<div class="pi-empty">Connectez-vous pour voir votre abonnement.</div>`;
     } else {
@@ -7127,11 +7127,11 @@ function openProfileInfo(type){
   }
 
   else if(type === 'payments'){
-    icon.textContent = '💰'; title.textContent = 'Paiements';
+ icon.textContent = ' '; title.textContent = 'Paiements';
     body.innerHTML = `
       <div class="pi-sub-card" style="margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <b>🎧 Pass Consommateur</b>
+          <b><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.6" y="14" width="4.4" height="6" rx="2"/><rect x="17" y="14" width="4.4" height="6" rx="2"/></svg> Pass Consommateur</b>
         </div>
         <div class="pi-sub-row"><span>Mensuel</span><b>650 FCFA</b></div>
         <div class="pi-sub-row"><span>Trimestriel</span><b>650 FCFA</b></div>
@@ -7139,7 +7139,7 @@ function openProfileInfo(type){
       </div>
       <div class="pi-sub-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <b>🎤 Pass Artiste</b>
+          <b><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v3.5M9 21h6"/></svg> Pass Artiste</b>
         </div>
         <div class="pi-sub-row"><span>Trimestriel</span><b>5 000 FCFA</b></div>
         <div class="pi-sub-row"><span>Annuel</span><b>10 000 FCFA</b></div>
@@ -7148,7 +7148,7 @@ function openProfileInfo(type){
   }
 
   else if(type === 'promo'){
-    icon.textContent = '🎁'; title.textContent = 'Codes promo';
+ icon.textContent = ' '; title.textContent = 'Codes promo';
     body.innerHTML = `<p style="font-size:12.5px; color:var(--text-faint);">Chargement…</p>`;
     fetch(NUNI_API_BASE + '/api/promo/NUNI30/status').then(r=>{ if(!r.ok) throw new Error(); return r.json(); }).then(data=>{
       const remaining = Math.max(0, data.max_uses - data.used_count);
@@ -7165,12 +7165,12 @@ function openProfileInfo(type){
   }
 
   else if(type === 'language'){
-    icon.textContent = '🌍'; title.textContent = 'Langue';
+ icon.textContent = ' '; title.textContent = 'Langue';
     const wrap = document.createElement('div'); wrap.className = 'pi-lang-row';
     languages.forEach(l=>{
       const opt = document.createElement('div');
       opt.className = 'pi-lang-opt' + (l.code===currentLanguage ? ' is-active' : '');
-      opt.innerHTML = `<div><div class="name">${l.name}</div><div class="native">${l.native}</div></div>${l.code===currentLanguage ? '✅' : ''}`;
+      opt.innerHTML = `<div><div class="name">${l.name}</div><div class="native">${l.native}</div></div>${l.code===currentLanguage ? '<svg class="nuni-ic nuni-ic-ok" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>' : ''}`;
       opt.onclick = ()=>{
         applyLanguage(l.code);
         toast(`Langue changée : ${l.name}`);
@@ -7186,13 +7186,13 @@ function openProfileInfo(type){
   }
 
   else if(type === 'contact'){
-    icon.textContent = '📩'; title.textContent = 'Nous contacter';
+ icon.textContent = ' '; title.textContent = 'Nous contacter';
     body.innerHTML = `
-      <a class="pi-contact-row" href="mailto:nunimisiki@gmail.com"><span class="ic">📧</span><div><div class="t">nunimisiki@gmail.com</div><div class="s">Réponse sous 48h</div></div></a>
-      <a class="pi-contact-row" href="https://wa.me/242068951600" target="_blank"><span class="ic">💬</span><div><div class="t">+242 06 895 16 00</div><div class="s">WhatsApp — service client</div></div></a>
-      <a class="pi-contact-row" href="#" onclick="event.preventDefault(); toast('Instagram NUNI — bientôt en ligne.')"><span class="ic">📷</span><div><div class="t">Instagram</div><div class="s">@nunimusic</div></div></a>
-      <a class="pi-contact-row" href="#" onclick="event.preventDefault(); toast('Facebook NUNI — bientôt en ligne.')"><span class="ic">👍</span><div><div class="t">Facebook</div><div class="s">NUNI Music</div></div></a>
-      <a class="pi-contact-row" href="#" onclick="event.preventDefault(); toast('TikTok NUNI — bientôt en ligne.')"><span class="ic">🎬</span><div><div class="t">TikTok</div><div class="s">@nunimusic</div></div></a>`;
+      <a class="pi-contact-row" href="mailto:nunimisiki@gmail.com"><span class="ic"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></svg></span><div><div class="t">nunimisiki@gmail.com</div><div class="s">Réponse sous 48h</div></div></a>
+      <a class="pi-contact-row" href="https://wa.me/242068951600" target="_blank"><span class="ic"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></svg></span><div><div class="t">+242 06 895 16 00</div><div class="s">WhatsApp — service client</div></div></a>
+ <a class="pi-contact-row" href="#" onclick="event.preventDefault(); toast('Instagram NUNI — bientôt en ligne.')"><span class="ic"> </span><div><div class="t">Instagram</div><div class="s">@nunimusic</div></div></a>
+ <a class="pi-contact-row" href="#" onclick="event.preventDefault(); toast('Facebook NUNI — bientôt en ligne.')"><span class="ic"> </span><div><div class="t">Facebook</div><div class="s">NUNI Music</div></div></a>
+ <a class="pi-contact-row" href="#" onclick="event.preventDefault(); toast('TikTok NUNI — bientôt en ligne.')"><span class="ic"> </span><div><div class="t">TikTok</div><div class="s">@nunimusic</div></div></a>`;
   }
 
   else if(type === 'downloads'){
@@ -7235,7 +7235,7 @@ function timeAgoFr(dateStr){
   const days = Math.floor(hours / 24);
   return `il y a ${days} j`;
 }
-const notifIcons = { follower:'🎉', new_release:'🎵', follower_milestone:'🏆', absence_reminder:'👋' };
+const notifIcons = { follower:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>', new_release:'<svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><circle cx="7.5" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/><path d="M10 18V5l9.5-2v13"/></svg>', follower_milestone:'<svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4"/><path d="M12 13v3M9 20h6M10 20v-2.5h4V20"/></svg>', absence_reminder:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg>' };
 async function loadNotifications(){
   if(!realAuthToken) return;
   try{
@@ -7249,7 +7249,7 @@ async function loadNotifications(){
       panel.insertAdjacentHTML('beforeend', `<div class="notif-item"><div><p style="margin:0;">Aucune notification pour l'instant.</p></div></div>`);
     } else {
       data.notifications.forEach(n=>{
-        head.insertAdjacentHTML('afterend', `<div class="notif-item"><span class="ic">${notifIcons[n.type]||'🔔'}</span><div><b>${n.title}</b><p>${n.body} · ${timeAgoFr(n.created_at)}</p></div></div>`);
+        head.insertAdjacentHTML('afterend', `<div class="notif-item"><span class="ic">${notifIcons[n.type]||'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>'}</span><div><b>${n.title}</b><p>${n.body} · ${timeAgoFr(n.created_at)}</p></div></div>`);
       });
     }
   }catch(e){ console.error('Impossible de charger les notifications :', e); }
@@ -7308,9 +7308,9 @@ function toggleVibeMode(){
   vibeMode = !vibeMode;
   document.getElementById('full-player').classList.toggle('vibe-mode', vibeMode);
   const hint = document.getElementById('fp-vibe-hint');
-  hint.textContent = vibeMode ? '✨ Mode Vibe NUNI activé — touchez pour quitter' : '✨ Touchez la pochette pour le Mode Vibe NUNI';
+ hint.textContent = vibeMode ? ' Mode Vibe NUNI activé — touchez pour quitter' : ' Touchez la pochette pour le Mode Vibe NUNI';
   if(vibeMode){
-    toast('Mode Vibe NUNI activé 🌊');
+ toast('Mode Vibe NUNI activé ');
     spawnVibeParticle();
     vibeParticleTimer = setInterval(spawnVibeParticle, 700);
   } else {
@@ -7403,7 +7403,7 @@ async function togglePushNotifications(){
       method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+realAuthToken},
       body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys })
     });
-    toast('✅ Notifications push activées — vous recevrez les vraies alertes NUNI même app fermée.');
+ toast(' Notifications push activées — vous recevrez les vraies alertes NUNI même app fermée.');
     updatePushToggleLabel();
   }catch(e){
     console.error(e);
