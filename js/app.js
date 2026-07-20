@@ -2015,10 +2015,14 @@ function buildNuniAudioSphere(){
 
   // Ne tourne que quand la tuile est réellement visible à l'écran — évite de consommer du
   // GPU/de la batterie en continu sur une page fermée ou un onglet en arrière-plan.
+  // Recalcule aussi systématiquement la taille à ce moment-là : au tout premier appel de
+  // buildNuniAudioSphere(), la page Catalogue est encore cachée (display:none, avant
+  // connexion) — getBoundingClientRect() renvoyait alors 0×0 et le canvas restait bloqué à
+  // cette taille pour toujours, invisible, même une fois la page réellement affichée.
   nuniSphereObserver = new IntersectionObserver((entries)=>{
     entries.forEach(entry=>{
       if(entry.isIntersecting){
-        if(!nuniSphereRAF) frame();
+        if(!nuniSphereRAF){ resize(); frame(); }
       } else if(nuniSphereRAF){
         cancelAnimationFrame(nuniSphereRAF); nuniSphereRAF = null;
       }
@@ -2027,7 +2031,7 @@ function buildNuniAudioSphere(){
   nuniSphereObserver.observe(canvas);
   document.addEventListener('visibilitychange', ()=>{
     if(document.hidden && nuniSphereRAF){ cancelAnimationFrame(nuniSphereRAF); nuniSphereRAF = null; }
-    else if(!document.hidden && !nuniSphereRAF && canvas.getBoundingClientRect().width > 0) frame();
+    else if(!document.hidden && !nuniSphereRAF && canvas.getBoundingClientRect().width > 0){ resize(); frame(); }
   });
 }
 // Déclenche l'onde lumineuse + le léger gonflement au toucher (voir touchBoost dans frame()).
