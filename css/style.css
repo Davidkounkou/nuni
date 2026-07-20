@@ -985,6 +985,41 @@ html.is-playing .player-track-info .t{ font-weight:700; }
   .volume-row{ display:none; }
 }
 
+/* ============ MODE BULLE (lecteur réduit quand il n'est pas utilisé) ============ */
+/* Avant : le player-bar restait affiché en pleine largeur en permanence dès qu'on entrait
+   dans l'app, même si rien n'avait jamais été écouté — il chevauchait le contenu (zone de
+   dépose de fichiers, menu ⋮ sur une pochette...) et cassait l'immersion. Maintenant : par
+   défaut (ou dès qu'on réduit manuellement via le bouton ˅), le lecteur devient une simple
+   bulle flottante avec la pochette + l'icône lecture/pause. Un tap dessus le rouvre en entier.
+   Il reprend aussi automatiquement sa forme normale dès qu'un son démarre réellement (voir
+   expandPlayer() appelé dans togglePlay()). */
+.player-bubble-icon{
+  display:none; position:absolute; inset:0; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.4); border-radius:inherit; color:#fff;
+}
+.player-bubble-icon svg{ width:22px; height:22px; }
+.player-minimize-btn{ order:-1; }
+
+.player-bar.is-collapsed{
+  width:64px; height:64px; left:auto; right:16px;
+  bottom:calc(16px + env(safe-area-inset-bottom,0));
+  padding:0; border-radius:50%; gap:0; justify-content:center;
+  background:transparent; border:none; backdrop-filter:none;
+  box-shadow:0 10px 30px -8px rgba(0,0,0,.6);
+  transition:width .25s var(--ease), height .25s var(--ease), border-radius .25s var(--ease), bottom .25s var(--ease);
+}
+.player-bar.is-collapsed .player-like,
+.player-bar.is-collapsed .player-center,
+.player-bar.is-collapsed .player-right,
+.player-bar.is-collapsed .player-track-info{ display:none !important; }
+.player-bar.is-collapsed .player-track{ width:64px; gap:0; }
+.player-bar.is-collapsed .player-cover{ width:64px; height:64px; border-radius:50%; }
+.player-bar.is-collapsed .player-bubble-icon{ display:flex; }
+
+@media(max-width:680px){
+  .player-bar.is-collapsed{ bottom:calc(80px + env(safe-area-inset-bottom,0)); } /* au-dessus de la mobile-tabbar */
+}
+
 /* ============ FULL-SCREEN PLAYER ============ */
 .full-player{
   position:fixed; inset:0; z-index:60; background:var(--bg); display:none; overflow:hidden;

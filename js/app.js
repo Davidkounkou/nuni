@@ -1391,6 +1391,16 @@ function enterApp(view){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('app-shell').classList.add('active');
   document.getElementById('player-bar').style.display = 'flex';
+  // Bulle par défaut tant que rien n'a été écouté cette session (évite que le lecteur
+  // prenne toute la largeur en bas de l'écran avant même d'avoir joué un son) — sauf si
+  // la personne avait explicitement laissé le lecteur ouvert (préférence mémorisée).
+  if(playing){
+    document.getElementById('player-bar').classList.remove('is-collapsed');
+  } else {
+    let wantsCollapsed = true;
+    try{ wantsCollapsed = localStorage.getItem('nuni_player_collapsed') !== '0'; }catch(e){ /* pas bloquant */ }
+    document.getElementById('player-bar').classList.toggle('is-collapsed', wantsCollapsed);
+  }
   document.getElementById('mobile-tabbar').style.removeProperty('display');
   document.getElementById('demo-nav').classList.remove('no-player');
   document.getElementById('mimi-widget').classList.remove('no-player');
@@ -2672,6 +2682,27 @@ setInterval(loadUpcomingReleases, 60000); // se resynchronise avec les vraies da
 // avec les vraies sorties programmées, dans openArtistPage() — plus de données factices ici.
 
 /* ============ PLAYER LOGIC ============ */
+/* ============ MODE BULLE DU LECTEUR ============ */
+// Réduit le lecteur en petite bulle flottante (pochette + icône lecture), pour libérer
+// l'écran quand on n'est pas en train de l'utiliser activement (menus, upload, navigation...).
+function collapsePlayer(){
+  document.getElementById('player-bar').classList.add('is-collapsed');
+  try{ localStorage.setItem('nuni_player_collapsed', '1'); }catch(e){ /* pas bloquant */ }
+}
+// Rouvre le lecteur en pleine largeur. Appelé au tap sur la bulle, et automatiquement dès
+// qu'un son démarre réellement (voir togglePlay()).
+function expandPlayer(){
+  document.getElementById('player-bar').classList.remove('is-collapsed');
+  try{ localStorage.setItem('nuni_player_collapsed', '0'); }catch(e){ /* pas bloquant */ }
+}
+// Clic sur la pochette : ouvre le lecteur plein écran normalement, sauf si on est en mode
+// bulle — dans ce cas le premier tap sert juste à rouvrir la barre, pas à ouvrir le plein écran.
+function handlePlayerTrackClick(){
+  const bar = document.getElementById('player-bar');
+  if(bar.classList.contains('is-collapsed')){ expandPlayer(); return; }
+  openFullPlayer();
+}
+
 let progressTimer, elapsed = 0, duration = 204; // 3:24
 let playbackSpeed = 1, qualityIndex = 1;
 try{
@@ -3007,6 +3038,9 @@ function playTrack(tr){
 }
 function togglePlay(){
   playing = !playing;
+  // Dès qu'un son démarre réellement, le lecteur reprend sa forme normale — c'est le
+  // moment où il est "utilisé". La réduction en bulle reste ensuite manuelle (bouton ˅).
+  if(playing) expandPlayer();
   document.documentElement.classList.toggle('is-playing', playing);
   updateNowPlayingCards();
   if('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
@@ -3016,6 +3050,8 @@ function togglePlay(){
   document.getElementById('play-icon').innerHTML = iconPath;
   const fpIcon = document.getElementById('fp-play-icon');
   if(fpIcon) fpIcon.innerHTML = iconPath;
+  const bubbleIcon = document.getElementById('player-bubble-icon-svg');
+  if(bubbleIcon) bubbleIcon.innerHTML = iconPath;
   if(usingRealAudio){
     if(playing){
       setPlayerLoadingState(true);

@@ -1031,8 +1031,13 @@
 
 <!-- ============ PLAYER BAR ============ -->
 <div class="player-bar" id="player-bar" style="display:none;">
-  <div class="player-track" onclick="openFullPlayer()" style="cursor:pointer;">
-    <div class="cover player-cover pal-1" id="player-cover"><div class="cover-glyph pal-pattern"></div></div>
+  <div class="player-track" onclick="handlePlayerTrackClick()" style="cursor:pointer;">
+    <div class="cover player-cover pal-1" id="player-cover">
+      <div class="cover-glyph pal-pattern"></div>
+      <div class="player-bubble-icon" id="player-bubble-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor" id="player-bubble-icon-svg"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+    </div>
     <div class="player-track-info">
       <div class="t" id="player-title">Mokili Ya Sika</div>
       <div class="a" id="player-artist">Bibi Mwana</div>
@@ -1058,6 +1063,9 @@
     </div>
   </div>
   <div class="player-right">
+    <button class="btn-icon player-minimize-btn" id="player-minimize-btn" aria-label="Réduire le lecteur" onclick="event.stopPropagation(); collapsePlayer();">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
     <div class="volume-row">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
       <div class="volume-track" onclick="setVolume(event)"><div class="volume-fill" id="volume-fill"></div></div>
