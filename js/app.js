@@ -339,6 +339,9 @@ function stopAllPlayback(){
     usingRealAudio = false;
     playing = false;
     elapsed = 0;
+    // Élément fantôme de la sphère audio — jamais indispensable, mais autant le stopper
+    // proprement en même temps plutôt que de le laisser tourner dans le vide.
+    try{ nuniAnalysisAudio.pause(); }catch(e){ /* pas bloquant */ }
     document.documentElement.classList.remove('is-playing');
     const icon = document.getElementById('play-icon');
     if(icon) icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
@@ -1884,25 +1887,40 @@ async function requestVerification(){
    cours de lecture (graves/médiums/aigus) dès qu'un vrai son est lancé.
    Choix Canvas 2D plutôt que Three.js/WebGL : rendu visuel équivalent pour une tuile de
    150×96px, sans ajouter ~600 Ko de bibliothèque externe chargée par tout le monde pour un
-   seul élément décoratif parmi 9 filtres de genre. ============ */
+   seul élément décoratif parmi 9 filtres de genre.
+
+   IMPORTANT — élément audio "fantôme" séparé, jamais realAudio directement :
+   Une première version branchait directement realAudio (le vrai lecteur) sur un AnalyserNode
+   Web Audio API. Ça fonctionnait, MAIS sur iPhone, dès qu'un <audio> passe par un AudioContext,
+   iOS Safari a tendance à couper le son en arrière-plan (app minimisée, téléphone verrouillé)
+   même avec MediaSession bien configuré — un vrai régression constatée en test. Ici, un second
+   élément <audio> MUET (nuniAnalysisAudio) charge le même fichier uniquement pour l'analyse ;
+   realAudio, lui, ne touche plus du tout à Web Audio API et garde son comportement natif fiable
+   en arrière-plan. Si l'analyse s'arrête ou échoue pour une raison quelconque, seule la sphère
+   en est affectée (retour à la simple respiration) — jamais le son. */
+const nuniAnalysisAudio = new Audio();
+nuniAnalysisAudio.crossOrigin = 'anonymous';
+nuniAnalysisAudio.muted = true;
+nuniAnalysisAudio.preload = 'auto';
+
 let nuniAudioCtx = null, nuniAnalyser = null, nuniFreqData = null, nuniAnalyserFailed = false;
-// Ce branchement ne peut être fait qu'UNE SEULE FOIS pour toute la session : un élément
-// <audio> ne peut être connecté qu'une fois à un AudioContext (createMediaElementSource),
-// et une fois connecté, son son ne sort PLUS QUE via ce graphe Web Audio — d'où le
-// ".connect(destination)" ci-dessous, sans lequel tout NUNI deviendrait silencieux en
-// permanence, pas seulement l'analyse des fréquences.
 function ensureAudioAnalyser(){
   if(nuniAnalyser || nuniAnalyserFailed) return nuniAnalyser;
   try{
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if(!AudioContextClass) throw new Error('Web Audio API non supportée par ce navigateur.');
     nuniAudioCtx = new AudioContextClass();
-    const sourceNode = nuniAudioCtx.createMediaElementSource(realAudio);
+    const sourceNode = nuniAudioCtx.createMediaElementSource(nuniAnalysisAudio);
     nuniAnalyser = nuniAudioCtx.createAnalyser();
     nuniAnalyser.fftSize = 128; // 64 valeurs de fréquence — largement assez pour moduler une sphère, sans coût CPU inutile
     nuniAnalyser.smoothingTimeConstant = 0.8; // lisse les à-coups brusques, sinon la sphère tremble au lieu de "battre"
+    // Gain à 0 avant la sortie : nuniAnalysisAudio est déjà muted, ce gain est une seconde
+    // sécurité pour garantir un silence total même si le mute était un jour retiré par erreur.
+    const silentGain = nuniAudioCtx.createGain();
+    silentGain.gain.value = 0;
     sourceNode.connect(nuniAnalyser);
-    nuniAnalyser.connect(nuniAudioCtx.destination); // OBLIGATOIRE — sans cette ligne, plus aucun son ne sort, jamais
+    nuniAnalyser.connect(silentGain);
+    silentGain.connect(nuniAudioCtx.destination);
     nuniFreqData = new Uint8Array(nuniAnalyser.frequencyBinCount);
   }catch(e){
     console.error('[sphère audio] branchement impossible — la sphère restera en simple respiration, la lecture normale n\'est pas affectée :', e.message);
@@ -1915,6 +1933,17 @@ function ensureAudioAnalyser(){
 // activer l'audio) — réveille l'AudioContext s'il a été mis en pause automatiquement.
 function nuniResumeAudioContextIfNeeded(){
   if(nuniAudioCtx && nuniAudioCtx.state === 'suspended'){ nuniAudioCtx.resume().catch(()=>{}); }
+}
+// Garde nuniAnalysisAudio calé sur le même morceau que le vrai lecteur, sans jamais bloquer
+// ni ralentir celui-ci (tout est best-effort, entouré de catch silencieux).
+function nuniSyncAnalysisAudio(src, currentTime){
+  try{
+    if(nuniAnalysisAudio.src !== src){ nuniAnalysisAudio.src = src; }
+    if(Math.abs(nuniAnalysisAudio.currentTime - currentTime) > 0.35){ nuniAnalysisAudio.currentTime = currentTime; }
+  }catch(e){ /* jamais bloquant */ }
+}
+function nuniAnalysisAudioPlayPause(shouldPlay){
+  try{ if(shouldPlay) nuniAnalysisAudio.play().catch(()=>{}); else nuniAnalysisAudio.pause(); }catch(e){ /* jamais bloquant */ }
 }
 
 let nuniSphereRAF = null, nuniSphereObserver = null, nuniSphereTouchT = 0;
@@ -2921,6 +2950,10 @@ realAudio.addEventListener('loadedmetadata', ()=>{
 });
 realAudio.addEventListener('timeupdate', ()=>{
   if(usingRealAudio){ elapsed = realAudio.currentTime; updateProgress(); }
+  // Recalage périodique de l'élément fantôme de la sphère audio (jamais indispensable,
+  // purement cosmétique — un décalage éventuel ne serait visible que sur la sphère, jamais
+  // sur le son réel).
+  if(usingRealAudio && nuniAnalyser){ nuniSyncAnalysisAudio(realAudio.src, realAudio.currentTime); }
   // Fondu enchaîné façon Apple Music, uniquement en mode DJ : dès qu'il reste moins de
   // DJ_CROSSFADE_SECONDS, on lance la transition — bien avant que le morceau ne se termine
   // vraiment, contrairement à l'ancien comportement (coupure nette à 'ended').
@@ -3233,6 +3266,9 @@ function playTrack(tr){
     // au mauvais moment ailleurs, le volume aurait pu rester coincé bas — ici, chaque
     // nouveau morceau redémarre toujours au vrai niveau voulu par la personne.
     if(!djDuckRampTimer) realAudio.volume = userVolume;
+    // Calé sur le même morceau pour la sphère audio "Tout" — élément séparé, muet, qui ne
+    // touche jamais à realAudio ni à la lecture réelle (voir nuniSyncAnalysisAudio plus haut).
+    nuniSyncAnalysisAudio(tr.audioUrl, 0);
   }
   updateProgress();
   syncFullPlayer();
@@ -3257,14 +3293,18 @@ function togglePlay(){
     if(playing){
       setPlayerLoadingState(true);
       // Branché une seule fois pour toute la session, dans le contexte du clic (requis par
-      // les navigateurs) — voir ensureAudioAnalyser(). N'affecte jamais la lecture normale
-      // même si le branchement échoue (fftSize/CORS) : le son continue de sortir normalement.
+      // les navigateurs) — voir ensureAudioAnalyser(). Tout ceci porte sur nuniAnalysisAudio,
+      // l'élément fantôme muet : n'affecte jamais realAudio ni la lecture réelle, y compris
+      // en arrière-plan sur iPhone.
       ensureAudioAnalyser();
       nuniResumeAudioContextIfNeeded();
+      nuniSyncAnalysisAudio(realAudio.src, realAudio.currentTime);
+      nuniAnalysisAudioPlayPause(true);
       realAudio.play().then(()=> setPlayerLoadingState(false)).catch(err => { setPlayerLoadingState(false); toast('Le navigateur a bloqué la lecture automatique — appuyez sur ▶ pour lancer le son manuellement.'); });
     } else {
       setPlayerLoadingState(false);
       realAudio.pause();
+      nuniAnalysisAudioPlayPause(false);
     }
     return;
   }
