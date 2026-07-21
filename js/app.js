@@ -2821,8 +2821,7 @@ function ensureTrackCardMenuStyles(){
   const style = document.createElement('style');
   style.id = 'track-card-menu-styles';
   style.textContent = `
-    .track-card-menu-btn{position:absolute; top:6px; right:6px; z-index:5; width:30px; height:30px; min-width:30px; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; border:none; font-size:16px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;}
-    .track-card-menu-btn:hover{ background:rgba(0,0,0,.75); }
+    .track-card-menu-btn{display:none;}
     #tcm-overlay{ position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.4); }
     #tcm-sheet{ position:fixed; left:0; right:0; bottom:0; z-index:9999; background:var(--bg-elev,#1a1a22); border-radius:20px 20px 0 0; padding:10px 10px calc(14px + env(safe-area-inset-bottom,0)); box-shadow:0 -10px 40px rgba(0,0,0,.5); }
     #tcm-sheet .tcm-handle{ width:36px; height:4px; border-radius:4px; background:rgba(255,255,255,.2); margin:6px auto 12px; }

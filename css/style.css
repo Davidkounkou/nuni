@@ -574,9 +574,10 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 }
 .artist-suggest-card .n{ font-size:13px; font-weight:600; margin-bottom:2px; }
 .artist-suggest-card .g{ font-size:11px; color:var(--text-faint); margin-bottom:12px; }
-.artist-suggest-card button{ font-size:11.5px; padding:7px 16px; border-radius:999px; border:1px solid var(--border-strong); width:100%; transition:all .3s; }
-.artist-suggest-card button:hover{ border-color:var(--accent); color:var(--accent); }
-.artist-suggest-card button.is-following{ background:var(--grad-envol); color:#0A0A10; border-color:transparent; font-weight:600; }
+.artist-suggest-card button{ font-size:11.5px; padding:7px 16px; border-radius:999px; border:none; width:100%; transition:all .3s; background:var(--grad-envol); color:#0A0A10; font-weight:600; }
+.artist-suggest-card button:hover{ filter:brightness(1.08); }
+.artist-suggest-card button.is-following{ background:transparent; color:var(--text-dim); border:1px solid var(--border-strong); font-weight:500; }
+.artist-suggest-card button.is-following:hover{ border-color:var(--accent); color:var(--accent); filter:none; }
 .release-card{
   flex-shrink:0; width:220px; background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-m);
   padding:16px; display:flex; gap:14px; align-items:center;
@@ -788,7 +789,7 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 .track-card:hover .cover.pal-6{ box-shadow:0 16px 36px -10px rgba(0,0,0,0.6), 0 0 34px -6px rgba(30,132,73,0.5); }
 .track-card .ttl{ font-size:14px; font-weight:600; margin-top:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .track-card .art{ font-size:12.5px; color:var(--text-faint); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.track-card .likes{ font-size:11px; color:var(--rose-braise); margin-top:4px; display:flex; align-items:center; gap:4px; }
+.track-card .likes{ display:none; }
 .cover-glyph{ position:absolute; inset:0; opacity:.5; }
 .imported-badge{
   position:absolute; top:8px; left:8px; z-index:2; background:rgba(10,10,16,.6); backdrop-filter:blur(4px);
