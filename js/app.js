@@ -2203,7 +2203,7 @@ const genres = [
   { n:'Rumba', c1:'#D98A3D', c2:'#7A4A24', anim:'anim-strum',
     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 16.3a3.4 3.4 0 1 0 3-5.7"/><path d="M8.7 10.7 18 2"/><path d="M18 2h2.3M18 2v2.3"/></svg>' },
   { n:'Gospel', c1:'#F1ECE3', c2:'#B89355', anim:'anim-rise',
-    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6.5c-3.8 0-6.8 1.9-8.3 4.9-1.4-1.7-4-2.3-6.7-1.4 1.4 1.5 3.2 2 5 1.8-1.4 1.1-2.7 2.6-3.2 4.7 2.3-.4 4.2-1.7 5.4-3.6.7 1.9.5 3.8-.7 5.6 2.8-.9 4.7-3.2 5.3-6.1 1.4-.7 2.5-2 3.2-3.8z"/></svg>' },
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M6 9h12"/></svg>' },
   { n:'Afro', c1:'#1E8449', c2:'#B8860B', anim:'anim-wave',
     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4h11L16 9.5H8z"/><path d="M8 9.5 6.5 19.5h11L16 9.5"/><path d="M6.5 4h11"/></svg>' },
   { n:'Hip-Hop', c1:'#4A2E70', c2:'#8B96B0', anim:'anim-bounce',
@@ -6940,7 +6940,11 @@ function toggleDesktopSearch(e){
   if(e) e.stopPropagation();
   const wrap = document.getElementById('app-search-wrap');
   wrap.classList.add('open');
-  setTimeout(()=> document.getElementById('app-search-input').focus(), 50);
+  // Avant : le focus() était posé dans un setTimeout — sur iOS Safari, le clavier ne
+  // s'ouvre QUE si .focus() est appelé de façon strictement synchrone dans le clic, sinon
+  // Safari le refuse silencieusement (restriction connue, pas un bug NUNI). D'où la
+  // recherche qui semblait "ne rien faire" sur iPhone.
+  document.getElementById('app-search-input').focus();
 }
 document.addEventListener('click', (e)=>{
   const wrap = document.getElementById('app-search-wrap');
@@ -6952,7 +6956,7 @@ document.addEventListener('click', (e)=>{
 });
 function openMobileSearch(){
   document.getElementById('app-search-wrap').classList.add('mobile-open');
-  setTimeout(()=> document.getElementById('app-search-input').focus(), 50);
+  document.getElementById('app-search-input').focus();
 }
 function closeMobileSearch(){
   document.getElementById('app-search-wrap').classList.remove('mobile-open');
