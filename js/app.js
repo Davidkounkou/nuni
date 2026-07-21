@@ -5520,6 +5520,42 @@ function closeTuner(){
 /* ============ NUNI TALENT — TOP 100 (vraies écoutes + vrais votes hebdomadaires) ============ */
 let talentTop100 = null;
 let talentMyVoteArtistId = null;
+// ============ NUNI TALENT — rail sur l'accueil (accueil, après Défis) ============
+// Reprend exactement les mêmes vraies données que le classement complet NUNI Talent
+// (/api/talent/top100 — vrais streams + vrais votes de la semaine, jamais inventés).
+// Jusqu'à 30 artistes, cartes verticales avec la vraie photo de profil en fond.
+async function loadHomeTalentRow(){
+  const wrap = document.getElementById('shelf-home-talent');
+  const row = document.getElementById('home-talent-row');
+  if(!wrap || !row) return;
+  try{
+    const res = await fetch(NUNI_API_BASE + '/api/talent/top100');
+    if(!res.ok) return;
+    const data = await res.json();
+    const list = (data.artists || []).slice(0, 30);
+    if(!list.length){ wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    row.innerHTML = '';
+    list.forEach(a=>{
+      const name = a.artist_name || a.first_name;
+      const card = document.createElement('div');
+      card.className = 'htal-card';
+      if(a.avatar_url) card.style.backgroundImage = `url(${a.avatar_url})`;
+      const votedBadge = (data.my_vote_artist_id === a.id)
+        ? `<div class="htal-voted" title="Vous avez voté"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>` : '';
+      card.innerHTML = `
+        <div class="htal-scrim"></div>
+        <div class="htal-rank">#${a.rank}</div>
+        ${votedBadge}
+        <div class="htal-info">
+          <div class="htal-name">${name}${a.is_verified ? ' <svg class="nuni-ic nuni-ic-ok" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>' : ''}</div>
+          <div class="htal-votes">${(a.votes_this_week||0)} vote${a.votes_this_week>1?'s':''} cette semaine</div>
+        </div>`;
+      card.onclick = ()=> openArtistPage(name, a.id);
+      row.appendChild(card);
+    });
+  }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
+}
 async function openTalentModal(){
   const wrap = document.getElementById('talent-rank-list');
   wrap.innerHTML = '<p style="color:var(--text-faint); font-size:13px; text-align:center; padding:20px 0;">Chargement…</p>';
@@ -6137,6 +6173,7 @@ async function loadProgress(){
     lastKnownLevel = data.level;
   }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
   loadChallenges();
+  loadHomeTalentRow();
   loadShop();
   loadLeaderboard();
 }
@@ -6803,7 +6840,6 @@ async function openPlaylistPage(id){
       refreshPlvRowHighlights();
       toast('Lecture aléatoire de « ' + data.playlist.title + ' »');
     };
-    renderLeSuggestionCard(overlay, data.playlist, mapped);
     renderSimilarPlaylistsRow(overlay, id, mapped);
  }catch(e){ toast(' Impossible de contacter le serveur NUNI.'); closeOverlay(); }
 }
