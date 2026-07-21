@@ -1454,6 +1454,60 @@ function enterApp(view){
    Bouton flottant repurposé (avant : contournait le système de Pass, désormais désactivé
    ailleurs) — vrai contact WhatsApp/email déjà utilisés partout ailleurs sur NUNI, et une
    vraie FAQ honnête, sans rien inventer sur le fonctionnement réel de la plateforme. */
+// ============ INSTALLER NUNI EN APPLICATION (PWA) ============
+// Android/Chrome : l'installation peut être déclenchée directement via l'événement
+// standard 'beforeinstallprompt', capturé dès le chargement de la page. iOS Safari ne
+// propose AUCUNE API pour déclencher ça par le code (restriction d'Apple, pas de NUNI) —
+// la seule voie est manuelle (Partager → Sur l'écran d'accueil), donc on affiche de vraies
+// instructions à la place, avec les bonnes captures selon l'appareil détecté.
+let nuniInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  nuniInstallPrompt = e;
+});
+function isRunningAsInstalledApp(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+async function installNuniApp(){
+  document.getElementById('demo-menu').classList.remove('open');
+  if(isRunningAsInstalledApp()){
+    toast('NUNI est déjà installé sur cet appareil !');
+    return;
+  }
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes('Macintosh') && 'ontouchend' in document);
+
+  if(nuniInstallPrompt){
+    // Android/Chrome/Edge : vraie boîte de dialogue d'installation native du navigateur.
+    nuniInstallPrompt.prompt();
+    try{ await nuniInstallPrompt.userChoice; }catch(e){ /* pas bloquant */ }
+    nuniInstallPrompt = null;
+    return;
+  }
+
+  if(isIOS){
+    document.getElementById('legal-title').textContent = 'Installer NUNI sur iPhone / iPad';
+    document.getElementById('legal-body').innerHTML = `
+      <p>iOS ne permet pas d'installer une application web automatiquement — voici comment le faire en 2 étapes, directement depuis Safari :</p>
+      <h4>1. Appuyez sur le bouton Partager</h4>
+      <p>L'icône <b>□ avec une flèche vers le haut</b>, en bas de l'écran dans Safari (ou en haut à côté de la barre d'adresse selon votre modèle).</p>
+      <h4>2. Sélectionnez « Sur l'écran d'accueil »</h4>
+      <p>Faites défiler la liste si besoin. NUNI apparaîtra ensuite comme une vraie application, avec son icône, sans la barre d'adresse du navigateur.</p>
+      <p style="color:var(--text-faint); font-size:12.5px; margin-top:16px;">Cette fonctionnalité doit obligatoirement passer par Safari — elle n'est pas disponible dans Chrome ou une autre app sur iPhone (restriction d'Apple).</p>
+    `;
+    document.getElementById('legal-modal-overlay').classList.add('show');
+    return;
+  }
+
+  // Android/desktop sans invite capturée (déjà refusée récemment, ou navigateur qui ne
+  // supporte pas beforeinstallprompt) : instructions génériques de repli.
+  document.getElementById('legal-title').textContent = 'Installer NUNI';
+  document.getElementById('legal-body').innerHTML = `
+    <p>Ouvrez le menu de votre navigateur (généralement les trois points en haut à droite) et cherchez <b>« Installer l'application »</b> ou <b>« Ajouter à l'écran d'accueil »</b>.</p>
+    <p style="color:var(--text-faint); font-size:12.5px; margin-top:16px;">Si l'option n'apparaît pas, votre navigateur ne la propose pas encore — Chrome et Edge sur Android fonctionnent le mieux pour ça.</p>
+  `;
+  document.getElementById('legal-modal-overlay').classList.add('show');
+}
 function openHelpWhatsApp(){
   document.getElementById('demo-menu').classList.remove('open');
   window.open('https://wa.me/242068951600', '_blank');
