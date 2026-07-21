@@ -312,6 +312,13 @@ async function restoreSession(){
     startAccountStatusWatcher();
     syncLikedTracksFromServer();
     loadProgress();
+    // Avant : loadFeaturedArtists() se lançait au tout premier chargement du script, bien
+    // avant que cette reconnexion automatique n'ait fini de vérifier qui est connecté —
+    // realAuthToken valait encore null à ce moment-là, donc le vrai statut "déjà suivi ?"
+    // n'était jamais vérifié, et le bouton restait coincé sur "Suivre" toute la session
+    // même pour des artistes réellement suivis. On la relance ici, une fois qu'on sait
+    // vraiment qui est connecté.
+    loadFeaturedArtists();
     realUserId = stored.userId;
     currentUser = data.user;
     applyAccountType();
