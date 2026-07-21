@@ -408,6 +408,7 @@ function startAccountStatusWatcher(){
 
 function logoutUser(){
   clearInterval(accountStatusCheckTimer);
+  clearInterval(heroRotateTimer);
   stopAllPlayback();
   clearSession();
   realAuthToken = null;
@@ -2193,22 +2194,22 @@ function nuniSphereTouchPulse(){ nuniSphereTouchT = 1; }
 const genres = [
   { n:'Tout', c1:'#6E45A8', c2:'#3A2A5C', anim:'anim-breathe',
     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 15.2c0-3 2.2-5.2 5.4-5.2 1.1 0 2.1.3 2.9 1L15.4 8l1 .7-1.7 2.1c1 .9 1.6 2.1 1.6 3.5 0 2.9-2.6 5.2-6.4 5.2-3.2 0-6-1.7-6-4.3z"/><circle cx="9.3" cy="10.9" r=".55" fill="currentColor"/></svg>' },
-  { n:'Nouveautés', c1:'#C9667A', c2:'#3A1530', anim:'anim-twinkle',
-    icon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.3 6.9h7.2l-5.8 4.3 2.2 6.9L12 16.3l-5.9 4.3 2.2-6.9-5.8-4.3h7.2z"/></svg>' },
+  { n:'Nouveautés', c1:'#E8C77E', c2:'#8A6A2E', anim:'anim-twinkle',
+    icon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.7 4 2.3 6 6.3 6.7-4 .7-5.6 2.7-6.3 6.7-.7-4-2.3-6-6.3-6.7C9.7 8 11.3 6 12 2z"/><path d="M19 15c.35 1.9 1.1 2.9 3 3.25-1.9.35-2.65 1.35-3 3.25-.35-1.9-1.1-2.9-3-3.25 1.9-.35 2.65-1.35 3-3.25z" opacity="0.75"/></svg>' },
   { n:'Top Congo', c1:'#D4AF6A', c2:'#5C3A18', anim:'anim-sheen',
-    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 18.5h18l-1.5-8.3-4 3.2L12 7l-3.5 6.4-4-3.2z"/><path d="M3 18.5h18" stroke-width="2.4"/></svg>' },
-  { n:'Rap', c1:'#1D2550', c2:'#0A0A10', anim:'anim-pulse-ring',
-    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9.3" y="2.5" width="5.4" height="10" rx="2.7"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v3M9 20.5h6"/></svg>' },
-  { n:'Rumba', c1:'#C0392B', c2:'#5C1810', anim:'anim-strum',
-    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="9.5" cy="15" rx="5" ry="4.2"/><path d="M12 4 9.5 11" class="ic-neck"/><path class="ic-string" d="M8 4.6 8.3 12"/><path class="ic-string" d="M10.4 3.6 10 11.4"/></svg>' },
-  { n:'Gospel', c1:'#141A38', c2:'#4A2E70', anim:'anim-rise',
-    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v17M6.5 9h11"/></svg>' },
-  { n:'Afro', c1:'#1E8449', c2:'#0F3D22', anim:'anim-wave',
-    icon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 2.1c1.9.3 2.5 1.7 3.9 2 1.5.3 1.9 1.5 1.5 2.8-.4 1.2.6 1.9 1 3.1.4 1.2-.6 1.9-.3 3.2.3 1.3-.8 1.9-1.6 2.8-.9 1-.6 2.5-1.9 2.8-1.2.5-1.9-.9-3.2-.6-1.2.3-2.2-.9-2.8-1.9-.6-1-1.9-.6-2.5-1.9-.6-1.1.3-1.9-.3-3.1C2.6 10.4 2 9.4 2.6 8.2 3.2 7 4.5 6.6 4.9 5.4 5.3 4.1 7.4 2.1 11 2.1z"/></svg>' },
-  { n:'Hip-Hop', c1:'#6E45A8', c2:'#241542', anim:'anim-bounce',
-    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="8.5" width="18" height="10.5" rx="2"/><circle cx="8" cy="13.8" r="2.4"/><circle cx="16" cy="13.8" r="2.4"/><path d="M7 8.5 6 4.5h12l-1 4"/></svg>' },
-  { n:'Traditionnel', c1:'#1E8449', c2:'#7A1E14', anim:'anim-glow-pulse',
-    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8.2C5 6.2 8.1 4.7 12 4.7S19 6.2 19 8.2v7.6c0 2-3.1 3.5-7 3.5s-7-1.5-7-3.5z"/><path d="M5 8.2c0 2 3.1 3.5 7 3.5s7-1.5 7-3.5"/></svg>' },
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 17h16l-1.4-6.4-3.8 3-2.8-5-2.8 5-3.8-3z"/><path d="M4 17h16" stroke-width="2.2"/><path d="M8 20.3c2.2-.7 5.8-.7 8 0" stroke-width="1.3"/></svg>' },
+  { n:'Rap', c1:'#8B96B0', c2:'#141A38', anim:'anim-pulse-ring',
+    icon:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="4.5" y="11" width="2.8" height="8"/><rect x="10.6" y="5" width="2.8" height="14"/><rect x="16.7" y="8.5" width="2.8" height="10.5"/></svg>' },
+  { n:'Rumba', c1:'#D98A3D', c2:'#7A4A24', anim:'anim-strum',
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 20 18 5" opacity=".55"/><path d="M8 20 18 9" opacity=".8"/><path d="M11.3 20 18 13"/></svg>' },
+  { n:'Gospel', c1:'#F1ECE3', c2:'#B89355', anim:'anim-rise',
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="9" r="5"/><path d="M12 15.5v6" stroke-width="1.8"/></svg>' },
+  { n:'Afro', c1:'#1E8449', c2:'#B8860B', anim:'anim-wave',
+    icon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 20.5 12 12 22 3.5 12z" opacity=".85"/><path d="M12 8 16 12 12 16 8 12z" fill="#0A0A10"/></svg>' },
+  { n:'Hip-Hop', c1:'#4A2E70', c2:'#8B96B0', anim:'anim-bounce',
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10.5" cy="13" r="7"/><circle cx="10.5" cy="13" r="1.4" fill="currentColor" stroke="none"/><path d="M16 6.5 20.5 4.5M20.5 4.5v4"/></svg>' },
+  { n:'Traditionnel', c1:'#1F4D2C', c2:'#8C6239', anim:'anim-glow-pulse',
+    icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 9h4v4H4zM8.5 13h4v4h-4zM13 9h4v4h-4zM17.5 13h4v4h-4z"/></svg>' },
 ];
 const genreGrid = document.getElementById('genre-grid');
 genres.forEach((g,i)=>{
@@ -3007,6 +3008,7 @@ async function loadRealTracks(){
 // jamais liée au vrai contenu de la plateforme. Ici : la vraie pochette + le vrai titre/artiste
 // du morceau le plus streamé du moment — la musique devient la vedette, pas le logo. Repli
 // silencieux sur l'image statique tant qu'aucun morceau réel n'a encore assez d'écoutes.
+let heroRotateTimer = null, heroRotateIndex = 0, heroRotatePool = [];
 function renderHomeHero(){
   const hero = document.getElementById('premium-hero-accueil');
   const titleEl = document.getElementById('premium-hero-title');
@@ -3014,16 +3016,35 @@ function renderHomeHero(){
   const badgeEl = document.getElementById('premium-hero-badge');
   const playBtn = document.getElementById('premium-hero-play-btn');
   if(!hero) return;
-  const top = getTopStreamedTracks(1)[0];
-  if(!top){
+  const top5 = getTopStreamedTracks(5);
+  if(!top5.length){
     // Pas encore assez de vraies écoutes pour établir un Top — on garde le texte/l'image
     // d'accroche par défaut plutôt qu'un écran vide, mais le badge reste honnête.
     if(badgeEl) badgeEl.innerHTML = '<span class="phb-dot"></span>Bienvenue sur NUNI';
     return;
   }
+  // Vrai tirage aléatoire (pas juste le même ordre à chaque rechargement) parmi les 5
+  // vrais morceaux les plus streamés — la bannière change de visage sans jamais montrer
+  // un morceau inventé ou un chiffre de streams fictif.
+  heroRotatePool = [...top5].sort(()=> Math.random()-0.5);
+  heroRotateIndex = 0;
+  applyHeroTrack(heroRotatePool[0], hero, titleEl, subEl, playBtn);
+  clearInterval(heroRotateTimer);
+  if(heroRotatePool.length > 1){
+    heroRotateTimer = setInterval(()=>{
+      heroRotateIndex = (heroRotateIndex + 1) % heroRotatePool.length;
+      hero.classList.add('hero-fading');
+      setTimeout(()=>{
+        applyHeroTrack(heroRotatePool[heroRotateIndex], hero, titleEl, subEl, playBtn);
+        hero.classList.remove('hero-fading');
+      }, 420);
+    }, 8000);
+  }
+}
+function applyHeroTrack(top, hero, titleEl, subEl, playBtn){
   if(top.cover) hero.style.backgroundImage = `url(${top.cover})`;
   if(titleEl) titleEl.innerHTML = `<em>${top.t}</em>`;
-  if(subEl) subEl.textContent = `${top.a} · le morceau le plus écouté cette semaine`;
+  if(subEl) subEl.textContent = `${top.a} · parmi les morceaux les plus écoutés cette semaine`;
   if(playBtn) playBtn.onclick = ()=>{ playTrack(top); openFullPlayer(); };
 }
 loadRealTracks();

@@ -630,14 +630,21 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
   mask-image:linear-gradient(90deg, transparent, black 22px, black calc(100% - 22px), transparent);
 }
 .genre-tile{
-  position:relative; flex-shrink:0; width:150px; height:96px; border-radius:18px; overflow:hidden; cursor:pointer;
+  position:relative; flex-shrink:0; width:150px; height:96px; border-radius:24px; overflow:hidden; cursor:pointer;
   scroll-snap-align:start;
   background:
-    radial-gradient(130% 110% at 12% 10%, color-mix(in srgb, var(--gc1,#6E45A8) 38%, transparent) 0%, transparent 62%),
+    radial-gradient(140% 120% at 15% 12%, color-mix(in srgb, var(--gc1,#6E45A8) 34%, transparent) 0%, transparent 60%),
+    linear-gradient(155deg, rgba(255,255,255,.05) 0%, transparent 40%),
     var(--bg-card);
-  border:1.5px solid rgba(255,255,255,.07);
-  box-shadow:0 8px 18px -14px rgba(0,0,0,.6);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:0 10px 24px -16px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.05);
   transition:transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s ease;
+}
+.genre-tile:hover{
+  transform:translateY(-3px);
+  box-shadow:0 16px 32px -14px rgba(0,0,0,.7), 0 0 0 1px color-mix(in srgb, var(--gc1,#6E45A8) 45%, transparent), inset 0 1px 0 rgba(255,255,255,.08);
+  border-color:color-mix(in srgb, var(--gc1,#6E45A8) 40%, transparent);
 }
 .genre-tile::before{
   content:''; position:absolute; inset:0; border-radius:inherit; padding:1.5px;
