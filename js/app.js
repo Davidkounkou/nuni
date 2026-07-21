@@ -2821,8 +2821,10 @@ function trackCard(tr){
   if(currentTrack && playing && trackKeyOf(currentTrack) === trackKeyOf(tr)) card.classList.add('is-now-playing');
   return card;
 }
-/* Petit menu tactile (zone d'appui 44px min, conforme aux recommandations mobiles) — vraies
-   actions : ajouter à la file d'attente, aimer/retirer des favoris, voir l'artiste. */
+/* Petit popover léger (zone d'appui 44px min, conforme aux recommandations mobiles) — ancré
+   près du bouton cliqué plutôt qu'une feuille plein écran avec fond assombri, pour rester
+   discret. Vraies actions : ajouter à la file d'attente, aimer/retirer des favoris, voir
+   l'artiste. */
 function ensureTrackCardMenuStyles(){
   if(document.getElementById('track-card-menu-styles')) return;
   const style = document.createElement('style');
@@ -2830,12 +2832,21 @@ function ensureTrackCardMenuStyles(){
   style.textContent = `
     .track-card-menu-btn{position:absolute; top:6px; right:6px; z-index:5; width:30px; height:30px; min-width:30px; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; border:none; font-size:16px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;}
     .track-card-menu-btn:hover{ background:rgba(0,0,0,.75); }
-    #tcm-overlay{ position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.4); }
-    #tcm-sheet{ position:fixed; left:0; right:0; bottom:0; z-index:9999; background:var(--bg-elev,#1a1a22); border-radius:20px 20px 0 0; padding:10px 10px calc(14px + env(safe-area-inset-bottom,0)); box-shadow:0 -10px 40px rgba(0,0,0,.5); }
-    #tcm-sheet .tcm-handle{ width:36px; height:4px; border-radius:4px; background:rgba(255,255,255,.2); margin:6px auto 12px; }
-    #tcm-sheet .tcm-title{ font-size:13px; color:var(--text-faint,#9aa); padding:0 10px 10px; }
-    #tcm-sheet button{ width:100%; text-align:left; padding:14px 12px; min-height:48px; border-radius:12px; background:none; border:none; color:var(--text,#fff); font-size:15px; display:flex; align-items:center; gap:12px; cursor:pointer; }
+    #tcm-overlay{ position:fixed; inset:0; z-index:9998; background:transparent; }
+    #tcm-sheet{
+      position:fixed; z-index:9999; width:240px; background:var(--bg-elev,#1a1a22);
+      border:1px solid var(--border-strong,rgba(255,255,255,.1)); border-radius:16px; padding:6px;
+      box-shadow:0 16px 40px -10px rgba(0,0,0,.55); animation:tcmPopIn .16s ease-out;
+    }
+    @keyframes tcmPopIn{ from{ opacity:0; transform:scale(.94) translateY(-4px); } to{ opacity:1; transform:scale(1) translateY(0); } }
+    #tcm-sheet .tcm-title{ font-size:12px; font-weight:600; color:var(--text-faint,#9aa); padding:8px 10px 6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    #tcm-sheet button{ width:100%; text-align:left; padding:10px; min-height:40px; border-radius:10px; background:none; border:none; color:var(--text,#fff); font-size:13.5px; display:flex; align-items:center; gap:10px; cursor:pointer; }
     #tcm-sheet button:hover, #tcm-sheet button:active{ background:rgba(255,255,255,.06); }
+    @media(max-width:520px){
+      /* Sur petit écran tactile, reste un popover léger — mais collé au bord le plus proche
+         plutôt qu'ancré pile sous un bouton parfois trop près du bord de l'écran. */
+      #tcm-sheet{ width:min(260px, calc(100vw - 24px)); }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -2845,7 +2856,7 @@ function closeTrackCardMenu(){
   if(overlay) overlay.remove();
   if(sheet) sheet.remove();
 }
-function openTrackCardMenu(tr){
+function openTrackCardMenu(tr, anchorEl){
   ensureTrackCardMenuStyles();
   closeTrackCardMenu();
   const isLiked = favoritesPlaylist.some(f=> f.t === tr.t);
@@ -2855,7 +2866,6 @@ function openTrackCardMenu(tr){
   const sheet = document.createElement('div');
   sheet.id = 'tcm-sheet';
   sheet.innerHTML = `
-    <div class="tcm-handle"></div>
     <div class="tcm-title">${tr.t} — ${tr.a}</div>
     <button id="tcm-queue"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> <span>Ajouter à la file d'attente</span></button>
     <button id="tcm-fav" class="${isLiked ? 'liked' : ''}">${isLiked ? '<svg class="nuni-ic nuni-ic-err" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg> <span>Retirer des favoris</span>' : '<svg class="nuni-ic filled nuni-ic-err" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg> <span>Ajouter aux favoris</span>'}</button>
@@ -2863,6 +2873,23 @@ function openTrackCardMenu(tr){
   `;
   document.body.appendChild(overlay);
   document.body.appendChild(sheet);
+  // Ancrage près du bouton cliqué (petit popover), avec repli intelligent pour ne jamais
+  // déborder de l'écran — sinon centré en bas comme avant si aucun bouton n'est fourni.
+  if(anchorEl){
+    const rect = anchorEl.getBoundingClientRect();
+    const sw = sheet.offsetWidth, sh = sheet.offsetHeight;
+    let left = rect.right - sw;
+    let top = rect.bottom + 6;
+    if(left < 10) left = 10;
+    if(left + sw > window.innerWidth - 10) left = window.innerWidth - sw - 10;
+    if(top + sh > window.innerHeight - 10) top = rect.top - sh - 6; // pas assez de place en dessous : ouvre vers le haut
+    sheet.style.left = left + 'px';
+    sheet.style.top = top + 'px';
+  } else {
+    sheet.style.left = '50%';
+    sheet.style.bottom = 'calc(20px + env(safe-area-inset-bottom,0))';
+    sheet.style.transform = 'translateX(-50%)';
+  }
   document.getElementById('tcm-queue').onclick = ()=>{ addToQueue(tr); closeTrackCardMenu(); };
   document.getElementById('tcm-fav').onclick = (e)=>{ toggleLike(e.currentTarget, tr); closeTrackCardMenu(); };
   document.getElementById('tcm-artist').onclick = ()=>{ openArtistPage(tr.a, tr.artistId); closeTrackCardMenu(); };
