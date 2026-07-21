@@ -1673,17 +1673,21 @@ html.is-playing .fp-title{ font-weight:800; }
   .user-chip{ padding:0; background:none; border:none; }
   .user-chip span{ display:none; }
   /* La recherche existe toujours sur mobile — juste cachée par défaut pour ne pas
-     encombrer la barre du haut, et ouverte en plein écran au tap sur la loupe. */
+     encombrer la barre du haut. Au tap sur la loupe (voir openMobileSearch), elle apparaît
+     en petit panneau ANCRÉ juste en dessous de l'icône — plus simple et plus fiable que
+     l'ancien plein écran, qui se positionnait mal sur iOS Safari selon les appareils. */
   .app-search-wrap.mobile-open{
-    display:flex !important; position:fixed; inset:0; z-index:10100;
-    background:var(--bg); padding:16px 16px calc(16px + env(safe-area-inset-top,0));
-    padding-top:calc(16px + env(safe-area-inset-top,0));
-    max-width:none; margin:0; flex-direction:column;
+    display:flex !important; position:fixed; z-index:10100;
+    background:var(--bg-elev); border:1px solid var(--border-strong); border-radius:16px;
+    box-shadow:0 16px 40px -10px rgba(0,0,0,.55); padding:10px;
+    width:min(320px, calc(100vw - 24px)); max-width:none; margin:0; flex-direction:column;
+    animation:mobileSearchPopIn .16s ease-out;
   }
-  .app-search-wrap.mobile-open input{ width:100%; padding:14px 14px 14px 40px; font-size:15px; }
-  .app-search-wrap.mobile-open .search-icon{ position:absolute; left:28px; top:34px; }
-  .app-search-wrap.mobile-open .search-results{ position:static; margin-top:14px; max-height:none; box-shadow:none; border:none; background:none; display:block !important; }
-  .app-search-wrap.mobile-open .nuni-mobile-search-close{ display:flex; position:absolute; top:calc(20px + env(safe-area-inset-top,0)); right:20px; z-index:1; }
+  @keyframes mobileSearchPopIn{ from{ opacity:0; transform:scale(.94) translateY(-4px); } to{ opacity:1; transform:scale(1) translateY(0); } }
+  .app-search-wrap.mobile-open input{ width:100%; padding:11px 11px 11px 36px; font-size:15px; border-radius:10px; background:var(--bg-card); }
+  .app-search-wrap.mobile-open .search-icon{ position:absolute; left:20px; top:26px; }
+  .app-search-wrap.mobile-open .search-results{ position:static; margin-top:10px; max-height:50vh; overflow-y:auto; box-shadow:none; border:none; background:none; display:block !important; }
+  .app-search-wrap.mobile-open .nuni-mobile-search-close{ display:flex; position:absolute; top:8px; right:8px; z-index:1; width:26px; height:26px; }
   .dash-grid{ grid-template-columns:1fr 1fr; }
   .artist-header{ flex-direction:column; align-items:flex-start; gap:14px; }
   .artist-avatar{ width:96px; height:96px; border-radius:24px; font-size:34px; }

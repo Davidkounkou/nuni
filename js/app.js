@@ -7025,7 +7025,16 @@ document.addEventListener('click', (e)=>{
   document.getElementById('search-results').classList.remove('open');
 });
 function openMobileSearch(){
-  document.getElementById('app-search-wrap').classList.add('mobile-open');
+  const wrap = document.getElementById('app-search-wrap');
+  const btn = document.querySelector('.nuni-mobile-search-btn');
+  wrap.classList.add('mobile-open');
+  // Ancré juste sous l'icône loupe qu'on vient de toucher — plus simple et plus fiable que
+  // le plein écran d'avant, qui posait des soucis de positionnement sur iOS Safari.
+  if(btn){
+    const rect = btn.getBoundingClientRect();
+    wrap.style.top = (rect.bottom + 8) + 'px';
+    wrap.style.right = Math.max(12, window.innerWidth - rect.right - 4) + 'px';
+  }
   document.getElementById('app-search-input').focus();
 }
 function closeMobileSearch(){
