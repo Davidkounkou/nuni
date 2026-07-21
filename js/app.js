@@ -3937,6 +3937,10 @@ function ensureClipWatchStyles(){
 }
 function openClipWatchPage(clip){
   ensureClipWatchStyles();
+  // Une seule source multimédia active à la fois : si un morceau audio joue, on le met en
+  // pause avant de lancer la vidéo (sinon les deux sons se superposent).
+  if(playing) togglePlay();
+  setImmersiveMode(true);
   if(clip.isReal && clip.realId){
     fetch(NUNI_API_BASE + '/api/clips/' + clip.realId + '/view', {
       method:'POST',
@@ -3970,6 +3974,7 @@ function openClipWatchPage(clip){
     if(v) v.pause();
     overlay.classList.remove('show');
     document.body.style.overflow = '';
+    setImmersiveMode(false);
     setTimeout(()=> overlay.remove(), 200);
   };
 
@@ -4686,6 +4691,7 @@ let lyricsOpen = false, immersionOn = false;
 function openFullPlayer(showLyrics){
   document.getElementById('full-player').classList.add('open');
   document.body.style.overflow = 'hidden';
+  setImmersiveMode(true);
   syncFullPlayer();
   if(showLyrics && !lyricsOpen) toggleLyrics();
 }
@@ -4694,6 +4700,18 @@ function closeFullPlayer(){
   document.getElementById('full-player').classList.remove('immersion');
   immersionOn = false;
   document.body.style.overflow = '';
+  setImmersiveMode(false);
+}
+// ============ MODE IMMERSIF — une seule source multimédia visible à la fois ============
+// Appelée par le lecteur plein écran, le lecteur de clip vidéo et le tuner NUNI Radio/DJ :
+// masque le mini-lecteur, la nav du haut, la barre d'onglets mobile et les boutons flottants
+// tant qu'une de ces vues plein écran est ouverte (voir la règle .nuni-immersive dans
+// style.css). Un compteur (pas juste un booléen) gère le cas où deux de ces vues
+// s'ouvriraient l'une par-dessus l'autre sans se fermer dans l'ordre inverse exact.
+let immersiveModeDepth = 0;
+function setImmersiveMode(active){
+  immersiveModeDepth = Math.max(0, immersiveModeDepth + (active ? 1 : -1));
+  document.documentElement.classList.toggle('nuni-immersive', immersiveModeDepth > 0);
 }
 function toggleImmersion(){
   immersionOn = !immersionOn;
@@ -5360,12 +5378,14 @@ let stationChangeTimer = null;
 
 function openTuner(tab){
   document.getElementById('tuner-modal-overlay').classList.add('show');
+  setImmersiveMode(true);
   renderTunerStationList();
   renderTunerStation(false);
   switchTunerTab(tab || 'radio');
 }
 function closeTuner(){
   document.getElementById('tuner-modal-overlay').classList.remove('show');
+  setImmersiveMode(false);
 }
 
 /* ============ NUNI TALENT — TOP 100 (vraies écoutes + vrais votes hebdomadaires) ============ */

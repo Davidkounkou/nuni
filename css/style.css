@@ -1021,6 +1021,21 @@ html.is-playing .player-track-info .t{ font-weight:700; }
   .player-bar{ animation:none; }
 }
 
+/* ============ MODE IMMERSIF (lecteur plein écran / clip vidéo / NUNI DJ) ============
+   Avant : le lecteur plein écran, le lecteur de clip et le tuner DJ avaient chacun un
+   z-index inférieur à celui du mini-lecteur (10000) — celui-ci restait donc visible et
+   cliquable PAR-DESSUS, créant un conflit visuel (deux lecteurs actifs en même temps).
+   Maintenant : une seule classe centrale sur <html>, posée/retirée par setImmersiveMode()
+   dans app.js, masque explicitement le mini-lecteur, la nav du haut, la barre d'onglets
+   mobile et les boutons flottants — une seule source multimédia visible à la fois, comme
+   Spotify/Apple Music/YouTube Music. */
+html.nuni-immersive #player-bar,
+html.nuni-immersive .app-topnav,
+html.nuni-immersive #mobile-tabbar,
+html.nuni-immersive #mimi-widget,
+html.nuni-immersive .demo-nav{
+  display:none !important;
+}
 /* ============ FULL-SCREEN PLAYER ============ */
 .full-player{
   position:fixed; inset:0; z-index:60; background:var(--bg); display:none; overflow:hidden;
