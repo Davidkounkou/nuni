@@ -614,62 +614,6 @@ html.is-playing .full-player .fp-halo{ opacity: .5; }
   .track-card.is-now-playing .play-fab-eq i{ animation:none; height:70%; }
 }
 
-/* ============================================================
-   LIQUID GLASS AFRICA — système de base
-   ------------------------------------------------------------
-   Verre liquide + profondeur + reflets, dans la palette NUNI
-   (noir ébène, cuivre, or africain, émeraude). Remplace les
-   fonds plats sobres par des panneaux translucides qui semblent
-   flotter au-dessus de l'interface.
-============================================================ */
-:root{
-  --glass-ebene: rgba(8, 7, 10, 0.55);
-  --glass-cacao: rgba(38, 22, 14, 0.42);
-  --glass-border-sheen: linear-gradient(135deg, rgba(255,255,255,.38) 0%, rgba(212,175,106,.12) 35%, transparent 60%);
-  --glass-blur: 26px;
-}
-.lg-glass{
-  position:relative;
-  background:linear-gradient(160deg, var(--glass-ebene) 0%, var(--glass-cacao) 100%);
-  backdrop-filter:blur(var(--glass-blur)) saturate(150%);
-  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(150%);
-  border:1px solid rgba(255,255,255,.10);
-  box-shadow:0 20px 50px -18px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.06);
-  transition:transform .4s var(--ease), box-shadow .4s var(--ease), border-color .4s var(--ease);
-}
-/* Reflet fin en haut à gauche, façon bordure de verre biseauté */
-.lg-glass::before{
-  content:''; position:absolute; inset:0; border-radius:inherit; padding:1px;
-  background:var(--glass-border-sheen);
-  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor; mask-composite:exclude;
-  opacity:.55; pointer-events:none;
-}
-/* Effet magnétique au survol : léger soulèvement + ombre plus profonde */
-.lg-glass:hover{
-  transform:translateY(-2px);
-  box-shadow:0 28px 60px -16px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.09);
-  border-color:rgba(255,255,255,.16);
-}
-/* Halo lumineux qui suit le curseur (position posée en JS via --mx/--my, voir attachGlassCursorLight) */
-.lg-glass-cursor::after{
-  content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:0;
-  background:radial-gradient(220px circle at var(--mx,50%) var(--my,50%), rgba(212,175,106,.16), transparent 70%);
-  transition:opacity .3s ease;
-}
-.lg-glass-cursor:hover::after{ opacity:1; }
-/* Variante accent doré (bordure/reflet plus chauds — cuivre/or) */
-.lg-glass-gold{ border-color:rgba(212,175,106,.22); }
-.lg-glass-gold::before{ background:linear-gradient(135deg, rgba(232,199,126,.5) 0%, rgba(212,175,106,.15) 40%, transparent 65%); }
-/* Variante émeraude (accent vert africain) */
-.lg-glass-emerald{ border-color:rgba(30,132,73,.28); }
-.lg-glass-emerald::before{ background:linear-gradient(135deg, rgba(95,187,160,.45) 0%, rgba(30,132,73,.14) 40%, transparent 65%); }
-
-@media (prefers-reduced-motion: reduce){
-  .lg-glass{ transition:none; }
-  .lg-glass:hover{ transform:none; }
-}
-
 .premium-hero{
   position:relative;
   border-radius:24px;
@@ -709,12 +653,11 @@ html.is-playing .full-player .fp-halo{ opacity: .5; }
 .premium-hero-sub{ color:rgba(255,255,255,0.72); font-size:15px; margin-bottom:18px; }
 .premium-hero-tags{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
 .premium-hero-tags span{
-  font-size:12px; font-weight:600; color:rgba(255,255,255,0.9);
-  background:rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.18);
-  backdrop-filter:blur(14px) saturate(150%); -webkit-backdrop-filter:blur(14px) saturate(150%);
-  padding:6px 14px; border-radius:999px; cursor:pointer; transition:all .25s ease;
+  font-size:12px; font-weight:600; color:rgba(255,255,255,0.85);
+  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.16);
+  padding:6px 14px; border-radius:999px; cursor:pointer; transition:background .2s ease;
 }
-.premium-hero-tags span:hover{ background:rgba(212,175,106,0.24); border-color:rgba(212,175,106,0.45); transform:translateY(-1px); }
+.premium-hero-tags span:hover{ background:rgba(212,175,106,0.22); border-color:rgba(212,175,106,0.4); }
 .premium-hero-actions{ display:flex; gap:12px; flex-wrap:wrap; }
 @media (max-width:640px){
   .premium-hero{ min-height:340px; }

@@ -530,7 +530,7 @@
       <button class="app-nav-link nav-artist-only" data-app-link="artist" onclick="enterApp('artist')">Artiste</button>
       <button class="app-nav-link nav-artist-only" data-app-link="dashboard" onclick="enterApp('dashboard')">Dashboard</button>
     </div>
-    <div class="app-search-wrap" id="app-search-wrap">
+    <div class="app-search-wrap" id="app-search-wrap" onclick="if(!this.classList.contains('open') &amp;&amp; !this.classList.contains('mobile-open')) toggleDesktopSearch(event)">
       <button class="btn-icon nuni-mobile-search-close" aria-label="Fermer la recherche" onclick="closeMobileSearch()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>

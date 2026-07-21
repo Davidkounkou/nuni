@@ -2143,7 +2143,7 @@ const genres = [
 const genreGrid = document.getElementById('genre-grid');
 genres.forEach((g,i)=>{
   const tile = document.createElement('div');
-  tile.className = 'genre-tile lg-glass-cursor' + (i===0 ? ' is-active' : '');
+  tile.className = 'genre-tile' + (i===0 ? ' is-active' : '');
   tile.style.setProperty('--gc1', g.c1);
   tile.style.setProperty('--gc2', g.c2);
   if(g.n === 'Tout'){
@@ -2177,22 +2177,6 @@ genres.forEach((g,i)=>{
   genreGrid.appendChild(tile);
 });
 buildNuniAudioSphere();
-attachGlassCursorLight('.genre-tile');
-
-// ============ LIQUID GLASS : halo lumineux qui suit le curseur ============
-// Pose --mx/--my (position du curseur en %) sur chaque élément .lg-glass-cursor visé —
-// le halo lui-même est purement CSS (voir .lg-glass-cursor::after dans nuni-premium.css).
-// Ignoré sur mobile (pas de curseur réel) : aucun coût inutile sur les appareils tactiles.
-function attachGlassCursorLight(selector){
-  if(window.matchMedia('(hover: none)').matches) return;
-  document.addEventListener('mousemove', (e)=>{
-    const el = e.target.closest(selector);
-    if(!el) return;
-    const rect = el.getBoundingClientRect();
-    el.style.setProperty('--mx', ((e.clientX - rect.left) / rect.width * 100) + '%');
-    el.style.setProperty('--my', ((e.clientY - rect.top) / rect.height * 100) + '%');
-  });
-}
 
 
 
@@ -6858,6 +6842,23 @@ let searchDebounceTimer = null;
 // aucun autre moyen d'y accéder — la recherche était donc tout simplement impossible sur
 // téléphone. Ici : un bouton loupe dans la barre du haut l'ouvre en plein écran (même champ,
 // mêmes résultats, juste un affichage adapté au petit écran).
+// ============ RECHERCHE EN BULLE (desktop, façon Apple Music) ============
+// Repliée par défaut (juste l'icône) — un clic la déplie en champ de saisie. Se referme
+// automatiquement au clic ailleurs si le champ est resté vide.
+function toggleDesktopSearch(e){
+  if(e) e.stopPropagation();
+  const wrap = document.getElementById('app-search-wrap');
+  wrap.classList.add('open');
+  setTimeout(()=> document.getElementById('app-search-input').focus(), 50);
+}
+document.addEventListener('click', (e)=>{
+  const wrap = document.getElementById('app-search-wrap');
+  if(!wrap || !wrap.classList.contains('open')) return;
+  if(wrap.contains(e.target)) return;
+  const input = document.getElementById('app-search-input');
+  if(!input.value.trim()){ wrap.classList.remove('open'); }
+  document.getElementById('search-results').classList.remove('open');
+});
 function openMobileSearch(){
   document.getElementById('app-search-wrap').classList.add('mobile-open');
   setTimeout(()=> document.getElementById('app-search-input').focus(), 50);
@@ -6934,10 +6935,6 @@ function runSearch(q){
     box.appendChild(item);
   });
 }
-document.addEventListener('click', (e)=>{
-  const wrap = document.querySelector('.app-search-wrap');
-  if(wrap && !wrap.contains(e.target)) document.getElementById('search-results').classList.remove('open');
-});
 
 /* ============ SÉPARATION INTERFACE CONSOMMATEUR / ARTISTE ============ */
 let accountType = 'artist'; // 'artist' ou 'consumer' — démo : on part en vue Artiste (Bibi Mwana)
