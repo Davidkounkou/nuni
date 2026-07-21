@@ -2796,7 +2796,7 @@ function trackCard(tr){
   const isMultiTrack = tr.releaseType && tr.releaseType !== 'Single';
   card.innerHTML = `
     ${coverInner}
-      ${tr.audioUrl ? '<span class="imported-badge" title="Votre import">Vous</span>' : ''}
+      ${(tr.artistId && currentUser && currentUser.id === tr.artistId) ? '<span class="imported-badge" title="Votre import">Vous</span>' : ''}
       ${isMultiTrack ? `<span class="nuni-type-badge" title="${tr.releaseType}"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.3"/></svg> ${tr.releaseType}</span>` : ''}
       <button class="track-card-menu-btn" aria-label="Options">⋮</button>
       <div class="play-fab">
