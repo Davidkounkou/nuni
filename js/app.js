@@ -2319,7 +2319,7 @@ function filterCatalogByGenre(genreName){
           <p class="premium-hero-sub">${formatLikes(totalListeners)} écoutes cumulées cette semaine sur les titres classés.</p>
           <div class="premium-hero-tags"><span style="cursor:default;"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M8 3h8l-2.5 6h-3L8 3z"/><path d="M11 17.5v-5l-1.3.7"/></svg> En tête : ${leader.a} — « ${leader.t} »</span></div>
           <div class="premium-hero-actions">
-            <button class="btn btn-primary" id="top-congo-hero-play-btn">▶ Écouter le classement</button>
+            <button class="btn btn-primary" id="top-congo-hero-play-btn"><svg class="nuni-ic filled" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M8 5v14l11-7z"/></svg> Écouter le classement</button>
           </div>
         </div>`;
       document.getElementById('top-congo-hero-play-btn').onclick = ()=>{ playTrack(leader); openFullPlayer(); };
@@ -5800,10 +5800,10 @@ function tunerTogglePlay(){
   tunerPlaying = !tunerPlaying;
   const btn = document.getElementById('tuner-play-btn');
   if(tunerPlaying){
-    btn.textContent = '⏸ Station en cours';
+    btn.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg> Station en cours';
     startTunerPlayback();
   } else {
-    btn.textContent = '▶ Écouter cette station';
+    btn.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M8 5v14l11-7z"/></svg> Écouter cette station';
     radioMode = false;
     document.getElementById('radio-badge').style.display = 'none';
     if(playing) togglePlay();
@@ -6126,13 +6126,13 @@ function djTogglePlay(){
   djPlaying = !djPlaying;
   const btn = document.getElementById('dj-play-btn');
   if(djPlaying){
-    btn.textContent = '⏸ DJ en cours';
+    btn.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg> DJ en cours';
     startDjPlayback();
     djVoiceUsedIndexes.clear();
     djSpeak(true); // annonce toujours au lancement
     toast('NUNI DJ activé — enchaînement automatique selon le mode ' + djModes.find(x=>x.id===djModeId).name + '.');
   } else {
-    btn.textContent = '▶ Lancer le DJ';
+    btn.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M8 5v14l11-7z"/></svg> Lancer le DJ';
     djMode = false;
     clearInterval(djTimer);
     if(djFadeTimer){ clearInterval(djFadeTimer); djFadeTimer = null; }

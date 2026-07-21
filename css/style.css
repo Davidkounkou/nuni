@@ -883,6 +883,10 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 .app-footer-col a:hover{ color:var(--accent); transform:translateX(2px); }
 .app-footer-tagline{ font-size:13.5px; color:var(--text-dim); line-height:1.7; max-width:230px; margin-top:4px; }
 .app-footer-social{ display:flex; gap:10px; margin-top:6px; }
+/* "NUNI" du pied de page : reste immobile au repos, pulse doucement au rythme uniquement
+   pendant une vraie lecture (classe .is-playing déjà posée sur <html> par togglePlay()). */
+html.is-playing .app-footer-wordmark{ animation:footerWordmarkPulse 1.1s ease-in-out infinite; display:inline-block; }
+@keyframes footerWordmarkPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.07); } }
 .app-footer-social a{
   width:36px; height:36px; border-radius:50%; background:var(--bg-card); border:1px solid var(--border);
   display:flex; align-items:center; justify-content:center; margin-bottom:0; transition:all .25s;
@@ -1671,7 +1675,7 @@ html.is-playing .fp-title{ font-weight:800; }
   /* La recherche existe toujours sur mobile — juste cachée par défaut pour ne pas
      encombrer la barre du haut, et ouverte en plein écran au tap sur la loupe. */
   .app-search-wrap.mobile-open{
-    display:flex !important; position:fixed; inset:0; z-index:200;
+    display:flex !important; position:fixed; inset:0; z-index:10100;
     background:var(--bg); padding:16px 16px calc(16px + env(safe-area-inset-top,0));
     padding-top:calc(16px + env(safe-area-inset-top,0));
     max-width:none; margin:0; flex-direction:column;
