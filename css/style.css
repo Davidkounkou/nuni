@@ -335,9 +335,11 @@ html.is-playing .eq i:nth-child(3){ animation-delay:.3s; }
   border-bottom:1px solid var(--border);
 }
 .app-nav-links{ display:flex; gap:6px; }
-.app-nav-link{ padding:9px 16px; border-radius:999px; font-size:13.5px; font-weight:500; letter-spacing:0.01em; color:var(--text-dim); transition:all .3s var(--ease); }
+.app-nav-link{ position:relative; padding:9px 16px; border-radius:999px; font-size:13.5px; font-weight:500; letter-spacing:0.01em; color:var(--text-dim); transition:all .3s var(--ease); }
 .app-nav-link:hover{ color:var(--text); }
-.app-nav-link.is-active{ background:var(--bg-card); color:var(--text); }
+/* Pas de fond plein sur l'onglet actif — juste un changement de couleur + un fin trait doré
+   (voir ensureNavStyles() dans app.js), façon Apple Music Desktop plutôt qu'un gros bouton. */
+.app-nav-link.is-active{ background:none; color:var(--text); }
 .app-topnav-right{ display:flex; align-items:center; gap:10px; }
 .app-search-wrap{ position:relative; flex:1; max-width:340px; margin:0 18px; }
 .app-search-wrap svg{ position:absolute; left:13px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--text-faint); }
@@ -604,9 +606,12 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 }
 .genre-tile{
   position:relative; flex-shrink:0; width:150px; height:96px; border-radius:18px; overflow:hidden; cursor:pointer;
-  scroll-snap-align:start; background:linear-gradient(150deg, var(--gc1,#6E45A8), var(--gc2,#3A2A5C));
-  border:1.5px solid rgba(255,255,255,.09);
-  box-shadow:0 10px 22px -12px rgba(0,0,0,.55);
+  scroll-snap-align:start;
+  background:
+    radial-gradient(130% 110% at 12% 10%, color-mix(in srgb, var(--gc1,#6E45A8) 38%, transparent) 0%, transparent 62%),
+    var(--bg-card);
+  border:1.5px solid rgba(255,255,255,.07);
+  box-shadow:0 8px 18px -14px rgba(0,0,0,.6);
   transition:transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s ease;
 }
 .genre-tile::before{
@@ -1327,6 +1332,24 @@ html.is-playing .fp-title{ font-weight:800; }
 .pi-item .t{ font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pi-item .s{ font-size:11.5px; color:var(--text-faint); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pi-empty{ text-align:center; color:var(--text-faint); font-size:13px; padding:30px 10px; }
+
+/* ============ SYSTÈME D'ICÔNES NUNI (remplace les emojis) ============
+   Trait fin uniforme, monochrome, couleur héritée par défaut (or NUNI) — remplace
+   l'ancien langage visuel à base d'emojis par des icônes vectorielles cohérentes,
+   dans l'esprit Apple Music / Spotify Premium. */
+.nuni-ic{
+  width:1em; height:1em; display:inline-block; vertical-align:-0.14em;
+  fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+  flex-shrink:0;
+}
+.nuni-ic.filled{ fill:currentColor; stroke:none; }
+.nuni-ic-gold{ color:var(--or, #D4AF6A); }
+.nuni-ic-copper{ color:#B87333; }
+.nuni-ic-ivory{ color:#F1ECE3; }
+.nuni-ic-emerald{ color:var(--vert-nuni, #1E8449); }
+.nuni-ic-ok{ color:#7FC79A; }
+.nuni-ic-err{ color:var(--rose-braise, #C9667A); }
+.nuni-ic-warn{ color:var(--jaune-nuni, #F0AC2E); }
 
 /* ============ BIBLIOTHÈQUE : cartes + liste filtrable ============ */
 .lib-cards-row{

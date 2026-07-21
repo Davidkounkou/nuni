@@ -2865,6 +2865,7 @@ async function loadRealTracks(){
     }));
     tracks.unshift(...mapped);
     refreshMainShelves();
+    renderHomeHero();
     // Le lecteur démarrait sur un morceau de démo sans vrai fichier audio (silence simulé si
     // on appuyait sur ▶ avant d'avoir cliqué un vrai morceau) — dès que de vrais morceaux sont
     // chargés, et si rien n'a encore été lancé, on bascule le lecteur sur le premier vrai son.
@@ -2877,6 +2878,29 @@ async function loadRealTracks(){
     }
     handleSharedTrackLink();
   }catch(e){ /* pas grave si le serveur est indisponible, le catalogue de démo reste affiché */ }
+}
+// Avant : la bannière hero affichait toujours la même image statique (le logo NUNI en grand),
+// jamais liée au vrai contenu de la plateforme. Ici : la vraie pochette + le vrai titre/artiste
+// du morceau le plus streamé du moment — la musique devient la vedette, pas le logo. Repli
+// silencieux sur l'image statique tant qu'aucun morceau réel n'a encore assez d'écoutes.
+function renderHomeHero(){
+  const hero = document.getElementById('premium-hero-accueil');
+  const titleEl = document.getElementById('premium-hero-title');
+  const subEl = document.getElementById('premium-hero-sub');
+  const badgeEl = document.getElementById('premium-hero-badge');
+  const playBtn = document.getElementById('premium-hero-play-btn');
+  if(!hero) return;
+  const top = getTopStreamedTracks(1)[0];
+  if(!top){
+    // Pas encore assez de vraies écoutes pour établir un Top — on garde le texte/l'image
+    // d'accroche par défaut plutôt qu'un écran vide, mais le badge reste honnête.
+    if(badgeEl) badgeEl.innerHTML = '<span class="phb-dot"></span>Bienvenue sur NUNI';
+    return;
+  }
+  if(top.cover) hero.style.backgroundImage = `url(${top.cover})`;
+  if(titleEl) titleEl.innerHTML = `<em>${top.t}</em>`;
+  if(subEl) subEl.textContent = `${top.a} · le morceau le plus écouté cette semaine`;
+  if(playBtn) playBtn.onclick = ()=>{ playTrack(top); openFullPlayer(); };
 }
 loadRealTracks();
 

@@ -589,18 +589,18 @@
     <div class="premium-hero" id="premium-hero-accueil" style="background-image:url('assets/hero/hero-accueil.jpg');">
       <div class="premium-hero-overlay"></div>
       <div class="premium-hero-content">
-        <span class="premium-hero-badge"><svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c1 1.5 1 3.2 1 4a5 5 0 0 1-10 0c0-4 3-5 3-9 1 1 2 2 2 3z"/></svg> TOP DU MOMENT</span>
-        <h2 class="premium-hero-title">L'Afrique<br>en mode<br><em>vibration</em></h2>
-        <p class="premium-hero-sub">Les sons qui font bouger le continent.</p>
+        <span class="premium-hero-badge" id="premium-hero-badge"><span class="phb-dot"></span>Le plus écouté cette semaine</span>
+        <h2 class="premium-hero-title" id="premium-hero-title">La musique congolaise<br>a un nouveau <em>terrain de jeu</em></h2>
+        <p class="premium-hero-sub" id="premium-hero-sub">Découvrez ce qui fait vibrer le Congo, en temps réel.</p>
         <div class="premium-hero-tags">
-          <span onclick="filterCatalogByGenre('Afro'); document.querySelectorAll('.genre-tile').forEach(t=>t.classList.toggle('is-active', t.querySelector('.gname').textContent==='Afro'));">Afro</span>
-          <span onclick="filterCatalogByGenre('Rap'); document.querySelectorAll('.genre-tile').forEach(t=>t.classList.toggle('is-active', t.querySelector('.gname').textContent==='Rap'));">Rap</span>
-          <span onclick="filterCatalogByGenre('Rumba'); document.querySelectorAll('.genre-tile').forEach(t=>t.classList.toggle('is-active', t.querySelector('.gname').textContent==='Rumba'));">Rumba</span>
-          <span onclick="filterCatalogByGenre('Gospel'); document.querySelectorAll('.genre-tile').forEach(t=>t.classList.toggle('is-active', t.querySelector('.gname').textContent==='Gospel'));">Gospel</span>
+          <span onclick="filterCatalogByGenre('Afro'); document.querySelectorAll('.genre-tile').forEach(t=>t.classList.toggle('is-active', t.querySelector('.gname') && t.querySelector('.gname').textContent==='Afro'));">Afro</span>
+          <span onclick="filterCatalogByGenre('Rap'); document.querySelectorAll('.genre-tile').forEach(t=>t.classList.toggle('is-active', t.querySelector('.gname') && t.querySelector('.gname').textContent==='Rap'));">Rap</span>
+          <span onclick="filterCatalogByGenre('Rumba'); document.querySelectorAll('.genre-tile').forEach(t=>t.classList.toggle('is-active', t.querySelector('.gname') && t.querySelector('.gname').textContent==='Rumba'));">Rumba</span>
+          <span onclick="filterCatalogByGenre('Gospel'); document.querySelectorAll('.genre-tile').forEach(t=>t.classList.toggle('is-active', t.querySelector('.gname') && t.querySelector('.gname').textContent==='Gospel'));">Gospel</span>
         </div>
         <div class="premium-hero-actions">
-          <button class="btn btn-primary" onclick="const top=getTopStreamedTracks(1)[0]; if(top){ playTrack(top); openFullPlayer(); } else { toast('Pas encore assez d\'écoutes pour établir un Top.'); }">▶ Écouter maintenant</button>
-          <button class="btn btn-ghost" onclick="filterCatalogByGenre('Top Congo'); document.querySelectorAll('.genre-tile').forEach((t,i)=>t.classList.toggle('is-active', t.querySelector('.gname').textContent==='Top Congo'));"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M4 21V10M11 21V4M18 21v-7"/><path d="M2 21h20"/></svg> Top Congo</button>
+          <button class="btn btn-primary" id="premium-hero-play-btn" onclick="const top=getTopStreamedTracks(1)[0]; if(top){ playTrack(top); openFullPlayer(); } else { toast('Pas encore assez d\'écoutes pour établir un Top.'); }">Écouter maintenant</button>
+          <button class="btn btn-ghost" onclick="filterCatalogByGenre('Top Congo'); document.querySelectorAll('.genre-tile').forEach((t,i)=>t.classList.toggle('is-active', t.querySelector('.gname') && t.querySelector('.gname').textContent==='Top Congo'));"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M4 21V10M11 21V4M18 21v-7"/><path d="M2 21h20"/></svg> Top Congo</button>
         </div>
       </div>
     </div>

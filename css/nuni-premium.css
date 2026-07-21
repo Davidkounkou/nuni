@@ -633,21 +633,22 @@ html.is-playing .full-player .fp-halo{ opacity: .5; }
 }
 .premium-hero-overlay{
   position:absolute; inset:0;
-  background:linear-gradient(90deg, rgba(7,7,7,0.92) 0%, rgba(7,7,7,0.55) 45%, rgba(7,7,7,0.15) 75%),
-             linear-gradient(0deg, rgba(7,7,7,0.85) 0%, rgba(7,7,7,0.1) 55%);
+  background:linear-gradient(90deg, rgba(5,5,6,0.96) 0%, rgba(5,5,6,0.72) 45%, rgba(5,5,6,0.32) 75%),
+             linear-gradient(0deg, rgba(5,5,6,0.92) 0%, rgba(5,5,6,0.2) 55%);
 }
 .premium-hero-content{
   position:relative; z-index:1;
   padding:36px 40px;
   max-width:520px;
 }
+/* Badge affiné — un simple point + texte discret, pas un gros bouton "app mobile". */
 .premium-hero-badge{
-  display:inline-flex; align-items:center; gap:6px;
-  background:rgba(30,122,76,0.18); color:#6fd39a;
-  border:1px solid rgba(111,211,154,0.35);
-  font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
-  padding:5px 12px; border-radius:20px; margin-bottom:16px;
+  display:inline-flex; align-items:center; gap:8px;
+  color:var(--or-2, #E8C77E);
+  font-size:11px; font-weight:600; letter-spacing:1.4px; text-transform:uppercase;
+  margin-bottom:18px;
 }
+.phb-dot{ width:6px; height:6px; border-radius:50%; background:var(--or-2, #E8C77E); box-shadow:0 0 8px var(--or-2, #E8C77E); flex-shrink:0; }
 .premium-hero-title{
   font-family:var(--font-display); color:#fff; font-size:38px; font-weight:800; line-height:1.08;
   margin-bottom:14px;
