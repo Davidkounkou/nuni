@@ -2034,6 +2034,15 @@ const nuniAnalysisAudio = new Audio();
 nuniAnalysisAudio.crossOrigin = 'anonymous';
 nuniAnalysisAudio.muted = true;
 nuniAnalysisAudio.preload = 'auto';
+// Avant : au lancement d'un morceau, l'élément fantôme charge son propre fichier séparément
+// du vrai lecteur — il met souvent un instant de plus à devenir réellement audible/analysable,
+// d'où un décalage visible entre le vrai son et la réaction de la sphère au démarrage. Ici :
+// dès que CET élément fantôme devient vraiment prêt à jouer, on le recale immédiatement sur
+// la position exacte du vrai lecteur à cet instant précis — au lieu d'attendre la correction
+// périodique (qui ne se déclenche que si l'écart dépasse déjà 0.35s, donc après coup).
+nuniAnalysisAudio.addEventListener('playing', ()=>{
+  if(usingRealAudio) nuniSyncAnalysisAudio(realAudio.src, realAudio.currentTime);
+});
 
 let nuniAudioCtx = null, nuniAnalyser = null, nuniFreqData = null, nuniAnalyserFailed = false;
 function ensureAudioAnalyser(){
