@@ -2134,10 +2134,6 @@ const nuniAnalysisAudio = new Audio();
 nuniAnalysisAudio.crossOrigin = 'anonymous';
 nuniAnalysisAudio.muted = true;
 nuniAnalysisAudio.preload = 'auto';
-// Inséré dans le DOM (invisible) — voir le commentaire détaillé au-dessus de realAudio,
-// même correctif appliqué ici par cohérence même si cet élément est muet.
-nuniAnalysisAudio.style.display = 'none';
-document.body.appendChild(nuniAnalysisAudio);
 // Avant : au lancement d'un morceau, l'élément fantôme charge son propre fichier séparément
 // du vrai lecteur — il met souvent un instant de plus à devenir réellement audible/analysable,
 // d'où un décalage visible entre le vrai son et la réaction de la sphère au démarrage. Ici :
@@ -3326,15 +3322,6 @@ const realAudio = new Audio();
 realAudio.crossOrigin = 'anonymous';
 realAudio.volume = 1;
 realAudio.preload = 'auto';
-// ---------- Correctif bug volume physique (boutons du téléphone sans effet) ----------
-// realAudio était créé via new Audio() mais jamais inséré dans le DOM. Sur mobile
-// (Android en particulier, et PWA installées), un <audio> hors du DOM n'est pas toujours
-// rattaché correctement par l'OS au flux "média" (STREAM_MUSIC) — les boutons physiques
-// de volume du téléphone n'ont alors aucun effet sur la lecture. L'insérer (invisible,
-// display:none) dans le DOM permet au navigateur/à l'OS de le reconnaître comme le vrai
-// lecteur média actif, exactement comme le fait n'importe quel lecteur audio natif.
-realAudio.style.display = 'none';
-document.body.appendChild(realAudio);
 realAudio.addEventListener('loadedmetadata', ()=>{
   if(usingRealAudio && isFinite(realAudio.duration)){ duration = realAudio.duration; updateProgress(); }
 });
@@ -6212,7 +6199,7 @@ function djSpeak(force){
   djSpeakFallbackTTS(force);
 }
 function playDjVoiceClip(src){
-  if(!djVoiceClipAudio){ djVoiceClipAudio = new Audio(); djVoiceClipAudio.style.display = 'none'; document.body.appendChild(djVoiceClipAudio); }
+  if(!djVoiceClipAudio) djVoiceClipAudio = new Audio();
   djVoiceClipAudio.pause();
   djVoiceClipAudio.src = src;
   djVoiceClipAudio.currentTime = 0;
@@ -6255,7 +6242,7 @@ function startDjCrossfade(){
   const nextTr = djQueue[(djQueuePos + 1) % djQueue.length];
   if(!nextTr || !nextTr.audioUrl) return; // repli sur le comportement naturel si le suivant n'est pas jouable
 
-  if(!djFadeAudio){ djFadeAudio = new Audio(); djFadeAudio.style.display = 'none'; document.body.appendChild(djFadeAudio); }
+  if(!djFadeAudio) djFadeAudio = new Audio();
   djFadeAudio.src = nextTr.audioUrl;
   djFadeAudio.currentTime = 0;
   djFadeAudio.volume = 0;
@@ -6351,6 +6338,20 @@ let genreRadioActive = null;
    jamais branché à aucune vraie donnée. Ici : tout vient de /api/me/progress, calculé
    en direct côté serveur à partir des vraies écoutes, genres, artistes suivis, etc. */
 let lastKnownLevel = null; // sert à détecter un vrai passage de niveau entre deux rafraîchissements
+// Icônes des badges d'auditeur — trait fin, cohérentes avec le reste de l'interface (nav,
+// classement…), plutôt que des emoji dont le rendu varie d'un appareil/OS à l'autre.
+const BADGE_ICONS = {
+  star: '<path d="M12 3.5 14.5 9l5.5.6-4 3.8 1 5.6L12 16l-5 3 1-5.6-4-3.8L9.5 9z"/>',
+  headphones: '<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4.5" height="7" rx="1.5"/><rect x="16.5" y="14" width="4.5" height="7" rx="1.5"/>',
+  flame: '<path d="M12 3c1.2 3 -1.5 4.3-1.5 7a3.5 3.5 0 0 0 7 0c0-1.4-.7-2.4-1.5-3 .6 2.3-.9 4-2.5 4-1.8 0-3-1.5-3-3.4C10.5 5.3 12 4 12 3z"/><path d="M9 14a4 4 0 0 0 8 0"/>',
+  globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.3 2.2 3.5 5.2 3.5 8.5s-1.2 6.3-3.5 8.5c-2.3-2.2-3.5-5.2-3.5-8.5S9.7 5.7 12 3.5z"/>',
+  heart: '<path d="M20.5 5.2a5 5 0 0 0-7.1 0L12 6.6l-1.4-1.4a5 5 0 1 0-7.1 7.1L12 21l8.5-8.7a5 5 0 0 0 0-7.1z"/>',
+  trophy: '<path d="M7.5 4h9v4.5a4.5 4.5 0 0 1-9 0V4z"/><path d="M7.5 5.5H5a2.2 2.2 0 0 0 2.5 4.3M16.5 5.5H19A2.2 2.2 0 0 1 16.5 9.8"/><path d="M12 12.5V16M9 20h6"/>',
+};
+function badgeIconSvg(key){
+  const inner = BADGE_ICONS[key] || BADGE_ICONS.star;
+  return `<svg class="nuni-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+}
 async function loadProgress(){
   const badgesRow = document.getElementById('badges-row');
   const levelWrap = document.getElementById('level-progress-wrap');
@@ -6365,10 +6366,13 @@ async function loadProgress(){
 
     if(badgesRow){
       badgesRow.innerHTML = '';
+      // Icônes SVG (même style que le reste du site : trait, pas d'emoji) plutôt que les
+      // emoji envoyés par certains navigateurs/OS de façon incohérente (rendu différent
+      // selon l'appareil) — voir badgeIconSvg juste au-dessus de loadProgress.
       data.badges.forEach(b=>{
         const chip = document.createElement('div');
         chip.className = 'badge-chip' + (b.locked ? ' locked' : '');
-        chip.innerHTML = `<div class="ic">${b.ic}</div><div class="n">${b.n}</div><div class="d">${b.d}</div>`;
+        chip.innerHTML = `<div class="ic">${badgeIconSvg(b.icon)}</div><div class="n">${b.n}</div><div class="d">${b.d}</div>`;
         badgesRow.appendChild(chip);
       });
     }
@@ -6384,7 +6388,6 @@ async function loadProgress(){
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
           ${data.next_level_name ? `<p style="font-size:11px; color:var(--text-faint); margin:0;">Prochain niveau : ${data.next_level_name}</p>` : '<span></span>'}
-          <span style="font-size:12px; font-weight:700; color:var(--accent,#D4AF6A);"><svg class="nuni-ic filled nuni-ic-emerald" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l-2.5 6L12 21l5.5-12L15 3"/></svg> ${data.nuni_points || 0} NUNI Points</span>
         </div>`;
     }
     // Vrai passage de niveau détecté (pas juste au tout premier chargement) — célébration visuelle.
@@ -6395,7 +6398,6 @@ async function loadProgress(){
   }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
   loadChallenges();
   loadHomeTalentRow();
-  loadShop();
   loadLeaderboard();
 }
 loadProgress();
@@ -6468,52 +6470,6 @@ async function loadLeaderboard(){
       }
     }
   }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
-}
-
-/* ============ BOUTIQUE NUNI POINTS ============
-   Étape 4 de la gamification. Articles cosmétiques achetés avec les points gagnés en
-   écoutant, en se connectant et en complétant des défis — jamais convertibles en FCFA. */
-async function loadShop(){
-  const wrap = document.getElementById('shelf-shop');
-  const row = document.getElementById('shop-row');
-  if(!wrap || !row) return;
-  if(!realAuthToken){ wrap.style.display = 'none'; return; }
-  try{
-    const res = await fetch(NUNI_API_BASE + '/api/shop/items', {
-      headers:{ 'Authorization':'Bearer ' + realAuthToken }
-    });
-    if(!res.ok) return;
-    const data = await res.json();
-    wrap.style.display = '';
-    row.innerHTML = '';
-    data.items.forEach(it=>{
-      const icon = it.name.split(' ')[0];
-      const label = it.name.replace(/^\S+\s/, '');
-      const canAfford = data.points >= it.cost;
-      const card = document.createElement('div');
-      card.className = 'shop-card' + (it.owned ? ' is-owned' : '');
-      card.innerHTML = `
-        <div class="sc-ic">${icon}</div>
-        <div class="sc-n">${label}</div>
-        <div class="sc-cost">${it.owned ? 'Possédé' : '<svg class="nuni-ic filled nuni-ic-emerald" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l-2.5 6L12 21l5.5-12L15 3"/></svg> ' + it.cost}</div>
-        ${it.owned ? '' : `<button class="sc-buy" ${canAfford ? '' : 'disabled'} onclick="buyShopItem('${it.key}', this)">Acheter</button>`}`;
-      row.appendChild(card);
-    });
-  }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
-}
-
-async function buyShopItem(key, btn){
-  if(btn) btn.disabled = true;
-  try{
-    const res = await fetch(NUNI_API_BASE + '/api/shop/items/' + key + '/buy', {
-      method:'POST',
-      headers:{ 'Authorization':'Bearer ' + realAuthToken }
-    });
-    const data = await res.json();
-    if(!res.ok){ toast(data.error || 'Achat impossible.'); if(btn) btn.disabled = false; return; }
-    toast(data.message || 'Article débloqué !');
-    loadProgress();
-  }catch(e){ toast('Impossible de contacter le serveur.'); if(btn) btn.disabled = false; }
 }
 
 /* ============ DÉFIS QUOTIDIENS / HEBDOMADAIRES ============

@@ -524,7 +524,7 @@
     <div class="app-nav-links">
       <button class="app-nav-link" data-app-link="catalog" onclick="enterApp('catalog')"><svg class="nuni-nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9.5a1 1 0 0 0 1 1h3.5v-6h3v6H17a1 1 0 0 0 1-1V10"/></svg>Accueil</button>
       <button class="app-nav-link" data-app-link="clips" onclick="enterApp('clips')"><svg class="nuni-nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="3.5"/><path d="M10.3 9.3v5.4l4.6-2.7z" fill="currentColor" stroke="none"/></svg>Clips</button>
-      <!-- Onglet "Opportunités" retiré temporairement — fonctionnement/rôle pas encore décidé, focus sur le streaming -->
+      <button class="app-nav-link" data-app-link="ads" onclick="enterApp('ads')"><svg class="nuni-nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 0 0 1 1h2.5l5 3.5v-13L6.5 9H4a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19.5 6a9 9 0 0 1 0 12"/></svg>Opportunités</button>
       <a class="app-nav-link" href="top.html"><svg class="nuni-nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 9.5 10.2l4 4L21 6"/><path d="M15 6h6v6"/></svg>Top</a>
       <button class="app-nav-link nav-consumer-only" data-app-link="library" onclick="enterApp('library')"><svg class="nuni-nav-ic" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="4" height="14" rx="1.5"/><rect x="10" y="2" width="4" height="20" rx="1.5"/><rect x="17" y="8" width="4" height="11" rx="1.5"/></svg>Bibliothèque</button>
       <button class="app-nav-link nav-artist-only" data-app-link="artist" onclick="enterApp('artist')">Artiste</button>
@@ -654,11 +654,6 @@
       <div class="shelf" id="shelf-home-talent" style="display:none;">
         <div class="shelf-head"><h3 class="serif">NUNI Talent — votez cette semaine</h3><a href="#" onclick="event.preventDefault(); openTalentModal();">Tout voir</a></div>
         <div class="home-talent-row" id="home-talent-row"></div>
-      </div>
-
-      <div class="shelf" id="shelf-shop" style="display:none;">
-        <div class="shelf-head"><h3 class="serif">Boutique NUNI Points</h3></div>
-        <div class="shop-row" id="shop-row"></div>
       </div>
 
       <div class="shelf" id="shelf-leaderboard" style="display:none;">
@@ -1359,7 +1354,10 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="3.5"/><path d="M10.3 9.3v5.4l4.6-2.7z" fill="currentColor" stroke="none"/></svg>
     <span>Clips</span>
   </button>
-  <!-- Onglet "Opportunités" retiré temporairement — fonctionnement/rôle pas encore décidé, focus sur le streaming -->
+  <button class="tab-btn" data-tab="ads" onclick="tabNav('ads')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 0 0 1 1h2.5l5 3.5v-13L6.5 9H4a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19.5 6a9 9 0 0 1 0 12"/></svg>
+    <span>Opportunités</span>
+  </button>
   <a class="tab-btn" href="top.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 9.5 10.2l4 4L21 6"/><path d="M15 6h6v6"/></svg>
     <span>Top</span>
