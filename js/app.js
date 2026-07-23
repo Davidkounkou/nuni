@@ -2902,6 +2902,12 @@ function removeFromQueue(index){
 }
 
 function trackCard(tr){
+  // Avant : ce style ne se chargeait qu'au tout premier clic sur un menu ⋮ (dans
+  // openTrackCardMenu). En attendant ce premier clic, le bouton n'avait AUCUNE position
+  // définie et tombait simplement en bas à droite de la pochette (comportement par défaut
+  // du conteneur flex) au lieu d'être ancré en haut à droite comme prévu. Chargé ici, il
+  // est déjà en place dès l'affichage de la toute première pochette de la page.
+  ensureTrackCardMenuStyles();
   const card = document.createElement('div');
   card.className = 'track-card';
   if(tr.realId) card.dataset.trackId = tr.realId;
