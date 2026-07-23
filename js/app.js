@@ -7325,7 +7325,14 @@ function applyAccountType(){
   const artistMenuItem = document.getElementById('profile-menu-artist-space');
   if(artistMenuItem) artistMenuItem.style.display = isArtist ? '' : 'none';
   const switchBtn = document.getElementById('account-switch-btn');
- if(switchBtn) switchBtn.textContent = isArtist ? ' Passer en vue Consommateur' : ' Passer en vue Artiste';
+  if(switchBtn) switchBtn.textContent = isArtist ? ' Passer en vue Consommateur' : ' Passer en vue Artiste';
+  // Avant : ce bouton venait du mode démo pré-connexion (avant l'existence des vrais
+  // comptes, pour prévisualiser les deux expériences) — mais il restait affiché même pour
+  // un VRAI compte connecté. Un Pass Consommateur pouvait donc littéralement voir et
+  // naviguer dans l'interface Artiste (Dashboard, page Artiste...), ce qui n'a aucun sens :
+  // seul le type de compte réel doit déterminer l'accès. Masqué dès qu'un vrai compte est
+  // connecté — ne reste utile que pendant la démo, avant inscription.
+  if(switchBtn) switchBtn.style.display = currentUser ? 'none' : '';
   // si l'écran courant n'existe pas côté consommateur, on revient au catalogue
   if(!isArtist){
     const activeLink = document.querySelector('.app-nav-link.is-active');
