@@ -588,85 +588,8 @@
 
   <!-- ---- CATALOG ---- -->
   <main class="app-main" id="view-catalog">
-    <div class="nuni-welcome-hero" id="nuni-welcome-hero">
-      <svg class="nwh-maze" viewBox="0 0 1400 420" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <defs>
-          <filter id="nwhGlow" x="-80%" y="-80%" width="260%" height="260%">
-            <feGaussianBlur stdDeviation="4" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <filter id="nwhGlowSoft" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="10"/>
-          </filter>
-          <radialGradient id="nwhDot" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#FBEFC8"/><stop offset="50%" stop-color="#E8C77E"/><stop offset="100%" stop-color="#D4AF6A" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="nwhDot2" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#F6D9A8"/><stop offset="50%" stop-color="#C9803F"/><stop offset="100%" stop-color="#C9803F" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="nwhDot3" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#FFF6E0"/><stop offset="50%" stop-color="#EAD3A0"/><stop offset="100%" stop-color="#EAD3A0" stop-opacity="0"/>
-          </radialGradient>
-          <!-- Trame Kongo/Kuba très discrète, en fond — un souvenir de motif, pas un décor -->
-          <pattern id="nwhFabric" width="90" height="90" patternUnits="userSpaceOnUse">
-            <path d="M0 45 L22 22 L45 45 L67 22 L90 45" fill="none" stroke="#D4AF6A" stroke-width="1"/>
-          </pattern>
-        </defs>
-
-        <rect x="0" y="0" width="1400" height="420" fill="url(#nwhFabric)" opacity=".04"/>
-
-        <!-- Silhouette presque invisible, fondue dans le décor (casque + tête, profil) -->
-        <g opacity=".05" fill="#E8C77E" stroke="#E8C77E">
-          <path d="M1170 265 Q1140 220 1152 158 Q1164 84 1228 76 Q1284 70 1296 128 Q1302 182 1274 214 L1278 266 Q1272 286 1238 286 Q1194 286 1170 265 Z" stroke="none"/>
-          <path d="M1148 138 Q1220 52 1298 126" fill="none" stroke-width="6" stroke-linecap="round"/>
-          <circle cx="1150" cy="150" r="16" stroke-width="5" fill="#0A0806"/>
-          <circle cx="1296" cy="140" r="18" stroke-width="5" fill="#0A0806"/>
-        </g>
-
-        <!-- Le réseau vivant : des courants qui se séparent, se croisent, se rejoignent —
-             jamais un motif répété, chaque tracé est unique, comme la musique qui circule
-             entre les artistes, les playlists et les auditeurs de NUNI. -->
-        <g fill="none" stroke-linecap="round">
-          <path class="nwh-river nwh-river-a" d="M-40 170 C 130 90, 260 250, 420 160 C 560 78, 700 240, 860 150 C 1000 68, 1150 210, 1300 130 C 1360 100, 1400 110, 1440 100" stroke="#E8C77E" stroke-width="2.4" opacity=".6"/>
-          <path class="nwh-river nwh-river-b" d="M-40 290 C 150 350, 300 200, 460 300 C 620 385, 780 235, 950 320 C 1090 385, 1230 260, 1400 320" stroke="#D9AF6C" stroke-width="2" opacity=".5"/>
-          <path class="nwh-river" d="M420 160 C 440 220, 440 260, 460 300" stroke="#C9803F" stroke-width="1.3" opacity=".35"/>
-          <path class="nwh-river" d="M860 150 C 890 210, 920 260, 950 320" stroke="#C9803F" stroke-width="1.3" opacity=".35"/>
-          <path class="nwh-river" d="M220 250 C 300 210, 360 290, 440 250 C 510 216, 570 270, 640 236" stroke="#D9AF6C" stroke-width="1.2" opacity=".3"/>
-          <path class="nwh-river" d="M540 150 C 610 190, 660 130, 730 168 C 800 200, 860 150, 930 186" stroke="#D9AF6C" stroke-width="1.2" opacity=".28"/>
-          <path class="nwh-river" d="M700 30 C 748 130, 636 250, 742 380" stroke="#E8C77E" stroke-width="1.5" opacity=".3"/>
-          <path class="nwh-river" d="M1080 20 C 1024 130, 1150 250, 1096 400" stroke="#E8C77E" stroke-width="1.5" opacity=".28"/>
-          <path class="nwh-river" d="M1160 130 C 1220 150, 1260 100, 1320 118" stroke="#C9803F" stroke-width="1" opacity=".22"/>
-        </g>
-
-        <!-- Nœuds : là où plusieurs courants se rencontrent — respiration lente -->
-        <g class="nwh-nodes" fill="#E8C77E">
-          <circle cx="420" cy="160" r="3.2"/><circle cx="860" cy="150" r="3.2"/><circle cx="460" cy="300" r="2.6"/>
-          <circle cx="950" cy="320" r="2.6"/><circle cx="700" cy="150" r="2.4"/><circle cx="1150" cy="210" r="2.8"/>
-          <circle cx="640" cy="236" r="2.2"/><circle cx="1300" cy="130" r="2.8"/>
-        </g>
-
-        <circle cx="0" cy="220" r="110" fill="#E8C77E" opacity=".15" filter="url(#nwhGlowSoft)"/>
-
-        <!-- Impulsions : chaque particule = un stream, un artiste découvert, un ajout à une
-             playlist. Elles voyagent réellement le long des courants, ne se répètent jamais
-             à l'identique (durées, tailles, débuts tous différents). -->
-        <circle r="5" fill="url(#nwhDot)" filter="url(#nwhGlow)"><animateMotion dur="10s" repeatCount="indefinite" path="M-40 170 C 130 90, 260 250, 420 160 C 560 78, 700 240, 860 150 C 1000 68, 1150 210, 1300 130 C 1360 100, 1400 110, 1440 100"/></circle>
-        <circle r="4" fill="url(#nwhDot2)" filter="url(#nwhGlow)"><animateMotion dur="12s" repeatCount="indefinite" begin="-4s" path="M-40 290 C 150 350, 300 200, 460 300 C 620 385, 780 235, 950 320 C 1090 385, 1230 260, 1400 320"/></circle>
-        <circle r="3.5" fill="url(#nwhDot3)" filter="url(#nwhGlow)"><animateMotion dur="6s" repeatCount="indefinite" begin="-1.5s" path="M420 160 C 440 220, 440 260, 460 300"/></circle>
-        <circle r="3" fill="url(#nwhDot2)" filter="url(#nwhGlow)"><animateMotion dur="5.5s" repeatCount="indefinite" begin="-2.4s" path="M860 150 C 890 210, 920 260, 950 320"/></circle>
-        <circle r="3.5" fill="url(#nwhDot)" filter="url(#nwhGlow)"><animateMotion dur="7s" repeatCount="indefinite" begin="-3s" path="M220 250 C 300 210, 360 290, 440 250 C 510 216, 570 270, 640 236"/></circle>
-        <circle r="3" fill="url(#nwhDot3)" filter="url(#nwhGlow)"><animateMotion dur="8s" repeatCount="indefinite" begin="-1s" path="M540 150 C 610 190, 660 130, 730 168 C 800 200, 860 150, 930 186"/></circle>
-        <circle r="3.5" fill="url(#nwhDot2)" filter="url(#nwhGlow)"><animateMotion dur="9s" repeatCount="indefinite" begin="-5s" path="M700 30 C 748 130, 636 250, 742 380"/></circle>
-        <circle r="3" fill="url(#nwhDot)" filter="url(#nwhGlow)"><animateMotion dur="8.5s" repeatCount="indefinite" begin="-2.8s" path="M1080 20 C 1024 130, 1150 250, 1096 400"/></circle>
-        <!-- Impulsions qui remontent jusqu'au texte, comme si la musique arrivait vers vous -->
-        <circle r="4.5" fill="url(#nwhDot)" filter="url(#nwhGlow)"><animateMotion dur="3.4s" repeatCount="indefinite" path="M-40 170 C -20 190, -20 200, -40 220"/></circle>
-        <circle r="4" fill="url(#nwhDot2)" filter="url(#nwhGlow)"><animateMotion dur="4s" repeatCount="indefinite" begin="-1.6s" path="M-40 290 C -20 260, -20 240, -40 220"/></circle>
-      </svg>
-      <div class="nwh-scrim"></div>
-      <div class="nwh-content">
-        <h1 id="catalog-greeting-title" class="greeting-anim">Bonsoir <svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg></h1>
-        <p id="catalog-greeting-sub" class="greeting-anim" style="animation-delay:.08s">Voici ce qui fait vibrer le Congo cette semaine.</p>
-      </div>
+    <div class="page-head">
+      <div><h1 id="catalog-greeting-title" class="greeting-anim">Bonsoir <svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg></h1><p id="catalog-greeting-sub" class="greeting-anim" style="animation-delay:.08s">Voici ce qui fait vibrer le Congo cette semaine.</p></div>
     </div>
 
     <div class="premium-hero" id="premium-hero-accueil" style="background-image:url('assets/hero/hero-accueil.jpg');">
