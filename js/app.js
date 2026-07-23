@@ -1797,19 +1797,10 @@ function openArtistPage(name, artistId){
       if(row) row.innerHTML = emptyMsg;
     });
   }
-  if(isOwnArtistPage){
-    document.querySelectorAll('#shelf-artist .track-card, #shelf-artist-trending .track-card, #shelf-artist-albums .track-card').forEach(card=>{
-      const cover = card.querySelector('.cover');
-      if(!cover || cover.querySelector('.track-delete-btn') || !card.dataset.trackId) return;
-      const delBtn = document.createElement('button');
-      delBtn.className = 'track-delete-btn';
-      delBtn.title = 'Supprimer ce morceau';
- delBtn.textContent = ' ️';
-      delBtn.style.cssText = 'position:absolute; top:6px; right:42px; z-index:4; width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,.65); color:#fff; border:none; cursor:pointer; font-size:13px;';
-      delBtn.onclick = (e)=>{ e.stopPropagation(); deleteMyTrack(card.dataset.trackId); };
-      cover.appendChild(delBtn);
-    });
-  }
+  // Avant : un bouton supprimer séparé (cercle gris) était ajouté à côté du menu ⋮ sur
+  // chaque pochette de sa propre discographie — doublon oublié depuis l'ajout de la vraie
+  // option "Supprimer ce morceau" à l'intérieur même du menu ⋮ (réservée au propriétaire).
+  // Un seul point d'accès maintenant, plus propre visuellement.
 
   const releaseRow = document.getElementById('artist-release-row');
   if(releaseRow){
