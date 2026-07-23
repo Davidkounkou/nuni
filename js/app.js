@@ -7653,17 +7653,38 @@ function openProfileInfo(type){
   else if(type === 'promo'){
  icon.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 12h18" stroke="var(--bg)" stroke-width="1.5"/></svg>'; title.textContent = 'Codes promo';
     body.innerHTML = `<p style="font-size:12.5px; color:var(--text-faint);">Chargement…</p>`;
-    fetch(NUNI_API_BASE + '/api/promo/NUNI30/status').then(r=>{ if(!r.ok) throw new Error(); return r.json(); }).then(data=>{
-      const remaining = Math.max(0, data.max_uses - data.used_count);
-      body.innerHTML = `
-        <div class="pi-promo-counter">
-          <div class="n">${data.used_count} / ${data.max_uses}</div>
-          <div class="l">codes déjà attribués aux ${data.max_uses} premiers inscrits</div>
-        </div>
-        <p style="font-size:12.5px; color:var(--text-dim); line-height:1.6; margin-bottom:14px;">Le code <b style="color:var(--accent)">${data.code}</b> offre <b>-${data.discount_pct}%</b> et n'est réservé qu'aux <b>${data.max_uses} premiers utilisateurs</b> connectés sur la plateforme.${remaining > 0 ? ` Il reste <b style="color:var(--accent)">${remaining} places</b>.` : ' Il n\'y a plus de places disponibles.'}</p>
-        <button class="btn btn-primary" style="width:100%;" onclick="closeProfileInfo(); goTo('plans');">Utiliser mon code sur un Pass</button>`;
-    }).catch(()=>{
-      body.innerHTML = `<div class="pi-empty">Aucun code promo actif pour le moment — revenez bientôt !</div>`;
+    // Codes personnels d'abord (attribués manuellement par NUNI, en récompense) — puis le
+    // code général si un est actif. Les deux peuvent coexister, ou aucun des deux.
+    Promise.all([
+      realAuthToken ? fetch(NUNI_API_BASE + '/api/me/promo-codes', { headers:{ 'Authorization':'Bearer ' + realAuthToken } }).then(r=> r.ok ? r.json() : {codes:[]}).catch(()=>({codes:[]})) : Promise.resolve({codes:[]}),
+      fetch(NUNI_API_BASE + '/api/promo/NUNI30/status').then(r=> r.ok ? r.json() : null).catch(()=>null),
+    ]).then(([personal, general])=>{
+      const myCodes = personal.codes || [];
+      let html = '';
+      if(myCodes.length){
+        html += `<div style="font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Rien que pour vous</div>`;
+        myCodes.forEach(c=>{
+          html += `<div class="pi-promo-counter" style="margin-bottom:10px;">
+            <div class="n" style="letter-spacing:2px;">${c.code}</div>
+            <div class="l">-${c.discount_pct}% sur votre prochain Pass${c.note ? ' — ' + c.note : ''}</div>
+          </div>`;
+        });
+        html += `<button class="btn btn-primary" style="width:100%; margin-bottom:18px;" onclick="closeProfileInfo(); goTo('plans');">Utiliser mon code</button>`;
+      }
+      if(general){
+        const remaining = Math.max(0, general.max_uses - general.used_count);
+        html += `
+          <div class="pi-promo-counter">
+            <div class="n">${general.used_count} / ${general.max_uses}</div>
+            <div class="l">codes déjà attribués aux ${general.max_uses} premiers inscrits</div>
+          </div>
+          <p style="font-size:12.5px; color:var(--text-dim); line-height:1.6; margin-bottom:14px;">Le code <b style="color:var(--accent)">${general.code}</b> offre <b>-${general.discount_pct}%</b> et n'est réservé qu'aux <b>${general.max_uses} premiers utilisateurs</b> connectés sur la plateforme.${remaining > 0 ? ` Il reste <b style="color:var(--accent)">${remaining} places</b>.` : ' Il n\'y a plus de places disponibles.'}</p>
+          <button class="btn btn-ghost" style="width:100%;" onclick="closeProfileInfo(); goTo('plans');">Utiliser ce code sur un Pass</button>`;
+      }
+      if(!myCodes.length && !general){
+        html = `<div class="pi-empty">Aucun code promo actif pour le moment — revenez bientôt !</div>`;
+      }
+      body.innerHTML = html;
     });
   }
 
