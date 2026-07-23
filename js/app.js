@@ -2019,6 +2019,57 @@ async function loadPaymentsHistory(){
    en direct sur les écoutes) : ici, ce sont les VRAIS paiements effectivement enregistrés
    par l'admin (table payment_history), avec le vrai montant restant à percevoir. Les
    streams publics du profil ne sont jamais modifiés par ce système. */
+// Avant : bouton présent mais sans aucune action — n'exportait littéralement rien. Ici :
+// vrai export CSV (ouvrable dans Excel/Sheets), avec les vraies données déjà en base —
+// streams mensuels réels + tout l'historique réel de paiements, rien d'inventé.
+async function exportArtistReport(){
+  if(!realAuthToken){ toast('Connectez-vous avec un vrai compte Artiste.'); return; }
+  toast('Préparation du rapport…');
+  try{
+    const [monthlyRes, historyRes, statusRes] = await Promise.all([
+      fetch(NUNI_API_BASE + '/api/artist/payments-history', { headers:{ 'Authorization':'Bearer ' + realAuthToken } }),
+      fetch(NUNI_API_BASE + '/api/artist/payment-history', { headers:{ 'Authorization':'Bearer ' + realAuthToken } }),
+      fetch(NUNI_API_BASE + '/api/artist/payment-status', { headers:{ 'Authorization':'Bearer ' + realAuthToken } }),
+    ]);
+    const monthly = monthlyRes.ok ? (await monthlyRes.json()).history || [] : [];
+    const history = historyRes.ok ? (await historyRes.json()).history || [] : [];
+    const status = statusRes.ok ? await statusRes.json() : null;
+
+    const esc = (v)=> `"${String(v??'').replace(/"/g,'""')}"`;
+    const lines = [];
+    lines.push(`Rapport NUNI — ${currentUser ? (currentUser.artist_name || currentUser.first_name) : ''} — généré le ${new Date().toLocaleDateString('fr-FR')}`);
+    lines.push('');
+    if(status){
+      lines.push('RÉSUMÉ ACTUEL');
+      lines.push(['Montant en attente (FCFA)', 'Streams période en cours', 'Streams totaux', 'Dernier versement'].map(esc).join(','));
+      lines.push([status.amount_due_fcfa, status.current_period_streams, status.total_streams, status.last_payment_at ? new Date(status.last_payment_at).toLocaleDateString('fr-FR') : ''].map(esc).join(','));
+      lines.push('');
+    }
+    lines.push('ÉCOUTES PAR MOIS');
+    lines.push(['Mois', 'Streams', 'Revenu net (75%) FCFA'].map(esc).join(','));
+    monthly.forEach(row=>{
+      lines.push([row.month, row.streams, row.artist_share_fcfa].map(esc).join(','));
+    });
+    lines.push('');
+    lines.push('HISTORIQUE DES VERSEMENTS REÇUS');
+    lines.push(['Date', 'Montant (FCFA)', 'Streams couverts', 'Méthode'].map(esc).join(','));
+    history.forEach(p=>{
+      lines.push([new Date(p.created_at).toLocaleDateString('fr-FR'), p.amount_fcfa, p.streams_covered, p.method || ''].map(esc).join(','));
+    });
+
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nuni-rapport-${(currentUser && currentUser.artist_name || 'artiste').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast('Rapport téléchargé.');
+  }catch(e){ toast('Impossible de générer le rapport — réessayez plus tard.'); }
+}
+
 async function loadRealPaymentStatus(){
   const pendingAmountEl = document.getElementById('payout-pending-amount');
   const pendingStreamsEl = document.getElementById('payout-pending-streams');
