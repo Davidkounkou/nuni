@@ -2134,6 +2134,10 @@ const nuniAnalysisAudio = new Audio();
 nuniAnalysisAudio.crossOrigin = 'anonymous';
 nuniAnalysisAudio.muted = true;
 nuniAnalysisAudio.preload = 'auto';
+// Inséré dans le DOM (invisible) — voir le commentaire détaillé au-dessus de realAudio,
+// même correctif appliqué ici par cohérence même si cet élément est muet.
+nuniAnalysisAudio.style.display = 'none';
+document.body.appendChild(nuniAnalysisAudio);
 // Avant : au lancement d'un morceau, l'élément fantôme charge son propre fichier séparément
 // du vrai lecteur — il met souvent un instant de plus à devenir réellement audible/analysable,
 // d'où un décalage visible entre le vrai son et la réaction de la sphère au démarrage. Ici :
@@ -3322,6 +3326,15 @@ const realAudio = new Audio();
 realAudio.crossOrigin = 'anonymous';
 realAudio.volume = 1;
 realAudio.preload = 'auto';
+// ---------- Correctif bug volume physique (boutons du téléphone sans effet) ----------
+// realAudio était créé via new Audio() mais jamais inséré dans le DOM. Sur mobile
+// (Android en particulier, et PWA installées), un <audio> hors du DOM n'est pas toujours
+// rattaché correctement par l'OS au flux "média" (STREAM_MUSIC) — les boutons physiques
+// de volume du téléphone n'ont alors aucun effet sur la lecture. L'insérer (invisible,
+// display:none) dans le DOM permet au navigateur/à l'OS de le reconnaître comme le vrai
+// lecteur média actif, exactement comme le fait n'importe quel lecteur audio natif.
+realAudio.style.display = 'none';
+document.body.appendChild(realAudio);
 realAudio.addEventListener('loadedmetadata', ()=>{
   if(usingRealAudio && isFinite(realAudio.duration)){ duration = realAudio.duration; updateProgress(); }
 });
@@ -6199,7 +6212,7 @@ function djSpeak(force){
   djSpeakFallbackTTS(force);
 }
 function playDjVoiceClip(src){
-  if(!djVoiceClipAudio) djVoiceClipAudio = new Audio();
+  if(!djVoiceClipAudio){ djVoiceClipAudio = new Audio(); djVoiceClipAudio.style.display = 'none'; document.body.appendChild(djVoiceClipAudio); }
   djVoiceClipAudio.pause();
   djVoiceClipAudio.src = src;
   djVoiceClipAudio.currentTime = 0;
@@ -6242,7 +6255,7 @@ function startDjCrossfade(){
   const nextTr = djQueue[(djQueuePos + 1) % djQueue.length];
   if(!nextTr || !nextTr.audioUrl) return; // repli sur le comportement naturel si le suivant n'est pas jouable
 
-  if(!djFadeAudio) djFadeAudio = new Audio();
+  if(!djFadeAudio){ djFadeAudio = new Audio(); djFadeAudio.style.display = 'none'; document.body.appendChild(djFadeAudio); }
   djFadeAudio.src = nextTr.audioUrl;
   djFadeAudio.currentTime = 0;
   djFadeAudio.volume = 0;
@@ -7534,15 +7547,11 @@ try{
 }catch(e){ /* pas bloquant */ }
 const languages = [
   { code:'fr', name:'Français', native:'Français' },
-  { code:'ln', name:'Lingala', native:'Lingála' },
-  { code:'kg', name:'Kikongo', native:'Kikongo' },
-  { code:'lr', name:'Lari', native:'Lari' },
+  { code:'en', name:'English', native:'English' },
 ];
 const homeTranslations = {
   fr: { eyebrow:"La plateforme qui finance directement la musique congolaise", title:"La musique congolaise", em:"mérite son envol." },
-  ln: { eyebrow:"Plateforme oyo ezali kofuta directement miziki ya Kongo", title:"Miziki ya Kongo", em:"esengeli kopumbwa." },
-  kg: { eyebrow:"Kimvuka kina kefutaka bansiki ya Kongo mu mbote", title:"Nsiki ya Kongo", em:"yifwete kubaka nzila." },
-  lr: { eyebrow:"Kimvuka kina kefutaka bansiki ya Kongo mu mbote", title:"Nsiki ya Kongo", em:"yifwete kubaka nzila." },
+  en: { eyebrow:"The platform that pays Congolese musicians directly", title:"Congolese music", em:"deserves its moment." },
 };
 function applyLanguage(code){
   currentLanguage = code;
@@ -7705,7 +7714,7 @@ function openProfileInfo(type){
     body.appendChild(wrap);
     const note = document.createElement('p');
     note.style.cssText = 'font-size:11.5px; color:var(--text-faint); margin-top:14px; line-height:1.5;';
-    note.textContent = "La traduction complète de l'application arrive progressivement — l'accueil est déjà disponible dans ces 4 langues.";
+    note.textContent = "La traduction complète de l'application arrive progressivement — l'accueil est déjà disponible dans ces 2 langues.";
     body.appendChild(note);
   }
 
@@ -7759,7 +7768,7 @@ function timeAgoFr(dateStr){
   const days = Math.floor(hours / 24);
   return `il y a ${days} j`;
 }
-const notifIcons = { follower:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>', new_release:'<svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><circle cx="7.5" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/><path d="M10 18V5l9.5-2v13"/></svg>', follower_milestone:'<svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4"/><path d="M12 13v3M9 20h6M10 20v-2.5h4V20"/></svg>', absence_reminder:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg>' };
+const notifIcons = { follower:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>', new_release:'<svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><circle cx="7.5" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/><path d="M10 18V5l9.5-2v13"/></svg>', follower_milestone:'<svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4"/><path d="M12 13v3M9 20h6M10 20v-2.5h4V20"/></svg>', absence_reminder:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/></svg>', opportunites_reminder:'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M3 10v4a1 1 0 0 0 1 1h2.5l5 3.5v-13L6.5 9H4a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19.5 6a9 9 0 0 1 0 12"/></svg>' };
 async function loadNotifications(){
   if(!realAuthToken) return;
   try{
@@ -7773,7 +7782,19 @@ async function loadNotifications(){
       panel.insertAdjacentHTML('beforeend', `<div class="notif-item"><div><p style="margin:0;">Aucune notification pour l'instant.</p></div></div>`);
     } else {
       data.notifications.forEach(n=>{
-        head.insertAdjacentHTML('afterend', `<div class="notif-item"><span class="ic">${notifIcons[n.type]||'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>'}</span><div><b>${n.title}</b><p>${n.body} · ${timeAgoFr(n.created_at)}</p></div></div>`);
+        head.insertAdjacentHTML('afterend', `<div class="notif-item" data-link="${n.link||''}" style="${n.link ? 'cursor:pointer;' : ''}"><span class="ic">${notifIcons[n.type]||'<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>'}</span><div><b>${n.title}</b><p>${n.body} · ${timeAgoFr(n.created_at)}</p></div></div>`);
+      });
+      // Avant : le lien enregistré avec chaque notification (n.link) n'était jamais
+      // utilisé — cliquer dessus ne faisait littéralement rien. Maintenant, un clic amène
+      // vraiment à la bonne section (utile pour le rappel Opportunités notamment).
+      panel.querySelectorAll('.notif-item[data-link]').forEach(el=>{
+        const link = el.dataset.link;
+        if(!link) return;
+        el.onclick = ()=>{
+          document.getElementById('notif-panel').classList.remove('open');
+          if(link.includes('opportunites')) enterApp('ads');
+          else if(link.startsWith('/')) enterApp(link.slice(1));
+        };
       });
     }
   }catch(e){ console.error('Impossible de charger les notifications :', e); }
