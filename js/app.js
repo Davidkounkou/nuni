@@ -7566,7 +7566,7 @@ function openProfileInfo(type){
   body.innerHTML = '';
 
   if(type === 'playlists'){
- icon.textContent = ' '; title.textContent = 'Mes playlists';
+ icon.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>'; title.textContent = 'Mes playlists';
     if(!favoritesPlaylist.length){
       body.innerHTML = `<div class="pi-empty">Aucune playlist pour l'instant.<br>Appuyez sur <svg class="nuni-ic filled nuni-ic-err" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg> sur un titre pour créer votre playlist <b>Favoris</b>.</div>`;
     } else {
@@ -7584,7 +7584,7 @@ function openProfileInfo(type){
   }
 
   else if(type === 'history'){
- icon.textContent = ' '; title.textContent = 'Historique';
+ icon.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2" stroke="var(--bg)" stroke-width="1.5"/></svg>'; title.textContent = 'Historique';
     const cutoff = Date.now() - 30*60*1000;
     const recent = listeningHistory.filter(h => h.at >= cutoff);
     if(!recent.length){
@@ -7606,7 +7606,7 @@ function openProfileInfo(type){
   }
 
   else if(type === 'subscription'){
- icon.textContent = ' '; title.textContent = 'Mon abonnement';
+ icon.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="2"/></svg>'; title.textContent = 'Mon abonnement';
     if(!currentUser){
       body.innerHTML = `<div class="pi-empty">Connectez-vous pour voir votre abonnement.</div>`;
     } else {
@@ -7630,7 +7630,7 @@ function openProfileInfo(type){
   }
 
   else if(type === 'payments'){
- icon.textContent = ' '; title.textContent = 'Paiements';
+ icon.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9z"/></svg>'; title.textContent = 'Paiements';
     body.innerHTML = `
       <div class="pi-sub-card" style="margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -7651,7 +7651,7 @@ function openProfileInfo(type){
   }
 
   else if(type === 'promo'){
- icon.textContent = ' '; title.textContent = 'Codes promo';
+ icon.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 12h18" stroke="var(--bg)" stroke-width="1.5"/></svg>'; title.textContent = 'Codes promo';
     body.innerHTML = `<p style="font-size:12.5px; color:var(--text-faint);">Chargement…</p>`;
     fetch(NUNI_API_BASE + '/api/promo/NUNI30/status').then(r=>{ if(!r.ok) throw new Error(); return r.json(); }).then(data=>{
       const remaining = Math.max(0, data.max_uses - data.used_count);
@@ -7668,7 +7668,7 @@ function openProfileInfo(type){
   }
 
   else if(type === 'language'){
- icon.textContent = ' '; title.textContent = 'Langue';
+ icon.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>'; title.textContent = 'Langue';
     const wrap = document.createElement('div'); wrap.className = 'pi-lang-row';
     languages.forEach(l=>{
       const opt = document.createElement('div');
@@ -7689,7 +7689,7 @@ function openProfileInfo(type){
   }
 
   else if(type === 'contact'){
- icon.textContent = ' '; title.textContent = 'Nous contacter';
+ icon.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/></svg>'; title.textContent = 'Nous contacter';
     body.innerHTML = `
       <a class="pi-contact-row" href="mailto:nunimisiki@gmail.com"><span class="ic"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></svg></span><div><div class="t">nunimisiki@gmail.com</div><div class="s">Réponse sous 48h</div></div></a>
       <a class="pi-contact-row" href="https://wa.me/242068951600" onclick="event.preventDefault(); openWhatsApp('https://wa.me/242068951600');"><span class="ic"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></svg></span><div><div class="t">+242 06 895 16 00</div><div class="s">WhatsApp — service client</div></div></a>
@@ -7699,7 +7699,7 @@ function openProfileInfo(type){
   }
 
   else if(type === 'downloads'){
-    icon.textContent = '⬇️'; title.textContent = 'Téléchargements';
+    icon.innerHTML = '<svg class="nuni-ic filled" viewBox="0 0 24 24"><path d="M12 3v13m0 0 5-5m-5 5-5-5"/><path d="M4 19h16" stroke-linecap="round"/></svg>'; title.textContent = 'Téléchargements';
     const downloads = getDownloadHistory();
     if(!downloads.length){
       body.innerHTML = `<div class="pi-empty">Aucun téléchargement pour l'instant sur cet appareil.<br>Téléchargez un morceau depuis le lecteur pour qu'il apparaisse ici.</div>`;
