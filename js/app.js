@@ -2557,6 +2557,16 @@ let currentTrack = tracks[0]; // déclaré ici, tout de suite après tracks — 
                                 // qui plantaient sinon (ReferenceError: accès avant initialisation).
 let playing = false; // même raison — trackCard() teste aussi "playing", donc doit exister avant fillShelf()
 function formatLikes(n){ return n >= 1000 ? (n/1000).toFixed(1).replace('.0','') + 'K' : n; }
+// Format façon Spotify/Apple Music : 0-999 exact, puis K/M/B avec virgule à la française
+// (1,2K plutôt que 1.2K). Utilisé partout où un vrai nombre de streams est affiché.
+function formatStreams(n){
+  n = Number(n) || 0;
+  const withComma = (v)=> v.toFixed(1).replace('.0','').replace('.', ',');
+  if(n < 1000) return String(n);
+  if(n < 1000000) return withComma(n/1000) + 'K';
+  if(n < 1000000000) return withComma(n/1000000) + 'M';
+  return withComma(n/1000000000) + 'B';
+}
 function ensureAlbumViewStyles(){
   if(document.getElementById('album-view-styles')) return;
   const style = document.createElement('style');
@@ -2921,7 +2931,6 @@ function trackCard(tr){
       ${(tr.artistId && currentUser && currentUser.id === tr.artistId) ? '<span class="imported-badge" title="Votre import">Vous</span>' : ''}
       ${isMultiTrack ? `<span class="nuni-type-badge" title="${tr.releaseType}"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.3"/></svg> ${tr.releaseType}</span>` : ''}
       <button class="track-card-menu-btn" aria-label="Options">⋮</button>
-      ${tr.isReal ? `<span class="track-streams-badge"><svg class="nuni-ic" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.6" y="14" width="4.4" height="6" rx="2"/><rect x="17" y="14" width="4.4" height="6" rx="2"/></svg> ${formatLikes(tr.streams||0)}</span>` : ''}
       <div class="play-fab">
         <svg viewBox="0 0 24 24" class="play-fab-icon"><path d="M8 5v14l11-7z"/></svg>
         <span class="eq play-fab-eq"><i></i><i></i><i></i></span>
@@ -2929,6 +2938,7 @@ function trackCard(tr){
     </div>
     <div class="ttl">${tr.t}</div>
     <div class="art" style="cursor:pointer;">${tr.a}</div>
+    ${tr.isReal ? `<div class="stream-count-line"><svg class="nuni-ic" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> ${formatStreams(tr.streams||0)} écoutes</div>` : ''}
     <div class="likes">${currentUser && currentUser.account_type === 'artist' ? `<svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.6" y="14" width="4.4" height="6" rx="2"/><rect x="17" y="14" width="4.4" height="6" rx="2"/></svg> <span class="streams-count">${tr.streams||0}</span> · ` : ''}<svg class="nuni-ic filled nuni-ic-err" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg> <span class="likes-count">${formatLikes(tr.likes||0)}</span></div>`;
   card.querySelector('.cover').onclick = ()=> handleTrackCardClick(tr);
   card.querySelector('.ttl').onclick = ()=> handleTrackCardClick(tr);

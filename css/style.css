@@ -798,12 +798,13 @@ html[data-theme="light"] .radio-banner{ background:linear-gradient(120deg, var(-
 }
 /* Vrai nombre de streams affiché directement sur la pochette (bas gauche) — jamais de
    chiffre inventé, tr.streams vient toujours d'une vraie donnée serveur. */
-.track-streams-badge{
-  position:absolute; bottom:8px; left:8px; z-index:2; background:rgba(10,10,16,.65); backdrop-filter:blur(4px);
-  color:#fff; font-size:10.5px; font-weight:600; display:flex; align-items:center; gap:4px;
-  padding:3px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.14);
+/* Streams affichés sous la pochette, comme Spotify/Apple Music — texte discret, pas un
+   badge flottant sur l'image. Vrai nombre, jamais inventé, formaté 854 / 12K / 1,2M / 1,2B. */
+.stream-count-line{
+  display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-faint);
+  margin-top:3px;
 }
-.track-streams-badge .nuni-ic{ width:11px; height:11px; }
+.stream-count-line .nuni-ic{ width:11px; height:11px; flex-shrink:0; }
 .cover .play-fab{
   position:absolute; top:50%; left:50%; margin:-19px 0 0 -19px;
   width:38px; height:38px; border-radius:50%; background:rgba(10,10,16,.55); backdrop-filter:blur(6px);
