@@ -2858,6 +2858,7 @@ function renderAlbumLeSuggestion(overlay, tr, albumTracks){
     </div>`;
   overlay.querySelector('.av-list').insertAdjacentElement('afterend', card);
   card.querySelector('.plv-lep-btn').onclick = ()=>{
+    toast('Clic détecté — ouverture de Le P…'); // indicateur temporaire, à retirer une fois le bug confirmé/résolu
     const widget = document.getElementById('mimi-widget');
     if(!widget.classList.contains('open')){ widget.classList.add('open'); mimiFace('happy'); setTimeout(()=>mimiFace('idle'), 900); }
     const input = document.getElementById('mimi-input');
