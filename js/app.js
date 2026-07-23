@@ -1,5 +1,18 @@
 console.log(' NUNI app.js chargé — version K4 (Vrai système de clips : publication, partage, vues uniques)');
 
+// ============ OUVERTURE WHATSAPP — sans écran blanc sur mobile ============
+// Avant : window.open(url, '_blank') partout. Sur ordinateur ça marche, mais sur mobile
+// (surtout iOS/PWA), '_blank' réserve un nouvel onglet Safari AVANT que le lien wa.me ne
+// bascule vers l'app WhatsApp elle-même — cet onglet réservé ne reçoit jamais de contenu et
+// reste blanc, abandonné derrière l'app WhatsApp qui s'ouvre. Ici : sur mobile, on navigue
+// directement dans l'onglet en cours (pas de nouvel onglet à abandonner) ; sur ordinateur,
+// on garde le nouvel onglet (WhatsApp Web s'y ouvre normalement, NUNI reste ouvert derrière).
+function openWhatsApp(url){
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if(isMobile){ window.location.href = url; }
+  else{ window.open(url, '_blank'); }
+}
+
 /* ============ POSITIONNEMENT RÉEL DE LA BULLE MIMI ============
    Avant : la distance du bas dépendait d'une classe CSS "no-player" à synchroniser
    manuellement à chaque endroit où la barre lecteur apparaît/disparaît — facile à
@@ -731,7 +744,7 @@ function confirmPlanViaWhatsApp(){
   // immédiatement pour l'envoi du code.
   const emailNote = (currentUser && currentUser.email) ? ` — mon email : ${currentUser.email}` : '';
   const msg = encodeURIComponent(`Bonjour NUNI, je souhaite souscrire au ${planLabel}${idNote}${emailNote}. Pouvez-vous m'aider à finaliser mon paiement ?`);
-  window.open(`https://wa.me/242068951600?text=${msg}`, '_blank');
+  openWhatsApp(`https://wa.me/242068951600?text=${msg}`);
   document.getElementById('whatsapp-modal-overlay').classList.remove('show');
   toast('Une fois votre paiement confirmé, vous recevrez un code à saisir ci-dessous.');
   openRedeemModal();
@@ -1588,7 +1601,7 @@ async function installNuniApp(){
 }
 function openHelpWhatsApp(){
   document.getElementById('demo-menu').classList.remove('open');
-  window.open('https://wa.me/242068951600', '_blank');
+  openWhatsApp('https://wa.me/242068951600');
 }
 function openHelpEmail(){
   document.getElementById('demo-menu').classList.remove('open');
@@ -7511,7 +7524,7 @@ function openProfileInfo(type){
  icon.textContent = ' '; title.textContent = 'Nous contacter';
     body.innerHTML = `
       <a class="pi-contact-row" href="mailto:nunimisiki@gmail.com"><span class="ic"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></svg></span><div><div class="t">nunimisiki@gmail.com</div><div class="s">Réponse sous 48h</div></div></a>
-      <a class="pi-contact-row" href="https://wa.me/242068951600" target="_blank"><span class="ic"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></svg></span><div><div class="t">+242 06 895 16 00</div><div class="s">WhatsApp — service client</div></div></a>
+      <a class="pi-contact-row" href="https://wa.me/242068951600" onclick="event.preventDefault(); openWhatsApp('https://wa.me/242068951600');"><span class="ic"><svg class="nuni-ic nuni-ic-gold" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></svg></span><div><div class="t">+242 06 895 16 00</div><div class="s">WhatsApp — service client</div></div></a>
  <a class="pi-contact-row" href="#" onclick="event.preventDefault(); toast('Instagram NUNI — bientôt en ligne.')"><span class="ic"> </span><div><div class="t">Instagram</div><div class="s">@nunimusic</div></div></a>
  <a class="pi-contact-row" href="#" onclick="event.preventDefault(); toast('Facebook NUNI — bientôt en ligne.')"><span class="ic"> </span><div><div class="t">Facebook</div><div class="s">NUNI Music</div></div></a>
  <a class="pi-contact-row" href="#" onclick="event.preventDefault(); toast('TikTok NUNI — bientôt en ligne.')"><span class="ic"> </span><div><div class="t">TikTok</div><div class="s">@nunimusic</div></div></a>`;
