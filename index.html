@@ -892,6 +892,24 @@
       <div class="bar-chart" id="bar-chart"></div>
     </div>
     <div class="dash-panel">
+      <h3 class="serif"><svg class="nuni-ic filled nuni-ic-gold" viewBox="0 0 24 24"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l-2.5 6L12 21l5.5-12L15 3"/></svg> Paiements & Revenus</h3>
+      <p style="font-size:11.5px; color:var(--text-faint); margin-top:-10px; margin-bottom:14px;">
+        Vos streams publics (profil, classements) ne sont jamais touchés par un versement — seul ce qui reste "à payer" est recalculé après chaque paiement reçu.
+      </p>
+      <div class="kpi-row" style="margin-bottom:6px;">
+        <div class="kpi-card revenue-figure"><div class="lbl">Montant en attente</div><div class="val data" id="payout-pending-amount">—</div></div>
+        <div class="kpi-card"><div class="lbl">Streams période en cours</div><div class="val data" id="payout-pending-streams">—</div></div>
+        <div class="kpi-card"><div class="lbl">Dernier versement</div><div class="val data" id="payout-last-date" style="font-size:15px;">—</div></div>
+      </div>
+      <h4 style="font-size:13px; margin:20px 0 10px; color:var(--text-dim);">Historique de mes versements reçus</h4>
+      <table class="pay-table">
+        <thead><tr><th>Date</th><th>Montant</th><th>Streams couverts</th></tr></thead>
+        <tbody id="real-payment-history-tbody">
+          <tr><td colspan="3" style="color:var(--text-faint); font-size:12.5px;">Chargement…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="dash-panel">
       <h3 class="serif">Historique des paiements</h3>
       <p style="font-size:11.5px; color:var(--text-faint); margin-top:-10px; margin-bottom:14px;">Calculé en temps réel à partir de vos vraies écoutes — les versements réels restent gérés manuellement par l'équipe NUNI.</p>
       <table class="pay-table">

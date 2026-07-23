@@ -1512,6 +1512,7 @@ function enterApp(view){
     loadArtistStats();
     loadDashboardChart();
     loadPaymentsHistory();
+    loadRealPaymentStatus();
     applySavedRevenuePrivacy();
     const momoInput = document.getElementById('momo-number-input');
     if(momoInput) momoInput.value = (currentUser && currentUser.momo_number) || '';
@@ -1797,10 +1798,19 @@ function openArtistPage(name, artistId){
       if(row) row.innerHTML = emptyMsg;
     });
   }
-  // Avant : un bouton supprimer séparé (cercle gris) était ajouté à côté du menu ⋮ sur
-  // chaque pochette de sa propre discographie — doublon oublié depuis l'ajout de la vraie
-  // option "Supprimer ce morceau" à l'intérieur même du menu ⋮ (réservée au propriétaire).
-  // Un seul point d'accès maintenant, plus propre visuellement.
+  if(isOwnArtistPage){
+    document.querySelectorAll('#shelf-artist .track-card, #shelf-artist-trending .track-card, #shelf-artist-albums .track-card').forEach(card=>{
+      const cover = card.querySelector('.cover');
+      if(!cover || cover.querySelector('.track-delete-btn') || !card.dataset.trackId) return;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'track-delete-btn';
+      delBtn.title = 'Supprimer ce morceau';
+ delBtn.textContent = ' ️';
+      delBtn.style.cssText = 'position:absolute; top:6px; right:42px; z-index:4; width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,.65); color:#fff; border:none; cursor:pointer; font-size:13px;';
+      delBtn.onclick = (e)=>{ e.stopPropagation(); deleteMyTrack(card.dataset.trackId); };
+      cover.appendChild(delBtn);
+    });
+  }
 
   const releaseRow = document.getElementById('artist-release-row');
   if(releaseRow){
@@ -1989,6 +1999,38 @@ async function loadPaymentsHistory(){
       const label = monthNames[Number(m)-1] + ' ' + y;
       return `<tr><td>${label}</td><td class="data">${row.streams.toLocaleString('fr-FR')}</td><td class="data">${row.artist_share_fcfa.toLocaleString('fr-FR')} FCFA</td></tr>`;
     }).join('');
+  }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
+}
+
+/* ============ VRAIS VERSEMENTS REÇUS (dashboard) ============
+   Différent de loadPaymentsHistory() ci-dessus (qui est une ESTIMATION mensuelle calculée
+   en direct sur les écoutes) : ici, ce sont les VRAIS paiements effectivement enregistrés
+   par l'admin (table payment_history), avec le vrai montant restant à percevoir. Les
+   streams publics du profil ne sont jamais modifiés par ce système. */
+async function loadRealPaymentStatus(){
+  const pendingAmountEl = document.getElementById('payout-pending-amount');
+  const pendingStreamsEl = document.getElementById('payout-pending-streams');
+  const lastDateEl = document.getElementById('payout-last-date');
+  const tbody = document.getElementById('real-payment-history-tbody');
+  if(!pendingAmountEl || !realAuthToken) return;
+  try{
+    const [statusRes, historyRes] = await Promise.all([
+      fetch(NUNI_API_BASE + '/api/artist/payment-status', { headers:{ 'Authorization':'Bearer ' + realAuthToken } }),
+      fetch(NUNI_API_BASE + '/api/artist/payment-history', { headers:{ 'Authorization':'Bearer ' + realAuthToken } }),
+    ]);
+    if(statusRes.ok){
+      const s = await statusRes.json();
+      pendingAmountEl.textContent = s.amount_due_fcfa.toLocaleString('fr-FR') + ' FCFA';
+      pendingStreamsEl.textContent = s.current_period_streams.toLocaleString('fr-FR');
+      lastDateEl.textContent = s.last_payment_at ? new Date(s.last_payment_at).toLocaleDateString('fr-FR') : 'Aucun pour le moment';
+    }
+    if(historyRes.ok && tbody){
+      const h = await historyRes.json();
+      const history = h.history || [];
+      tbody.innerHTML = history.length
+        ? history.map(p=> `<tr><td>${new Date(p.created_at).toLocaleDateString('fr-FR')}</td><td class="data">${p.amount_fcfa.toLocaleString('fr-FR')} FCFA</td><td class="data">${p.streams_covered.toLocaleString('fr-FR')}</td></tr>`).join('')
+        : '<tr><td colspan="3" style="color:var(--text-faint); font-size:12.5px;">Aucun versement reçu pour le moment.</td></tr>';
+    }
   }catch(e){ /* pas grave si le serveur est momentanément indisponible */ }
 }
 
